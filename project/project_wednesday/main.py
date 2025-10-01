@@ -45,7 +45,7 @@ def main():
     print(">>> Inicio de ejecucion")
 
     ## Creacion de target
-    create_target()
+    # create_target()
 
     ## Carga de Datos
     os.makedirs('data', exist_ok=True)
@@ -53,7 +53,7 @@ def main():
     df = cargar_datos(path)
 
     ## Feature Engineering
-    atributos = ['ctrx_quarter']
+    atributos = list(df.drop(columns=['foto_mes']).columns) #['ctrx_quarter']
     cant_lag = 2
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag)
     logger.info(f'Feature Engineering completado: {df.shape}')
@@ -62,18 +62,18 @@ def main():
     df = convertir_clase_ternaria_a_target(df)
 
     ## Ejecutar optimizacion de hiperparametros
-    # study = optimizar(df, n_trials = 100)
-    #
-    # # 5. Análisis adicional
-    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    # trials_df = study.trials_dataframe()
-    # if len(trials_df) > 0:
-    #     top_5 = trials_df.nlargest(5, 'value')
-    #     logger.info("Top 5 mejores trials:")
-    #     for idx, trial in top_5.iterrows():
-    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
-    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+    study = optimizar(df, n_trials = 100)
+
+    # 5. Análisis adicional
+    logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    trials_df = study.trials_dataframe()
+    if len(trials_df) > 0:
+        top_5 = trials_df.nlargest(5, 'value')
+        logger.info("Top 5 mejores trials:")
+        for idx, trial in top_5.iterrows():
+            logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
+    logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
     resultados_test = evaluar_en_test(df, mejores_params)

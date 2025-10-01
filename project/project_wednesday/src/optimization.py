@@ -200,7 +200,7 @@ def optimizar(df, n_trials=100) -> optuna.Study:
         # load_if_exists=True,
     )
 
-    study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progressbar=True)
+    study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progress_bar=True)
 
     # Resultados
     logger.info(f"Mejor ganancia: {study.best_value:,.0f}")
