@@ -53,7 +53,7 @@ def main():
     df = cargar_datos(path)
 
     ## Feature Engineering
-    atributos = list(df.drop(columns=['foto_mes']).columns) #['ctrx_quarter']
+    atributos = list(df.drop(columns=['foto_mes', 'target']).columns) #['ctrx_quarter']
     cant_lag = 2
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag)
     logger.info(f'Feature Engineering completado: {df.shape}')
