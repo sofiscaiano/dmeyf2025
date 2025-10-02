@@ -153,6 +153,7 @@ def objetivo_ganancia(trial, df) -> float:
         # early_stopping_rounds= int(50 + 5 / learning_rate),
         feval=ganancia_lgb_binary,
         stratified=True,
+        shuffle=True,
         nfold=5,
         seed=SEMILLA[0],
         callbacks=[lgb.early_stopping(stopping_rounds=50, verbose=False), lgb.log_evaluation(0)]
@@ -196,11 +197,12 @@ def optimizar(df, n_trials=100) -> optuna.Study:
     study = optuna.create_study(
         direction="maximize",
         study_name=study_name,
+        sampler=optuna.samplers.TPESampler(seed=SEMILLA[0])
         # storage=storage_name,
         # load_if_exists=True,
     )
 
-    study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progress_bar=True)
+    study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progress_bar=True, n_jobs=-1)
 
     # Resultados
     logger.info(f"Mejor ganancia: {study.best_value:,.0f}")
@@ -242,11 +244,39 @@ def evaluar_en_test(df, mejores_params) -> dict:
     train_data = lgb.Dataset(X_train, label=y_train)
     test_data = lgb.Dataset(X_test, label=y_test)
 
+    # Hiperparámetros a optimizar
+    params = {
+        'objective': 'binary',
+        'metric': 'None',  # Usamos nuestra métrica personalizada
+        'verbose': -1,
+        'verbosity': -1,
+        'silent': 1,
+        'boosting': 'gbdt',
+        'first_metric_only': False,
+        'boost_from_average': True,
+        'feature_pre_filter': False,
+        'force_row_wise': True,  # para reducir warnings
+        'max_depth': -1,  # -1 significa no limitar,  por ahora lo dejo fijo
+        'min_gain_to_split': 0,
+        'min_sum_hessian_in_leaf': 0.001,
+        'lambda_l1': 0.0,
+        'lambda_l2': 0.0,
+        'max_bin': 31,  # lo debo dejar fijo, no participa de la BO
+        'pos_bagging_fraction': 1,
+        'neg_bagging_fraction': 1,
+        'is_unbalance': False,
+        'scale_pos_weight': 1,
+        'extra_trees': False,
+        'random_state': SEMILLA[0]  # Desde configuración YAML
+    }
+
+    final_params = {**params, **mejores_params}
+
     # Entrenar modelo con mejores parámetros
-    modelo = lgb.train(mejores_params,
+    modelo = lgb.train(final_params,
                       train_data,
                       num_boost_round = mejores_params.get('num_iterations', 1000)
-    )
+                       )
     # ... Implementar entrenamiento y test con la logica de entrenamiento FINAL para mayor detalle
     # recordar realizar todos los df necesarios y utilizar lgb.train()
 

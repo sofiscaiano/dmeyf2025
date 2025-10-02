@@ -67,12 +67,30 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     """
     logger.info("Iniciando entrenamiento del modelo final")
 
-    # Configurar parámetros del modelo
+    # Hiperparámetros optimizados
     params = {
         'objective': 'binary',
         'metric': 'None',  # Usamos nuestra métrica personalizada
-        'random_state': SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA,
         'verbose': -1,
+        'verbosity': -1,
+        'silent': 1,
+        'boosting': 'gbdt',
+        'first_metric_only': False,
+        'boost_from_average': True,
+        'feature_pre_filter': False,
+        'force_row_wise': True,  # para reducir warnings
+        'max_depth': -1,  # -1 significa no limitar,  por ahora lo dejo fijo
+        'min_gain_to_split': 0,
+        'min_sum_hessian_in_leaf': 0.001,
+        'lambda_l1': 0.0,
+        'lambda_l2': 0.0,
+        'max_bin': 31,
+        'pos_bagging_fraction': 1,
+        'neg_bagging_fraction': 1,
+        'is_unbalance': False,
+        'scale_pos_weight': 1,
+        'extra_trees': False,
+        'random_state': SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA,
         **mejores_params  # Agregar los mejores hiperparámetros
     }
 

@@ -62,7 +62,7 @@ def main():
     df = convertir_clase_ternaria_a_target(df)
 
     ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(df, n_trials = 100)
+    study = optimizar(df, n_trials = 2)
 
     # 5. Análisis adicional
     logger.info("=== ANÁLISIS DE RESULTADOS ===")
