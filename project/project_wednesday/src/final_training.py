@@ -5,8 +5,7 @@ import logging
 import os
 from datetime import datetime
 from .config import FINAL_TRAIN, FINAL_PREDICT, SEMILLA
-from .best_params import cargar_mejores_hiperparametros
-from .gain_function import ganancia_lgb_binary
+from .config import *
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     """
     logger.info("Iniciando entrenamiento del modelo final")
 
-    # Hiperparámetros optimizados
+    # Hiperparámetros fijos y optimizados
     params = {
         'objective': 'binary',
         'metric': 'None',  # Usamos nuestra métrica personalizada
@@ -75,23 +74,12 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
         'verbosity': -1,
         'silent': 1,
         'boosting': 'gbdt',
-        'first_metric_only': False,
-        'boost_from_average': True,
-        'feature_pre_filter': False,
-        'force_row_wise': True,  # para reducir warnings
-        'max_depth': -1,  # -1 significa no limitar,  por ahora lo dejo fijo
-        'min_gain_to_split': 0,
-        'min_sum_hessian_in_leaf': 0.001,
-        'lambda_l1': 0.0,
-        'lambda_l2': 0.0,
-        'max_bin': 31,
-        'pos_bagging_fraction': 1,
-        'neg_bagging_fraction': 1,
-        'is_unbalance': False,
-        'scale_pos_weight': 1,
-        'extra_trees': False,
+        'n_threads': -1,
+        'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
+        'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
+        'max_bin': PARAMETROS_LGB['max_bin'],
         'random_state': SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA,
-        **mejores_params  # Agregar los mejores hiperparámetros
+        **mejores_params
     }
 
     logger.info(f"Parámetros del modelo: {params}")
@@ -114,7 +102,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
 
 
 def generar_predicciones_finales(modelo: lgb.Booster, X_predict: pd.DataFrame, clientes_predict: np.ndarray,
-                                 umbral: float = 0.025) -> pd.DataFrame:
+                                 envios: int) -> pd.DataFrame:
     """
     Genera las predicciones finales para el período objetivo.
 
@@ -122,7 +110,7 @@ def generar_predicciones_finales(modelo: lgb.Booster, X_predict: pd.DataFrame, c
         modelo: Modelo entrenado
         X_predict: Features para predicción
         clientes_predict: IDs de clientes
-        umbral: Umbral para clasificación binaria
+        envios: cantidad de envios a realizar
 
     Returns:
         pd.DataFrame: DataFrame con numero_cliente y predict
@@ -130,16 +118,22 @@ def generar_predicciones_finales(modelo: lgb.Booster, X_predict: pd.DataFrame, c
     logger.info("Generando predicciones finales")
 
     # Generar probabilidades con el modelo entrenado
-    probabilidades = modelo.predict(X_predict)
+    y_pred_proba = modelo.predict(X_predict)
 
-    # Convertir a predicciones binarias con el umbral establecido
-    predicciones_binarias = (probabilidades > umbral).astype(int)
-
-    # Crear DataFrame de 'resultados' con nombres de atributos que pide kaggle
+    # Crear un DataFrame para manejar el orden
     resultados = pd.DataFrame({
-        'numero_de_cliente': clientes_predict,
-        'Predicted': predicciones_binarias
+        "numero_de_cliente": clientes_predict,
+        "probabilidad": y_pred_proba
     })
+
+    # Ordenar por probabilidad descendente
+    resultados = resultados.sort_values(by="probabilidad", ascending=False).reset_index(drop=True)
+
+    # 4. Asignar etiquetas: 1 a los primeros envios, 0 al resto
+    resultados["Predicted"] = 0
+    resultados.loc[:envios, "Predicted"] = 1
+
+    resultados.drop(columns='probabilidad', inplace=True)
 
     # Estadísticas de predicciones
     total_predicciones = len(resultados)
@@ -150,6 +144,6 @@ def generar_predicciones_finales(modelo: lgb.Booster, X_predict: pd.DataFrame, c
     logger.info(f"  Total clientes: {total_predicciones:,}")
     logger.info(f"  Predicciones positivas: {predicciones_positivas:,} ({porcentaje_positivas:.2f}%)")
     logger.info(f"  Predicciones negativas: {total_predicciones - predicciones_positivas:,}")
-    logger.info(f"  Umbral utilizado: {umbral}")
+    logger.info(f"  Cantidad de envios: {envios}")
 
     return resultados
