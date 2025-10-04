@@ -126,7 +126,7 @@ def objetivo_ganancia(trial, df) -> float:
 
     df_train = df[df['foto_mes'].isin(periodos_cv)]
     logging.info(df_train.shape)
-    X_train = df_train.drop(['target', 'foto_mes'], axis=1)
+    X_train = df_train.drop(['target'], axis=1)
     y_train = df_train['target']
 
     train_data = lgb.Dataset(X_train, label=y_train)

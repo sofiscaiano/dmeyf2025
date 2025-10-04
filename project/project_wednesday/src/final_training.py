@@ -40,11 +40,11 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
     # Corroborar que no esten vacios los df
 
     # Preparar features y target para entrenamiento
-    X_train = df_train.drop(['target', 'foto_mes'], axis=1)
+    X_train = df_train.drop(['target'], axis=1)
     y_train = df_train['target']
 
     # Preparar features para predicción
-    X_predict = df_predict.drop(['target', 'foto_mes'], axis=1)
+    X_predict = df_predict.drop(['target'], axis=1)
     clientes_predict = df_predict['numero_de_cliente']
 
     logger.info(f"Features utilizadas: {len(X_predict.columns)}")
