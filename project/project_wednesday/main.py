@@ -86,7 +86,7 @@ def main():
     reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
 
     ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 
     # 5. Análisis adicional
     logger.info("=== ANÁLISIS DE RESULTADOS ===")

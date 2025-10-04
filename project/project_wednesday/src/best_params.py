@@ -1,4 +1,5 @@
 import json
+import numpy as np
 import logging
 from .config import STUDY_NAME, UNDERSAMPLING_FRACTION
 
@@ -30,7 +31,7 @@ def cargar_mejores_hiperparametros(archivo_base: str = None) -> dict:
         # Encontrar la iteración con mayor ganancia
         mejor_iteracion = max(iteraciones, key=lambda x: x['value'])
         mejores_params = mejor_iteracion['params']
-        mejores_params['min_data_in_leaf'] = mejores_params['min_data_in_leaf'] / UNDERSAMPLING_FRACTION
+        mejores_params['min_data_in_leaf'] = round(mejores_params['min_data_in_leaf'] / UNDERSAMPLING_FRACTION)
         mejor_ganancia = mejor_iteracion['value']
 
         logger.info(f"Mejores hiperparámetros cargados desde {archivo}")
