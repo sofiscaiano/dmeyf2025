@@ -41,6 +41,8 @@ logger.info(f"MES_TEST: {MES_TEST}")
 logger.info(f"GANANCIA_ACIERTO: {GANANCIA_ACIERTO}")
 logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
 
+n_trials = int(os.getenv("N_TRIALS", 2))
+
 def main():
     print(">>> Inicio de ejecucion")
 
@@ -62,7 +64,7 @@ def main():
     df = convertir_clase_ternaria_a_target(df)
 
     ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(df, n_trials = 2)
+    study = optimizar(df, n_trials=n_trials)
 
     # 5. Análisis adicional
     logger.info("=== ANÁLISIS DE RESULTADOS ===")

@@ -19,3 +19,4 @@ tomli==2.2.1
 tqdm==4.67.1
 typing_extensions==4.15.0
 tzdata==2025.2
+scikit-learn==1.7.2

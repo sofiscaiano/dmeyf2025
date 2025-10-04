@@ -1,0 +1,152 @@
+[
+  {
+    "ganancia": 742280000.0,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 2246,
+    "porcentaje_positivas": 1.374389602124613,
+    "params": {
+      "num_leaves": 72,
+      "learning_rate": 0.12856219234946206,
+      "min_data_in_leaf": 305,
+      "feature_fraction": 0.39940917690891753,
+      "bagging_fraction": 0.5255943956345855,
+      "num_iterations": 1124
+    },
+    "datetime": "2025-10-02T13:31:52.092971",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-04-30"
+    }
+  },
+  {
+    "ganancia": 935460000.0,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 4907,
+    "porcentaje_positivas": 3.002729197518021,
+    "params": {
+      "num_leaves": 73,
+      "learning_rate": 0.08013833258486193,
+      "min_data_in_leaf": 617,
+      "feature_fraction": 0.3318293633765337,
+      "bagging_fraction": 0.8407707119302203,
+      "num_iterations": 933
+    },
+    "datetime": "2025-10-02T23:04:31.461924",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-04-30"
+    }
+  },
+  {
+    "ganancia": 1033440000.0,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 9768,
+    "porcentaje_positivas": 5.977309721083357,
+    "params": {
+      "num_leaves": 66,
+      "learning_rate": 0.02935700653433538,
+      "min_data_in_leaf": 468,
+      "feature_fraction": 0.185848074705947,
+      "bagging_fraction": 0.43151822973184106,
+      "num_iterations": 1151
+    },
+    "datetime": "2025-10-02T23:13:17.938456",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-04-30"
+    }
+  },
+  {
+    "ganancia": 1024520000.0,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 10814,
+    "porcentaje_positivas": 6.617386089659647,
+    "params": {
+      "num_leaves": 88,
+      "learning_rate": 0.017393696731444,
+      "min_data_in_leaf": 313,
+      "feature_fraction": 0.46809508410674394,
+      "bagging_fraction": 0.5605237678657431,
+      "num_iterations": 915
+    },
+    "datetime": "2025-10-02T23:25:26.360832",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-04-30"
+    }
+  },
+  {
+    "ganancia": 1029160000.0,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 10782,
+    "porcentaje_positivas": 6.597804403431691,
+    "params": {
+      "num_leaves": 88,
+      "learning_rate": 0.017393696731444,
+      "min_data_in_leaf": 313,
+      "feature_fraction": 0.46809508410674394,
+      "bagging_fraction": 0.5605237678657431,
+      "num_iterations": 915
+    },
+    "datetime": "2025-10-02T23:34:09.131801",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-04-30"
+    }
+  },
+  {
+    "ganancia": 1033200000.0,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 12460,
+    "porcentaje_positivas": 7.624619075010097,
+    "params": {
+      "num_leaves": 96,
+      "learning_rate": 0.0172287603300251,
+      "min_data_in_leaf": 673,
+      "feature_fraction": 0.2681303674671471,
+      "bagging_fraction": 0.8928686829771486,
+      "num_iterations": 690
+    },
+    "datetime": "2025-10-03T01:45:14.877407",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-04-30"
+    }
+  }
+]
