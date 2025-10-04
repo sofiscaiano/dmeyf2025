@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 import duckdb
 import logging
+from .config import SEMILLA
 
 logger = logging.getLogger(__name__)
 
@@ -56,3 +58,36 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     logger.info(f"Feature engineering completado. DataFrame resultante con {df.shape[1]} columnas")
 
     return df
+
+
+def undersample(df, sample_fraction):
+    """
+    Realiza un undersampling de la clase mayoritaria.
+
+    Args:
+        df (pd.DataFrame): El DataFrame de entrada.
+        sample_fraction (float): Fracción de la clase mayoritaria a conservar (entre 0 y 1).
+    Returns:
+        pd.DataFrame: El DataFrame resultante submuestreado.
+    """
+
+    # Función lambda para aplicar a cada grupo (clase)
+    # Si el grupo es la clase mayoritaria, se aplica el muestreo con la fracción.
+    # Para el resto de clases, se conserva el 100% de los datos (frac=1).
+    df_undersampled = df.groupby('target', group_keys=False).apply(
+        lambda x: x.sample(
+            frac=sample_fraction,
+            random_state=SEMILLA[1]
+        ) if x.name == 0 else x
+    ).reset_index(drop=True)
+
+    prop_continua = (df_undersampled['target'] == 0).sum() / (df['target'] == 0).sum()
+    prop_baja = (df_undersampled['target'] == 1).sum() / (df['target'] == 1).sum()
+
+    # Imprimir estadísticas para verificar la reducción
+    logging.info(f"Tamaño original del DataFrame: {len(df)}")
+    logging.info(f"Tamaño final del DataFrame: {len(df_undersampled)}")
+    logging.info(f"Proporcion final de clase mayoritaria: {prop_continua:.2f}")
+    logging.info(f"Proporcion final de clase minoritaria: {prop_baja:.2f}")
+
+    return df_undersampled

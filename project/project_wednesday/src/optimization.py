@@ -38,7 +38,8 @@ def guardar_iteracion(trial, ganancia, archivo_base=None):
         'configuracion': {
             'semilla': SEMILLA[0],
             'mes_train': MES_TRAIN,
-            'mes_validacion': MES_VALIDACION
+            'mes_validacion': MES_VALIDACION,
+            'undersampling': UNDERSAMPLING_FRACTION
         }
     }
 
@@ -151,8 +152,7 @@ def objetivo_ganancia(trial, df) -> float:
     return ganancia_total
 
 
-
-def optimizar(df, n_trials=100) -> optuna.Study:
+def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     """
     Args:
         df: DataFrame con datos
@@ -184,7 +184,7 @@ def optimizar(df, n_trials=100) -> optuna.Study:
         # load_if_exists=True,
     )
 
-    study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progress_bar=True, n_jobs=1, gc_after_trial=True)
+    study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progress_bar=True, n_jobs=n_jobs, gc_after_trial=True)
 
     # Resultados
     logger.info(f"Mejor ganancia: {study.best_value:,.0f}")

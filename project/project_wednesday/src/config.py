@@ -22,6 +22,7 @@ try:
         COSTO_ESTIMULO = _cfg.get('COSTO_ESTIMULO', None)
         FINAL_TRAIN = _cfg.get('FINAL_TRAIN', [])
         FINAL_PREDICT = _cfg.get('FINAL_PREDICT', "")
+        UNDERSAMPLING_FRACTION = _cfg.get('UNDERSAMPLING_FRACTION', 1.0)
 
 except Exception as e:
     logger.error(f'Error al cargar el archivo de configuracion: {e}')

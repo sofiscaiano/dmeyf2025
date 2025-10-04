@@ -6,7 +6,7 @@ import glob
 import argparse
 
 import lightgbm as lgb
-from src.features import feature_engineering_lag
+from src.features import feature_engineering_lag, undersample
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -44,6 +44,7 @@ logger.info(f"MES_VALIDACION: {MES_VALIDACION}")
 logger.info(f"MES_TEST: {MES_TEST}")
 logger.info(f"GANANCIA_ACIERTO: {GANANCIA_ACIERTO}")
 logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
+logger.info(f"UNDERSAMPLING_FRACTION: {UNDERSAMPLING_FRACTION}")
 
 def main():
 
@@ -53,6 +54,12 @@ def main():
         type=int,
         default=100,
         help="Cantidad de trials para Optuna"
+    )
+    parser.add_argument(
+        "--n_jobs",
+        type=int,
+        default=1,
+        help="Jobs paralelos para Optuna"
     )
 
     args = parser.parse_args()
@@ -71,39 +78,41 @@ def main():
     atributos = list(df.drop(columns=['foto_mes', 'target']).columns)
     cant_lag = 2
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag)
-    # logger.info(f'Feature Engineering completado: {df.shape}')
 
     ## Convertir clase ternaria a target binaria
     df = convertir_clase_ternaria_a_target(df)
 
-    # ## Ejecutar optimizacion de hiperparametros
-    # study = optimizar(df, n_trials = args.n_trials)
-    #
-    # # 5. Análisis adicional
-    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    # trials_df = study.trials_dataframe()
-    # if len(trials_df) > 0:
-    #     top_5 = trials_df.nlargest(5, 'value')
-    #     logger.info("Top 5 mejores trials:")
-    #     for idx, trial in top_5.iterrows():
-    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
-    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
-    #
+    ## Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
+    reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
+
+    ## Ejecutar optimizacion de hiperparametros
+    study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+
+    # 5. Análisis adicional
+    logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    trials_df = study.trials_dataframe()
+    if len(trials_df) > 0:
+        top_5 = trials_df.nlargest(5, 'value')
+        logger.info("Top 5 mejores trials:")
+        for idx, trial in top_5.iterrows():
+            logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
+    logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+
     mejores_params = cargar_mejores_hiperparametros()
-    # resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
-    #
-    # # Guardar resultados de test
-    # guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-    #
-    # # Resumen de evaluación en test
-    # logger.info("=== RESUMEN DE EVALUACIÓN EN TEST ===")
-    # logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.0f}")
-    # logger.info(f"🎯 Predicciones positivas: {resultados_test['predicciones_positivas']:,} ({resultados_test['porcentaje_positivas']:.2f}%)")
-    #
+    resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
+
+    # Guardar resultados de test
+    guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
+
+    # Resumen de evaluación en test
+    logger.info("=== RESUMEN DE EVALUACIÓN EN TEST ===")
+    logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.0f}")
+    logger.info(f"🎯 Predicciones positivas: {resultados_test['predicciones_positivas']:,} ({resultados_test['porcentaje_positivas']:.2f}%)")
+
     # # Entrenar modelo final
     X_train, y_train, X_predict, clientes_predict = preparar_datos_entrenamiento_final(df)
-    # modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
+    modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
 
     # Generar predicciones
     envios = cargar_mejores_envios()
