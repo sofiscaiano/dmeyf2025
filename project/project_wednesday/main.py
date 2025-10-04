@@ -5,7 +5,8 @@ import logging
 
 from src.features import feature_engineering_lag
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
-from src.optimization import optimizar, evaluar_en_test, guardar_resultados_test
+from src.optimization import optimizar
+from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *
 from src.best_params import cargar_mejores_hiperparametros
 from src.final_training import preparar_datos_entrenamiento_final, generar_predicciones_finales, entrenar_modelo_final
@@ -41,8 +42,6 @@ logger.info(f"MES_TEST: {MES_TEST}")
 logger.info(f"GANANCIA_ACIERTO: {GANANCIA_ACIERTO}")
 logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
 
-n_trials = int(os.getenv("N_TRIALS", 2))
-
 def main():
     print(">>> Inicio de ejecucion")
 
@@ -63,22 +62,22 @@ def main():
     ## Convertir clase ternaria a target binaria
     df = convertir_clase_ternaria_a_target(df)
 
-    ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(df, n_trials=n_trials)
-
-    # 5. Análisis adicional
-    logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    trials_df = study.trials_dataframe()
-    if len(trials_df) > 0:
-        top_5 = trials_df.nlargest(5, 'value')
-        logger.info("Top 5 mejores trials:")
-        for idx, trial in top_5.iterrows():
-            logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
-    logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+    # ## Ejecutar optimizacion de hiperparametros
+    # study = optimizar(df, n_trials = 100)
+    #
+    # # 5. Análisis adicional
+    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    # trials_df = study.trials_dataframe()
+    # if len(trials_df) > 0:
+    #     top_5 = trials_df.nlargest(5, 'value')
+    #     logger.info("Top 5 mejores trials:")
+    #     for idx, trial in top_5.iterrows():
+    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
+    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
-    resultados_test = evaluar_en_test(df, mejores_params)
+    resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
 
     # Guardar resultados de test
     guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
@@ -95,7 +94,8 @@ def main():
     # Guardar modelo joblib
 
     # Generar predicciones
-    predicciones = generar_predicciones_finales(modelo_final, X_predict, clientes_predict)
+    envios = resultados_test['predicciones_positivas']
+    predicciones = generar_predicciones_finales(modelo_final, X_predict, clientes_predict, envios)
 
     # Guardar predicciones
     salida_kaggle = guardar_predicciones_finales(predicciones)
