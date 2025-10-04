@@ -11,3 +11,14 @@ competencia01:
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
 
+parametros_lgb:
+  n_trail: 100
+  num_leaves: [8, 100]
+  learning_rate: [0.005, 0.3]
+  feature_fraction: [0.1, 1.0]
+  bagging_fraction: [0.1, 1.0]
+  min_data_in_leaf: [5, 700]
+  num_iterations: [500, 1500]
+  feature_pre_filter: False
+  force_row_wise: True
+  max_bin: 31
