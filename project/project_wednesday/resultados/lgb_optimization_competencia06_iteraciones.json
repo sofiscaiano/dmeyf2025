@@ -1,0 +1,48 @@
+[
+  {
+    "trial_number": 0,
+    "params": {
+      "bagging_fraction": 0.5792862251382852,
+      "num_iterations": 1238,
+      "learning_rate": 0.21228294105805287,
+      "feature_fraction": 0.620132326375112,
+      "num_leaves": 83,
+      "min_data_in_leaf": 616
+    },
+    "value": 500760000.0,
+    "datetime": "2025-10-04T11:48:43.017977",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-03-31"
+    }
+  },
+  {
+    "trial_number": 1,
+    "params": {
+      "bagging_fraction": 0.7934223731901621,
+      "num_iterations": 1161,
+      "learning_rate": 0.11536316272281309,
+      "feature_fraction": 0.6134588858505973,
+      "num_leaves": 97,
+      "min_data_in_leaf": 510
+    },
+    "value": 517740000.0,
+    "datetime": "2025-10-04T11:55:37.038524",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        "2021-01-31",
+        "2021-02-28",
+        "2021-03-31"
+      ],
+      "mes_validacion": "2021-03-31"
+    }
+  }
+]

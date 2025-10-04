@@ -1,9 +1,9 @@
-STUDY_NAME : 'lgb_optimization_competencia05'
+STUDY_NAME : 'lgb_optimization_competencia06'
 
 competencia01:
   DATA_PATH: '../data/competencia_01.csv'
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
-  MES_TRAIN: ['2021-01-31','2021-02-28', '2021-03-31']
+  MES_TRAIN: ['2021-01-31','2021-02-28']
   MES_VALIDACION: '2021-03-31'
   MES_TEST: '2021-04-30'
   FINAL_TRAIN: ['2021-01-31', '2021-02-28', '2021-03-31', '2021-04-30']

@@ -43,7 +43,7 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     # Completar la consulta
     sql += " FROM df"
 
-    logger.debug(f"Consulta SQL: {sql}")
+    # logger.debug(f"Consulta SQL: {sql}")
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
@@ -51,7 +51,7 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     df = con.execute(sql).df()
     con.close()
 
-    print(df.head())
+    # print(df.head())
 
     logger.info(f"Feature engineering completado. DataFrame resultante con {df.shape[1]} columnas")
 

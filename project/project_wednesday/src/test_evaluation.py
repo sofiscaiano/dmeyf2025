@@ -58,22 +58,38 @@ def evaluar_en_test(df, mejores_params) -> dict:
         'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],
-        'random_state': SEMILLA[0],
+        # 'random_state': SEMILLA[0],
         'seed': SEMILLA[0]
     }
 
     final_params = {**params, **mejores_params}
 
-    logging.info('=== Inicio Entrenamiento del Modelo ===')
-    # Entrenar modelo con mejores parámetros
-    modelo = lgb.train(final_params,
-                      train_data,
-                      num_boost_round = mejores_params.get('num_iterations', 1000)
-                       )
-    logging.info('=== Finaliza Entrenamiento del Modelo ===')
+    logging.info('=== Inicio Entrenamiento del Modelo con 5 semillas ===')
 
-    # Obtengo las predicciones
-    y_pred = modelo.predict(X_test)
+    modelos = []
+    preds = []
+
+    for i, seed in enumerate(SEMILLA):
+        logging.info(f'Entrenando modelo con seed = {seed}')
+
+        # Copia de parámetros con la semilla actual
+        params_seed = final_params.copy()
+        params_seed['seed'] = seed
+
+        # Entrenamiento
+        modelo = lgb.train(
+            params_seed,
+            train_data,
+            num_boost_round=mejores_params.get('num_iterations', 1000)
+        )
+
+        modelos.append(modelo)
+        preds.append(modelo.predict(X_test))
+
+    logging.info('=== Finaliza Entrenamiento de los 5 Modelos ===')
+
+    # Ensemble: promedio de predicciones
+    y_pred = np.mean(preds, axis=0)
 
     logging.info('=== Inicio Calculo de Ganancias Acumuladas en Test ===')
     # Calcular solo la ganancia
@@ -188,14 +204,15 @@ def crear_grafico_ganancia_test(y_pred_proba: np.array, ganancias_acumuladas: np
     ganancia_maxima = np.max(ganancias_acumuladas)
     indice_maximo = np.argmax(ganancias_acumuladas)
 
+    # umbral para filtrar el grafico
     umbral_ganancia = ganancia_maxima * 0.66
 
     indices_filtrados = ganancias_acumuladas >= umbral_ganancia
     x_filtrado = np.where(indices_filtrados)[0]
     y_filtrado = ganancias_acumuladas[indices_filtrados]
 
-    umbral_probabilidad = 0.025
-    clientes_sobre_umbral = np.sum(y_pred_proba >= umbral_probabilidad)
+    # umbral_probabilidad = 0.025
+    # clientes_sobre_umbral = np.sum(y_pred_proba >= umbral_probabilidad)
 
     plt.style.use('seaborn-v0_8')
     plt.figure(figsize=(14, 8))
@@ -204,16 +221,12 @@ def crear_grafico_ganancia_test(y_pred_proba: np.array, ganancias_acumuladas: np
 
     plt.scatter(indice_maximo, ganancia_maxima, color='red', s=100, zorder=5, label='Ganancia Máxima')
 
-    # ✅ corregido: xytext debe ser tupla (no set)
     plt.annotate(f'Ganancia Máxima\n{ganancia_maxima:,.0f}',
                  xy=(indice_maximo, ganancia_maxima),
                  xytext=(indice_maximo + len(x_filtrado) * 0.1, ganancia_maxima * 1.05),
                  arrowprops=dict(arrowstyle="->", color='red', lw=1.5),
                  fontsize=10, fontweight='bold', color='red',
                  bbox=dict(facecolor='white', alpha=0.8, boxstyle='round, pad=0.3'))
-
-    plt.axvline(x=indice_maximo, color='green', linestyle='--', alpha=0.7,
-                label=f'Corte Ideal (cliente {clientes_sobre_umbral:,})')
 
     plt.xlabel('Clientes ordenados por probabilidad', fontsize=12)
     plt.ylabel('Ganancia Acumulada', fontsize=12)
@@ -237,8 +250,6 @@ def crear_grafico_ganancia_test(y_pred_proba: np.array, ganancias_acumuladas: np
     logger.info('Estadísticas del gráfico:')
     logger.info(f'  - Ganancia máxima: {ganancia_maxima:,.0f}')
     logger.info(f'  - Corte ideal por cliente: {indice_maximo:,.0f}')
-    logger.info(f'  - Umbral de filtrado: {umbral_ganancia:,.0f} (66% del máximo)')
-    logger.info(f'  - Corte 0.025 en cliente: {clientes_sobre_umbral:,.0f}')
 
     return ruta_archivo
 

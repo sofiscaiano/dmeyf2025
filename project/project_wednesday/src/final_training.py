@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from .config import FINAL_TRAIN, FINAL_PREDICT, SEMILLA
 from .config import *
+import glob
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
         'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],
-        'random_state': SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA,
+        'seed': SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA,
         **mejores_params
     }
 
@@ -87,27 +88,46 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     # Crear dataset de LightGBM
     train_data = lgb.Dataset(X_train, label=y_train)
 
-    # Entrenar modelo con lgb.train()
-    modelo = lgb.train(
-        params,
-        train_data,
-        num_boost_round=mejores_params.get('num_iterations', 1000)
-        # callbacks=[
-        #     lgb.early_stopping(stopping_rounds=50),
-        #     lgb.log_evaluation(period=100)
-        # ],
-        # feval=ganancia_lgb_binary
-    )
-    return modelo
+    logging.info('=== Inicio Entrenamiento del Modelo Final con 5 semillas ===')
+
+    modelos = []
+
+    # Carpeta donde guardar los modelos
+    models_dir = "resultados/modelos/"
+    os.makedirs(models_dir, exist_ok=True)
+
+    for i, seed in enumerate(SEMILLA):
+        logging.info(f'Entrenando modelo con seed = {seed}')
+
+        # Copia de parámetros con la semilla actual
+        params_seed = params.copy()
+        params_seed['seed'] = seed
+
+        # Entrenamiento
+        modelo = lgb.train(
+            params_seed,
+            train_data,
+            num_boost_round=mejores_params.get('num_iterations', 1000)
+        )
+
+        # Guardar el modelo entrenado
+        model_path = os.path.join(models_dir, f"{STUDY_NAME}_lgb_seed_{seed}.txt")
+        modelo.save_model(model_path)
+        logging.info(f'Modelo guardado en: {model_path}')
+
+        modelos.append(modelo)
+
+    logging.info('=== Finaliza Entrenamiento de los 5 Modelos ===')
+
+    return modelos
 
 
-def generar_predicciones_finales(modelo: lgb.Booster, X_predict: pd.DataFrame, clientes_predict: np.ndarray,
+def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.ndarray,
                                  envios: int) -> pd.DataFrame:
     """
     Genera las predicciones finales para el período objetivo.
 
     Args:
-        modelo: Modelo entrenado
         X_predict: Features para predicción
         clientes_predict: IDs de clientes
         envios: cantidad de envios a realizar
@@ -117,8 +137,17 @@ def generar_predicciones_finales(modelo: lgb.Booster, X_predict: pd.DataFrame, c
     """
     logger.info("Generando predicciones finales")
 
-    # Generar probabilidades con el modelo entrenado
-    y_pred_proba = modelo.predict(X_predict)
+    models_dir = "resultados/modelos/"
+    model_files = sorted(glob.glob(f"{models_dir}/{STUDY_NAME}_lgb_seed_*.txt"))
+
+    preds = []
+
+    for file in model_files:
+        modelo = lgb.Booster(model_file=file)
+        preds.append(modelo.predict(X_predict))
+
+    # Ensemble final (promedio)
+    y_pred_proba = np.mean(preds, axis=0)
 
     # Crear un DataFrame para manejar el orden
     resultados = pd.DataFrame({
