@@ -38,20 +38,33 @@ def convertir_clase_ternaria_a_target(df: pd.DataFrame) -> pd.DataFrame:
     n_baja1_orig = (df_result['target'] == 'BAJA+1').sum()
     n_baja2_orig = (df_result['target'] == 'BAJA+2').sum()
 
-    # Convertir clase_ternaria a binario en el mismo atributo
+    # Convertir clase_ternaria a binario respetando mi objetivo principal que son los baja+2
+    df_result['target_test'] = df_result['target'].map({
+        'CONTINUA': 0,
+        'BAJA+1': 0,
+        'BAJA+2': 1
+    })
+
+    # Convertir clase_ternaria a binario en el mismo atributo considerando todas las bajas para training
     df_result['target'] = df_result['target'].map({
         'CONTINUA': 0,
         'BAJA+1': 1,
         'BAJA+2': 1
     })
 
+
     # Log de la conversión
     n_ceros = (df_result['target'] == 0).sum()
     n_unos = (df_result['target'] == 1).sum()
+
+    # Log de la conversión
+    n_ceros_test = (df_result['target_test'] == 0).sum()
+    n_unos_test = (df_result['target_test'] == 1).sum()
 
     logger.info(f"Conversión completada:")
     logger.info(f"  Original - CONTINUA: {n_continua_orig}, BAJA+1: {n_baja1_orig}, BAJA+2: {n_baja2_orig}")
     logger.info(f"  Binario - 0: {n_ceros}, 1: {n_unos}")
     logger.info(f"  Distribución: {n_unos / (n_ceros + n_unos) * 100:.2f}% casos positivos")
+    logger.info(f"  Real BAJA+2 -> Binario - 0: {n_ceros_test}, 1: {n_unos_test}")
 
     return df_result

@@ -75,7 +75,7 @@ def main():
     df = cargar_datos(path)
 
     ## Reporte HTML de evolucion de features
-    generar_reporte_mensual_html(df, nombre_archivo='reporte_evolucion_features.html')
+    # generar_reporte_mensual_html(df, nombre_archivo='reporte_evolucion_features.html')
 
     ## Feature Engineering
     atributos = list(df.drop(columns=['foto_mes', 'target']).columns)
@@ -86,26 +86,26 @@ def main():
     df = convertir_clase_ternaria_a_target(df)
 
     ## Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
-    # reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
+    reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
 
     ## Ejecutar optimizacion de hiperparametros
-    # study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 
-    # 5. Análisis adicional
-    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    # trials_df = study.trials_dataframe()
-    # if len(trials_df) > 0:
-    #     top_5 = trials_df.nlargest(5, 'value')
-    #     logger.info("Top 5 mejores trials:")
-    #     for idx, trial in top_5.iterrows():
-    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
-    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+    ## 5. Análisis adicional
+    logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    trials_df = study.trials_dataframe()
+    if len(trials_df) > 0:
+        top_5 = trials_df.nlargest(5, 'value')
+        logger.info("Top 5 mejores trials:")
+        for idx, trial in top_5.iterrows():
+            logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
+    logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
 
-    # Guardar resultados de test
+    ## Guardar resultados de test
     guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
 
     # Resumen de evaluación en test
@@ -113,18 +113,18 @@ def main():
     logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.0f}")
     logger.info(f"🎯 Predicciones positivas: {resultados_test['predicciones_positivas']:,} ({resultados_test['porcentaje_positivas']:.2f}%)")
 
-    # # Entrenar modelo final
+    ## Entrenar modelo final
     X_train, y_train, X_predict, clientes_predict = preparar_datos_entrenamiento_final(df)
     modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
 
-    # Generar predicciones
+    ## Generar predicciones
     envios = cargar_mejores_envios()
     predicciones = generar_predicciones_finales(X_predict, clientes_predict, envios)
 
-    # Guardar predicciones
+    ## Guardar predicciones
     salida_kaggle = guardar_predicciones_finales(predicciones)
 
-    # Resumen final
+    ## Resumen final
     logger.info("=== RESUMEN FINAL ===")
     logger.info(f"✅ Entrenamiento final completado exitosamente")
     logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")

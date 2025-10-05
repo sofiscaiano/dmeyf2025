@@ -37,11 +37,11 @@ def evaluar_en_test(df, mejores_params) -> dict:
     df_train_completo = df[df['foto_mes'].isin(periodos_entrenamiento)]
     df_test = df[df['foto_mes'] == MES_TEST]
 
-    X_train = df_train_completo.drop(['target'], axis=1)
+    X_train = df_train_completo.drop(['target', 'target_test'], axis=1)
     y_train = df_train_completo['target']
 
-    X_test = df_test.drop(['target'], axis=1)
-    y_test = df_test['target']
+    X_test = df_test.drop(['target', 'target_test'], axis=1)
+    y_test = df_test['target_test']
 
     train_data = lgb.Dataset(X_train, label=y_train)
     test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)

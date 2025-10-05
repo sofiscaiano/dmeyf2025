@@ -38,11 +38,11 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
     logger.info(f"Registros de predicción: {len(df_predict):,}")
 
     # Preparar features y target para entrenamiento
-    X_train = df_train.drop(['target'], axis=1)
+    X_train = df_train.drop(['target', 'target_test'], axis=1)
     y_train = df_train['target']
 
     # Preparar features para predicción
-    X_predict = df_predict.drop(['target'], axis=1)
+    X_predict = df_predict.drop(['target', 'target_test'], axis=1)
     clientes_predict = df_predict['numero_de_cliente']
 
     logger.info(f"Features utilizadas: {len(X_predict.columns)}")

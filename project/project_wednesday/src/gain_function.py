@@ -62,7 +62,7 @@ def calcular_ganancias_acumuladas(y_true, y_pred_proba):
         [pl.when(pl.col('y_true') == 1).then(GANANCIA_ACIERTO).otherwise(-COSTO_ESTIMULO).alias(
             'ganancia_individual')])
     # Calculo la ganancia acumulada en cada paso
-    df_ordenado = df_ordenado.with_columns([pl.col('ganancia_individual').cum_sum().alias('ganancia_acumulada')])
+    df_ordenado = df_ordenado.with_columns([pl.col('ganancia_individual').cast(pl.Int64).cum_sum().alias('ganancia_acumulada')])
     ganancias_acumuladas = df_ordenado['ganancia_acumulada'].to_numpy()
 
     return ganancias_acumuladas
@@ -111,7 +111,7 @@ def ganancia_evaluator(y_pred, y_true):
     # Con Polars realizo el calculo de ganancia individual de cada registro segun los verdaderos valores
     df_ordenado = df_ordenado.with_columns([pl.when(pl.col('y_true') == 1).then(GANANCIA_ACIERTO).otherwise(-COSTO_ESTIMULO).alias('ganancia_individual')])
     # Calculo la ganancia acumulada en cada paso
-    df_ordenado = df_ordenado.with_columns([pl.col('ganancia_individual').cum_sum().alias('ganancia_acumulada')])
+    df_ordenado = df_ordenado.with_columns([pl.col('ganancia_individual').cast(pl.Int64).cum_sum().alias('ganancia_acumulada')])
     # Obtengo la ganancia maxima de la serie
     ganancia_maxima = df_ordenado.select(pl.col('ganancia_acumulada').max()).item()
 

@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia07'
+STUDY_NAME : 'lgb_optimization_competencia08'
 
 competencia01:
   DATA_PATH: '../data/competencia_01.csv'
@@ -10,11 +10,11 @@ competencia01:
   FINAL_PREDICT: 202106
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
-  UNDERSAMPLING_FRACTION: 1
+  UNDERSAMPLING_FRACTION: 0.3
 
 parametros_lgb:
   n_trail: 100
-  num_leaves: [10, 200]
+  num_leaves: [10, 1000]
   learning_rate: [0.005, 0.3]
   feature_fraction: [0.2, 1.0]
   bagging_fraction: [0.2, 1.0]

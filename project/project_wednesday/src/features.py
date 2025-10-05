@@ -38,8 +38,8 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     for attr in columnas:
         if attr in df.columns:
             for i in range(1, cant_lag + 1):
-                sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i},"
-                sql += f", {attr} - {attr}_lag_{i},"
+                sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i}"
+                # sql += f", {attr} - {attr}_lag_{i} as {attr}_delta_lag_{i}"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
@@ -53,6 +53,14 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     con.register("df", df)
     df = con.execute(sql).df()
     con.close()
+
+    for attr in columnas:
+        for i in range(1, cant_lag + 1):
+            lag_col = f"{attr}_lag_{i}"
+            delta_col = f"{attr}_delta_lag_{i}"
+            if lag_col in df.columns:
+                # Usar .values para evitar la indexación de Pandas, que puede ser lenta
+                df[delta_col] = df[attr].values - df[lag_col].values
 
     print(df.head())
 

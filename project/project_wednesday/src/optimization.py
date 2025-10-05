@@ -126,7 +126,7 @@ def objetivo_ganancia(trial, df) -> float:
 
     df_train = df[df['foto_mes'].isin(periodos_cv)]
     logging.info(df_train.shape)
-    X_train = df_train.drop(['target'], axis=1)
+    X_train = df_train.drop(['target', 'target_test'], axis=1)
     y_train = df_train['target']
 
     train_data = lgb.Dataset(X_train, label=y_train)
@@ -139,7 +139,7 @@ def objetivo_ganancia(trial, df) -> float:
         shuffle=True,
         nfold=5,
         seed=SEMILLA[0],
-        callbacks=[lgb.early_stopping(stopping_rounds=50, verbose=False), lgb.log_evaluation(0)]
+        callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False), lgb.log_evaluation(0)]
     )
 
     ganancia_total = np.max(cv_results['valid ganancia-mean'])
