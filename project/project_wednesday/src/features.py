@@ -38,7 +38,8 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     for attr in columnas:
         if attr in df.columns:
             for i in range(1, cant_lag + 1):
-                sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i}"
+                sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i},"
+                sql += f", {attr} - {attr}_lag_{i},"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
@@ -91,3 +92,102 @@ def undersample(df, sample_fraction):
     logging.info(f"Proporcion final de clase minoritaria: {prop_baja:.2f}")
 
     return df_undersampled
+
+
+import pandas as pd
+import plotly.express as px
+from io import StringIO
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+
+def generar_reporte_mensual_html(df, columna_fecha='foto_mes', nombre_archivo='reporte_mensual.html'):
+    """
+    Genera un archivo HTML con gráficos de líneas interactivos de Plotly,
+    mostrando la evolución mensual del promedio de cada feature.
+
+    Args:
+        df (pd.DataFrame): DataFrame de entrada que contiene la columna de fecha y features.
+        columna_fecha (str): Nombre de la columna que contiene la fecha mensual (ej: 'foto_mes').
+        nombre_archivo (str): Nombre del archivo HTML de salida.
+    """
+
+    print(f"Iniciando generación de reporte para {len(df.columns) - 1} features...")
+
+    # --- 1. Preparación de datos: Calcular el promedio mensual para cada feature ---
+
+    # Excluir la columna de fecha para agrupar las features numéricas
+    features_numericas = df.drop(columns=[columna_fecha]).select_dtypes(include=np.number).columns
+
+    if features_numericas.empty:
+        print("Error: No se encontraron features numéricas para graficar.")
+        return
+
+    # Calcular el promedio mensual para todas las features numéricas
+    df_agrupado = df.groupby(columna_fecha)[features_numericas].mean().reset_index()
+
+    # Asegurarse de que la columna de fecha esté ordenada
+    df_agrupado = df_agrupado.sort_values(columna_fecha)
+
+    # --- 2. Generar el contenido HTML de cada gráfico ---
+
+    graficos_html = []
+
+    for feature in features_numericas:
+        # Generar el gráfico de línea interactivo con Plotly Express
+        fig = px.line(
+            df_agrupado,
+            x=columna_fecha,
+            y=feature,
+            title=f'Evolución Mensual de {feature} (Promedio)'
+        )
+
+        # Mejorar el layout y el formato de los ejes
+        fig.update_traces(mode='lines+markers')
+        fig.update_layout(
+            xaxis_title="Período Mensual",
+            yaxis_title=f"Promedio de {feature}",
+            title_x=0.5  # Centrar el título
+        )
+
+        # Exportar el gráfico como una cadena HTML
+        # full_html=False asegura que solo se exporte el <div> que contiene el gráfico
+        # y no un documento HTML completo
+        html_string = fig.to_html(full_html=False, include_plotlyjs='cdn')
+        graficos_html.append(f"""
+            <div style="width: 80%; margin: 40px auto; border: 1px solid #ddd; padding: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                {html_string}
+            </div>
+            <hr>
+        """)
+
+    # --- 3. Unir los gráficos en un solo archivo HTML ---
+
+    # Plantilla HTML básica
+    html_template = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Reporte de Evolución Mensual</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <style>
+            body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; }}
+            h1 {{ text-align: center; color: #333; padding: 20px; background-color: #fff; }}
+        </style>
+    </head>
+    <body>
+        <h1>Reporte de Evolución Mensual de Features ({df_agrupado[columna_fecha].min()} a {df_agrupado[columna_fecha].max()})</h1>
+
+        {''.join(graficos_html)}
+
+    </body>
+    </html>
+    """
+
+    # Escribir el contenido en el archivo
+    with open(nombre_archivo, 'w', encoding='utf-8') as f:
+        f.write(html_template)
+
+    print(f"\n✅ Reporte HTML generado exitosamente: {nombre_archivo}")
+    print("Abre el archivo en tu navegador web para ver los gráficos interactivos.")

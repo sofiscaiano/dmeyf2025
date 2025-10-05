@@ -37,8 +37,6 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
     logger.info(f"Registros de entrenamiento: {len(df_train):,}")
     logger.info(f"Registros de predicción: {len(df_predict):,}")
 
-    # Corroborar que no esten vacios los df
-
     # Preparar features y target para entrenamiento
     X_train = df_train.drop(['target'], axis=1)
     y_train = df_train['target']

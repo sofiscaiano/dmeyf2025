@@ -6,7 +6,7 @@ import glob
 import argparse
 
 import lightgbm as lgb
-from src.features import feature_engineering_lag, undersample
+from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -73,6 +73,9 @@ def main():
     os.makedirs('data', exist_ok=True)
     path = 'data/competencia_01.csv'
     df = cargar_datos(path)
+
+    ## Reporte HTML de evolucion de features
+    generar_reporte_mensual_html(df, nombre_archivo='reporte_evolucion_features.html')
 
     ## Feature Engineering
     atributos = list(df.drop(columns=['foto_mes', 'target']).columns)
