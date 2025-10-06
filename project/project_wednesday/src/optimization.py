@@ -93,6 +93,9 @@ def objetivo_ganancia(trial, df) -> float:
         'silent': 1,
         'boosting': 'gbdt',
         'num_threads': -1,
+        'device': 'gpu',
+        'gpu_platform_id': 0,
+        'gpu_device_id': 0,
 
         # 'first_metric_only': False,
         # 'boost_from_average': True,

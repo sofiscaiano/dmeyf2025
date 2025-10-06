@@ -108,7 +108,7 @@ def main():
     ## Guardar resultados de test
     guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
 
-    # Resumen de evaluación en test
+    ## Resumen de evaluación en test
     logger.info("=== RESUMEN DE EVALUACIÓN EN TEST ===")
     logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.0f}")
     logger.info(f"🎯 Predicciones positivas: {resultados_test['predicciones_positivas']:,} ({resultados_test['porcentaje_positivas']:.2f}%)")

@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia08'
+STUDY_NAME : 'lgb_optimization_competencia10'
 
 competencia01:
   DATA_PATH: '../data/competencia_01.csv'
