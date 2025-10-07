@@ -118,7 +118,9 @@ def objetivo_ganancia(trial, df) -> float:
         'feature_fraction': trial.suggest_float('feature_fraction', PARAMETROS_LGB['feature_fraction'][0], PARAMETROS_LGB['feature_fraction'][1]),
         'num_leaves': trial.suggest_int("num_leaves", PARAMETROS_LGB['num_leaves'][0], PARAMETROS_LGB['num_leaves'][1]),
         'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', PARAMETROS_LGB['min_data_in_leaf'][0], PARAMETROS_LGB['min_data_in_leaf'][1]),
-        'random_state': SEMILLA[0]
+        'seed': SEMILLA[0],
+        'data_random_seed': SEMILLA[0],
+        'feature_fraction_seed': SEMILLA[0]
     }
 
     # MES_TRAIN puede ser un unico mes o una lista de meses
@@ -134,6 +136,7 @@ def objetivo_ganancia(trial, df) -> float:
 
     train_data = lgb.Dataset(X_train, label=y_train)
 
+    logger.debug(f"Iniciando CV de trial:{trial.number}")
     cv_results = lgb.cv(
         params,
         train_data,
@@ -193,7 +196,7 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     fig_importancia = optuna.visualization.plot_param_importances(study)
     fig_importancia.write_html(f"resultados/{STUDY_NAME}_importancia_parametros.html")
 
-    fig_contour = optuna.visualization.plot_contour(study, params=['learning_rate', 'max_depth'])
+    fig_contour = optuna.visualization.plot_contour(study, params=['num_leaves', 'min_data_in_leaf'])
     fig_contour.write_html(f"resultados/{STUDY_NAME}_contour.html")
 
     fig_slice = optuna.visualization.plot_slice(study)

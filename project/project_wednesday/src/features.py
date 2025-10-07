@@ -75,8 +75,9 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     :return: dataframe corregido
     """
 
+    logger.info(f"Inicia fix de variables por aguinaldo")
     sql = """
-    SELECT a.* EXCLUDE(mpayroll, cpayroll_trx),
+    SELECT a.* EXCLUDE(mpayroll, cpayroll_trx, flag_aguinaldo),
            case when flag_aguinaldo = 1 then mpayroll_lag_1 else mpayroll end as mpayroll,
            case when flag_aguinaldo = 1 and cpayroll_trx > 1 then cpayroll_trx - 1 else cpayroll_trx end as cpayroll_trx
     FROM (
@@ -92,9 +93,12 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
+    con.execute("SET memory_limit='20GB';")
+    con.execute("SET threads=6;")
     con.register("df", df)
     df = con.execute(sql).df()
     con.close()
+    logger.info(f"Finaliza fix de variables por aguinaldo")
 
     return df
 

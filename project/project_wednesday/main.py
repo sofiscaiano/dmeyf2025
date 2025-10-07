@@ -81,7 +81,7 @@ def main():
     atributos = list(df.drop(columns=['foto_mes', 'target']).columns)
     cant_lag = 2
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag)
-    df = fix_aguinaldo(df)
+    # df = fix_aguinaldo(df)
 
     ## Convertir clase ternaria a target binaria
     df = convertir_clase_ternaria_a_target(df)
@@ -116,7 +116,7 @@ def main():
 
     ## Entrenar modelo final
     X_train, y_train, X_predict, clientes_predict = preparar_datos_entrenamiento_final(df)
-    # modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
+    modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
 
     ## Generar predicciones
     envios = cargar_mejores_envios()
@@ -128,7 +128,7 @@ def main():
     ## Resumen final
     logger.info("=== RESUMEN FINAL ===")
     logger.info(f"✅ Entrenamiento final completado exitosamente")
-    # logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
+    logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
     logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
     logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
     logger.info(f"📁 Archivo de salida: {salida_kaggle}")
