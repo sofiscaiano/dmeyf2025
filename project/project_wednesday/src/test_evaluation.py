@@ -8,6 +8,7 @@ from datetime import datetime
 from .config import *
 from matplotlib import pyplot as plt
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
+from .plots import plot_mean_importance
 
 logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
@@ -68,6 +69,8 @@ def evaluar_en_test(df, mejores_params) -> dict:
 
     modelos = []
     preds = []
+    all_importances = []
+    importance_type = 'gain'  # O 'split'
 
     for i, seed in enumerate(SEMILLA):
         logging.info(f'Entrenando modelo con seed = {seed}')
@@ -83,6 +86,13 @@ def evaluar_en_test(df, mejores_params) -> dict:
             num_boost_round=mejores_params.get('num_iterations', 1000)
         )
 
+        # Generamos un DataFrame temporal con la importancia de este modelo
+        feature_imp = pd.DataFrame({
+            'feature': modelo.feature_name(),
+            'importance': modelo.feature_importance(importance_type=importance_type)
+        })
+        all_importances.append(feature_imp)
+
         modelos.append(modelo)
         preds.append(modelo.predict(X_test))
 
@@ -90,6 +100,9 @@ def evaluar_en_test(df, mejores_params) -> dict:
 
     # Ensemble: promedio de predicciones
     y_pred = np.mean(preds, axis=0)
+
+    logging.info('=== Inicio Grafico de Importancia ===')
+    plot_mean_importance(all_importances, importance_type, type='test')
 
     logging.info('=== Inicio Calculo de Ganancias Acumuladas en Test ===')
     # Calcular solo la ganancia

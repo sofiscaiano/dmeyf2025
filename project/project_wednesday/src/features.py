@@ -68,6 +68,36 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
 
     return df
 
+def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Corrige las columnas asociadas al pago de aguinaldo para el mes de junio 2021
+    :param df: dataframe con los datos
+    :return: dataframe corregido
+    """
+
+    sql = """
+    SELECT a.* EXCLUDE(mpayroll, cpayroll_trx),
+           case when flag_aguinaldo = 1 then mpayroll_lag_1 else mpayroll end as mpayroll,
+           case when flag_aguinaldo = 1 and cpayroll_trx > 1 then cpayroll_trx - 1 else cpayroll_trx end as cpayroll_trx
+    FROM (
+    SELECT *,
+           case when foto_mes = 202106 
+               and mpayroll/mpayroll_lag_1 >= 1.3 
+               and mpayroll/mpayroll_lag_2 >= 1.3 
+                    then 1 
+                else 0 
+               end as flag_aguinaldo
+    FROM df) as a
+    """
+
+    # Ejecutar la consulta SQL
+    con = duckdb.connect(database=":memory:")
+    con.register("df", df)
+    df = con.execute(sql).df()
+    con.close()
+
+    return df
+
 
 def undersample(df, sample_fraction):
     """

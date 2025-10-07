@@ -189,6 +189,16 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
 
     study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progress_bar=True, n_jobs=n_jobs, gc_after_trial=True)
 
+    # Generar el gráfico
+    fig_importancia = optuna.visualization.plot_param_importances(study)
+    fig_importancia.write_html(f"resultados/{STUDY_NAME}_importancia_parametros.html")
+
+    fig_contour = optuna.visualization.plot_contour(study, params=['learning_rate', 'max_depth'])
+    fig_contour.write_html(f"resultados/{STUDY_NAME}_contour.html")
+
+    fig_slice = optuna.visualization.plot_slice(study)
+    fig_slice.write_html(f"resultados/{STUDY_NAME}_slice.html")
+
     # Resultados
     logger.info(f"Mejor ganancia: {study.best_value:,.0f}")
     logger.info(f"Mejores parámetros: {study.best_params}")

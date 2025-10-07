@@ -4,6 +4,7 @@ import numpy as np
 import logging
 import os
 from datetime import datetime
+from .plots import plot_mean_importance
 from .config import FINAL_TRAIN, FINAL_PREDICT, SEMILLA
 from .config import *
 import glob
@@ -51,7 +52,7 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
     return X_train, y_train, X_predict, clientes_predict
 
 
-def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_params: dict) -> lgb.Booster:
+def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_params: dict) -> list:
     """
     Entrena el modelo final con los mejores hiperparámetros.
 
@@ -89,6 +90,8 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     logging.info('=== Inicio Entrenamiento del Modelo Final con 5 semillas ===')
 
     modelos = []
+    all_importances = []
+    importance_type = 'gain'  # O 'split'
 
     # Carpeta donde guardar los modelos
     models_dir = "resultados/modelos/"
@@ -108,12 +111,22 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
             num_boost_round=mejores_params.get('num_iterations', 1000)
         )
 
+        # Generamos un DataFrame temporal con la importancia de este modelo
+        feature_imp = pd.DataFrame({
+            'feature': modelo.feature_name(),
+            'importance': modelo.feature_importance(importance_type=importance_type)
+        })
+        all_importances.append(feature_imp)
+
         # Guardar el modelo entrenado
         model_path = os.path.join(models_dir, f"{STUDY_NAME}_lgb_seed_{seed}.txt")
         modelo.save_model(model_path)
         logging.info(f'Modelo guardado en: {model_path}')
 
         modelos.append(modelo)
+
+    logging.info('=== Inicio Grafico de Importancia ===')
+    plot_mean_importance(all_importances, importance_type, type='train')
 
     logging.info('=== Finaliza Entrenamiento de los 5 Modelos ===')
 
@@ -142,6 +155,8 @@ def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.n
 
     for file in model_files:
         modelo = lgb.Booster(model_file=file)
+        feature_names = modelo.feature_name() # obtengo los nombres de las features
+        X_predict = X_predict[feature_names]  # respeto el orden por si hice cambios
         preds.append(modelo.predict(X_predict))
 
     # Ensemble final (promedio)
