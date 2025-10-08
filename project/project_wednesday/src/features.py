@@ -33,18 +33,20 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
 
     # Construir la consulta SQL
     sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE (foto_mes)"
+    sql_delta = "SELECT *"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
             for i in range(1, cant_lag + 1):
                 sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i}"
-                # sql += f", {attr} - {attr}_lag_{i} as {attr}_delta_lag_{i}"
+                sql_delta += f", case when {attr}_lag_{i} > 0 then {attr} / {attr}_lag_{i} - 1 else NULL end as {attr}_delta_lag_{i}"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
     # Completar la consulta
     sql += " FROM df"
+    sql_delta += " FROM df"
 
     # logger.debug(f"Consulta SQL: {sql}")
 
@@ -52,15 +54,17 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     con = duckdb.connect(database=":memory:")
     con.register("df", df)
     df = con.execute(sql).df()
+    con.register("df", df)
+    df = con.execute(sql_delta).df()
     con.close()
 
-    for attr in columnas:
-        for i in range(1, cant_lag + 1):
-            lag_col = f"{attr}_lag_{i}"
-            delta_col = f"{attr}_delta_lag_{i}"
-            if lag_col in df.columns:
-                # Usar .values para evitar la indexación de Pandas, que puede ser lenta
-                df[delta_col] = df[attr].values - df[lag_col].values
+    # for attr in columnas:
+    #     for i in range(1, cant_lag + 1):
+    #         lag_col = f"{attr}_lag_{i}"
+    #         delta_col = f"{attr}_delta_lag_{i}"
+    #         if lag_col in df.columns:
+    #             # Usar .values para evitar la indexación de Pandas, que puede ser lenta
+    #             df[delta_col] = df[attr].values - df[lag_col].values
 
     print(df.head())
 

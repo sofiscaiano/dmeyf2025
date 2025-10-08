@@ -84,6 +84,15 @@ def objetivo_ganancia(trial, df) -> float:
     float: ganancia total
     """
 
+    flag_GPU = int(os.getenv('GPU', 0))
+
+    if flag_GPU == 0:
+        gpu_dict = {'device': 'cpu'}
+    else:
+        gpu_dict = {'device': 'gpu',
+        'gpu_platform_id': 0,
+        'gpu_device_id': 0}
+
     # Hiperparámetros a optimizar
     params = {
         'objective': 'binary',
@@ -93,10 +102,7 @@ def objetivo_ganancia(trial, df) -> float:
         'silent': 1,
         'boosting': 'gbdt',
         'num_threads': -1,
-        'device': 'gpu',
-        'gpu_platform_id': 0,
-        'gpu_device_id': 0,
-
+        **gpu_dict,
         # 'first_metric_only': False,
         # 'boost_from_average': True,
         'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],

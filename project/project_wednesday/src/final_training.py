@@ -66,6 +66,15 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     """
     logger.info("Iniciando entrenamiento del modelo final")
 
+    flag_GPU = int(os.getenv('GPU', 0))
+
+    if flag_GPU == 0:
+        gpu_dict = {'device': 'cpu'}
+    else:
+        gpu_dict = {'device': 'gpu',
+                    'gpu_platform_id': 0,
+                    'gpu_device_id': 0}
+
     # Hiperparámetros fijos y optimizados
     params = {
         'objective': 'binary',
@@ -75,9 +84,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
         'silent': 1,
         'boosting': 'gbdt',
         'n_threads': -1,
-        'device': 'gpu',
-        'gpu_platform_id': 0,
-        'gpu_device_id': 0,
+        **gpu_dict,
         'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],

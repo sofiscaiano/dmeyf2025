@@ -79,7 +79,7 @@ def main():
 
     ## Feature Engineering
     atributos = list(df.drop(columns=['foto_mes', 'target']).columns)
-    cant_lag = 2
+    cant_lag = 1
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag)
     # df = fix_aguinaldo(df)
 

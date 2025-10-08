@@ -12,6 +12,7 @@ try:
         _cfg = _cfgGeneral['competencia01']
 
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
+        PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
         STUDY_NAME = _cfgGeneral.get("STUDY_NAME", 'Wednesday')
         DATA_PATH = _cfg.get('DATA_PATH', "../data/competencia.csv")
         SEMILLA = _cfg.get('SEMILLA', [42])
@@ -23,6 +24,7 @@ try:
         FINAL_TRAIN = _cfg.get('FINAL_TRAIN', [])
         FINAL_PREDICT = _cfg.get('FINAL_PREDICT', "")
         UNDERSAMPLING_FRACTION = _cfg.get('UNDERSAMPLING_FRACTION', 1.0)
+        ADHOC = _cfg.get('ADHOC', False)
 
 except Exception as e:
     logger.error(f'Error al cargar el archivo de configuracion: {e}')

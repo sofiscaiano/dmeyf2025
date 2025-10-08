@@ -47,6 +47,15 @@ def evaluar_en_test(df, mejores_params) -> dict:
     train_data = lgb.Dataset(X_train, label=y_train)
     test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
 
+    flag_GPU = int(os.getenv('GPU', 0))
+
+    if flag_GPU == 0:
+        gpu_dict = {'device': 'cpu'}
+    else:
+        gpu_dict = {'device': 'gpu',
+        'gpu_platform_id': 0,
+        'gpu_device_id': 0}
+
     # Hiperparámetros fijos
     params = {
         'objective': 'binary',
@@ -56,9 +65,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
         'silent': 1,
         'boosting': 'gbdt',
         'n_threads': -1,
-        'device': 'gpu',
-        'gpu_platform_id': 0,
-        'gpu_device_id': 0,
+        **gpu_dict,
         'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],
