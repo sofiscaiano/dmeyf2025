@@ -70,9 +70,9 @@ def evaluar_en_test(df, mejores_params) -> dict:
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],
         # 'random_state': SEMILLA[0],
-        'seed': SEMILLA[0],
-        'data_random_seed': SEMILLA[0],
-        'feature_fraction_seed': SEMILLA[0]
+        'seed': SEMILLA[0]
+        # 'data_random_seed': SEMILLA[0],
+        # 'feature_fraction_seed': SEMILLA[0]
     }
 
     final_params = {**params, **mejores_params}

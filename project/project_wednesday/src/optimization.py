@@ -142,7 +142,7 @@ def objetivo_ganancia(trial, df) -> float:
 
     train_data = lgb.Dataset(X_train, label=y_train)
 
-    logger.debug(f"Iniciando CV de trial:{trial.number}")
+    # logger.debug(f"Iniciando CV de trial:{trial.number}")
     cv_results = lgb.cv(
         params,
         train_data,

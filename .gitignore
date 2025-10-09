@@ -190,3 +190,7 @@ logs/
 data/
 .idea/
 *.html
+*.png
+*.jpg
+*.json
+*.txt

@@ -89,8 +89,8 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],
         'seed': SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA,
-        'data_random_seed': SEMILLA[0],
-        'feature_fraction_seed': SEMILLA[0],
+        # 'data_random_seed': SEMILLA[0],
+        # 'feature_fraction_seed': SEMILLA[0],
         **mejores_params
     }
 

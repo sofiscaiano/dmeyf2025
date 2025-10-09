@@ -1,9 +1,9 @@
-STUDY_NAME : 'lgb_optimization_competencia12'
+STUDY_NAME : 'lgb_optimization_competencia14'
 
 competencia01:
   DATA_PATH: '../data/competencia_01.csv'
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
-  MES_TRAIN: [202101,202102]
+  MES_TRAIN: [202101, 202102]
   MES_VALIDACION: 202103
   MES_TEST: 202104
   FINAL_TRAIN: [202101, 202102, 202103, 202104]
@@ -15,11 +15,11 @@ competencia01:
 
 parametros_lgb:
   n_trail: 100
-  num_leaves: [50, 1000]
+  num_leaves: [10, 1000]
   learning_rate: [0.005, 0.3]
   feature_fraction: [0.2, 1.0]
   bagging_fraction: [0.2, 1.0]
-  min_data_in_leaf: [2, 300]
+  min_data_in_leaf: [2, 3000]
   num_iterations: [500, 2000]
   feature_pre_filter: False
   force_row_wise: True
