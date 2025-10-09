@@ -1,0 +1,26 @@
+[
+  {
+    "ganancia": 356420000.0,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 11618,
+    "porcentaje_positivas": 7.109375956137024,
+    "params": {
+      "bagging_fraction": 0.49797664118232515,
+      "num_iterations": 3985,
+      "learning_rate": 0.009530044857578333,
+      "feature_fraction": 0.36593007041527864,
+      "num_leaves": 630,
+      "min_data_in_leaf": 107
+    },
+    "datetime": "2025-10-07T14:40:04.649577",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        202101,
+        202102
+      ],
+      "mes_validacion": 202104
+    }
+  }
+]

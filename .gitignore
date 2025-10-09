@@ -193,4 +193,5 @@ data/
 *.png
 *.jpg
 *.json
+!*test_results.json
 *.txt
