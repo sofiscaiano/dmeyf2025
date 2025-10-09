@@ -1,10 +1,54 @@
 import pandas as pd
+import polars as pl
 import numpy as np
 import duckdb
 import logging
 from .config import SEMILLA
+import os
 
 logger = logging.getLogger(__name__)
+
+
+def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
+    """
+    Genera rankings para los atributos especificados utilizando Pandas.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame con los datos
+    columnas : list
+        Lista de atributos para los cuales generar rankings. Si es None, no se generan lags.
+
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame con las variables reemplazadas
+    """
+
+    logger.info(f"Realizando feature engineering para reducir data drift para {len(columnas) if columnas else 0} atributos")
+
+    if columnas is None or len(columnas) == 0:
+        logger.warning("No se especificaron atributos para generar rankings")
+        return df
+
+    columnas_inicial = df.columns.tolist()
+
+    # Iteramos sobre la lista de columnas que queremos transformar.
+    for attr in columnas:
+        if attr in df.columns:
+            df[attr] = df.groupby('foto_mes')[attr].rank(pct=True)
+        else:
+            print(f"Advertencia: El atributo {attr} no existe en el DataFrame")
+
+    # Selecciono las columnas
+    df = df[columnas_inicial]
+
+    print(df.head())
+
+    logger.info(f"Feature engineering rank finalizado. DataFrame resultante con {df.shape[1]} columnas")
+
+    return df
 
 def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
     """
@@ -32,7 +76,7 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
         return df
 
     # Construir la consulta SQL
-    sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE (foto_mes)"
+    sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE(foto_mes)"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
@@ -44,8 +88,8 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
     # Completar la consulta
-    sql += (" FROM df")
-    sql += (" ORDER BY numero_de_cliente, foto_mes")
+    sql += " FROM df"
+    sql += " ORDER BY numero_de_cliente, foto_mes"
 
     # logger.debug(f"Consulta SQL: {sql}")
 
@@ -55,19 +99,45 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     df = con.execute(sql).df()
     con.close()
 
-    for attr in columnas:
-        for i in range(1, cant_lag + 1):
-            lag_col = f"{attr}_lag_{i}"
-            delta_col = f"{attr}_delta_lag_{i}"
-            if lag_col in df.columns:
-                # Usar .values para evitar la indexación de Pandas, que puede ser lenta
-                df[delta_col] = df[attr].values - df[lag_col].values
-
     print(df.head())
 
     logger.info(f"Feature engineering completado. DataFrame resultante con {df.shape[1]} columnas")
 
     return df
+
+
+def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
+    """
+    Genera variables delta (attr - attr_lag_i) usando Polars.
+    """
+    logger.info(f"Comienzo feature delta (Polars). df shape: {df.shape}")
+
+    df = pl.from_pandas(df)
+
+    exprs = []
+    for attr in columnas:
+        if attr not in df.columns:
+            logger.warning(f"No se encontró {attr}, se omite.")
+            continue
+
+        for i in range(1, cant_lag + 1):
+            lag_col = f"{attr}_lag_{i}"
+            if lag_col not in df.columns:
+                logger.warning(f"No se encontró {lag_col}, se omite.")
+                continue
+
+            exprs.append((pl.col(attr) - pl.col(lag_col)).alias(f"{attr}_delta_{i}"))
+
+    if exprs:
+        df = df.with_columns(exprs)
+
+    df = df.to_pandas()
+
+    logger.info(df.head())
+
+    logger.info(f"Ejecución delta finalizada. df shape: {df.shape}")
+    return df
+
 
 def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -78,14 +148,16 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
 
     logger.info(f"Inicia fix de variables por aguinaldo")
     sql = """
-    SELECT a.* EXCLUDE(mpayroll, cpayroll_trx, flag_aguinaldo),
+    SELECT a.* EXCLUDE(mpayroll, cpayroll_trx, flag_aguinaldo, mpayroll_lag_1, mpayroll_lag_2),
            case when flag_aguinaldo = 1 then mpayroll_lag_1 else mpayroll end as mpayroll,
            case when flag_aguinaldo = 1 and cpayroll_trx > 1 then cpayroll_trx - 1 else cpayroll_trx end as cpayroll_trx
     FROM (
     SELECT *,
-           case when foto_mes = 202106 
-               and mpayroll/mpayroll_lag_1 >= 1.3 
-               and mpayroll/mpayroll_lag_2 >= 1.3 
+           lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_1,
+           lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
+           case when foto_mes = '2021-06-30' 
+               and mpayroll/mpayroll_lag_1  >= 1.3 
+               and mpayroll/mpayroll_lag_2  >= 1.3 
                     then 1 
                 else 0 
                end as flag_aguinaldo
