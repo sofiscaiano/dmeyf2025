@@ -224,21 +224,33 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
 
     logger.info(f"Inicia fix de variables por aguinaldo")
     sql = """
-    SELECT a.* EXCLUDE(mpayroll, cpayroll_trx, flag_aguinaldo, mpayroll_lag_1, mpayroll_lag_2),
-           case when flag_aguinaldo = 1 then mpayroll_lag_1 else mpayroll end as mpayroll,
-           case when flag_aguinaldo = 1 and cpayroll_trx > 1 then cpayroll_trx - 1 else cpayroll_trx end as cpayroll_trx
+    with aguinaldo as (
+    SELECT foto_mes, 
+           numero_de_cliente, 
+           mpayroll_delta_1,
+           flag_aguinaldo,
+           cpayroll_trx
     FROM (
-    SELECT *,
+    SELECT foto_mes, 
+           numero_de_cliente,
            lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_1,
            lag(mpayroll, 2) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
+           mpayroll - mpayroll_lag_1 as mpayroll_delta_1,
            case when foto_mes = '2021-06-30' 
                and mpayroll/mpayroll_lag_1  >= 1.3 
                and mpayroll/mpayroll_lag_2  >= 1.3 
                     then 1 
                 else 0 
-               end as flag_aguinaldo
+           end as flag_aguinaldo,
+           case when flag_aguinaldo = 1 and cpayroll_trx > 1 then cpayroll_trx - 1 else cpayroll_trx end as cpayroll_trx
     FROM df) as a
-    ORDER BY numero_de_cliente, foto_mes
+    WHERE foto_mes = '2021-06-30')
+        
+    SELECT df.* REPLACE(case when aguinaldo.mpayroll_delta_1 is null then df.mpayroll when df.foto_mes = '2021-06-30' then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll, case when df.foto_mes = '2021-06-30' then aguinaldo.cpayroll_trx else aguinaldo.cpayroll_trx end as cpayroll_trx)
+    FROM df 
+    LEFT JOIN aguinaldo
+    ON df.numero_de_cliente = aguinaldo.numero_de_cliente
+    ORDER BY df.numero_de_cliente, df.foto_mes
     """
 
     # Ejecutar la consulta SQL
