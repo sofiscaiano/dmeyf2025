@@ -11,19 +11,17 @@ logger = logging.getLogger(__name__)
 
 def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
     """
-    Genera rankings para los atributos especificados utilizando Pandas.
+    Para cada columna en `columnas`, calcula un ranking percentil por grupo (group_col).
+    - Valores > 0: percentil en (0, 1]
+    - Valores < 0: percentil en [-1, 0)
+      (por defecto se usa la magnitud |valor| para que el más negativo -> -1)
+    - Valores == 0 -> 0
+    NaNs se mantienen como NaN.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     df : pd.DataFrame
-        DataFrame con los datos
-    columnas : list
-        Lista de atributos para los cuales generar rankings. Si es None, no se generan lags.
-
-    Returns:
-    --------
-    pd.DataFrame
-        DataFrame con las variables reemplazadas
+    columnas : list[str]
     """
 
     logger.info(f"Realizando feature engineering para reducir data drift para {len(columnas) if columnas else 0} atributos")
@@ -34,12 +32,38 @@ def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFr
 
     columnas_inicial = df.columns.tolist()
 
-    # Iteramos sobre la lista de columnas que queremos transformar.
     for attr in columnas:
-        if attr in df.columns:
-            df[attr] = df.groupby('foto_mes')[attr].rank(pct=True)
-        else:
-            print(f"Advertencia: El atributo {attr} no existe en el DataFrame")
+        if attr not in df.columns:
+            logger.warning(f"Advertencia: El atributo {attr} no existe en el DataFrame")
+            continue
+
+        def rank_signed(s: pd.Series) -> pd.Series:
+            # resultado inicial con NaNs
+            res = pd.Series(index=s.index, dtype=float)
+
+            mask_neg = s < 0
+            mask_pos = s > 0
+            mask_zero = s == 0
+
+            # Negativos
+            if mask_neg.any():
+                # rank por magnitud: mayor |valor| -> percentil más alto -> mapeo a -1
+                abs_rank = s.loc[mask_neg].abs().rank(pct=True, method='average')
+                res.loc[mask_neg] = -abs_rank
+
+            # Positivos
+            if mask_pos.any():
+                pos_rank = s.loc[mask_pos].rank(pct=True, method='average', ascending=True)
+                res.loc[mask_pos] = pos_rank
+
+            # Ceros → 0 exactamente
+            if mask_zero.any():
+                res.loc[mask_zero] = 0.0
+
+            return res
+
+        # aplicamos por grupo; transform devuelve una serie alineada con el índice original
+        df[attr] = df.groupby('foto_mes')[attr].transform(rank_signed)
 
     # Selecciono las columnas
     df = df[columnas_inicial]
@@ -162,6 +186,7 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
                 else 0 
                end as flag_aguinaldo
     FROM df) as a
+    ORDER BY numero_de_cliente, foto_mes
     """
 
     # Ejecutar la consulta SQL
