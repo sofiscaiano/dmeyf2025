@@ -34,12 +34,18 @@ def create_target():
     on t0.numero_de_cliente = t2.numero_de_cliente
     and last_day(date_add(t0.foto_mes, INTERVAL 2 MONTH)) = t2.foto_mes
     --where t0.foto_mes <= '2021-04-30'
+    ORDER BY t0.numero_de_cliente, t0.foto_mes
     """
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
     con.register("df", df)
     df = con.execute(sql).df()
+
+    # 1. Convertir la columna 'fecha' a formato datetime
+    df['foto_mes'] = pd.to_datetime(df["foto_mes"])
+    # 2. Formatear la fecha a YYYYMM como cadena y convertir a entero
+    df['foto_mes'] = df['foto_mes'].dt.strftime('%Y%m').astype(int)
 
     print(df.shape)
     print(df['target'].value_counts(dropna=False))

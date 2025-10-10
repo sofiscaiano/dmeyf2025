@@ -14,7 +14,6 @@ def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFr
     Para cada columna en `columnas`, calcula un ranking percentil por grupo (group_col).
     - Valores > 0: percentil en (0, 1]
     - Valores < 0: percentil en [-1, 0)
-      (por defecto se usa la magnitud |valor| para que el más negativo -> -1)
     - Valores == 0 -> 0
     NaNs se mantienen como NaN.
 
@@ -107,12 +106,63 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
         if attr in df.columns:
             for i in range(1, cant_lag + 1):
                 sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i}"
-                # sql += f", {attr} - {attr}_lag_{i} as {attr}_delta_lag_{i}"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
     # Completar la consulta
     sql += " FROM df"
+    sql += " ORDER BY numero_de_cliente, foto_mes"
+
+    # logger.debug(f"Consulta SQL: {sql}")
+
+    # Ejecutar la consulta SQL
+    con = duckdb.connect(database=":memory:")
+    con.register("df", df)
+    df = con.execute(sql).df()
+    con.close()
+
+    print(df.head())
+
+    logger.info(f"Feature engineering completado. DataFrame resultante con {df.shape[1]} columnas")
+
+    return df
+
+def feature_engineering_trend(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
+    """
+    Genera variables de tendencia para los atributos especificados utilizando SQL.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame con los datos
+    columnas : list
+        Lista de atributos para los cuales generar tendencias. Si es None, no se generan tendencias.
+
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame con las variables de tendencia agregadas
+    """
+
+    logger.info(f"Realizando feature engineering de tendencia para {len(columnas) if columnas else 0} atributos")
+
+    if columnas is None or len(columnas) == 0:
+        logger.warning("No se especificaron atributos para generar lags")
+        return df
+
+    # Construir la consulta SQL
+    sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE(foto_mes)"
+
+    # Agregar los lags para los atributos especificados
+    for attr in columnas:
+        if attr in df.columns:
+            sql += f", regr_slope({attr}, cliente_antiguedad) over ventana as {attr}_trend_3m"
+        else:
+            logger.warning(f"El atributo {attr} no existe en el DataFrame")
+
+    # Completar la consulta
+    sql += " FROM df"
+    sql += " window ventana as (partition by numero_de_cliente order by foto_mes rows between 3 preceding and current row)"
     sql += " ORDER BY numero_de_cliente, foto_mes"
 
     # logger.debug(f"Consulta SQL: {sql}")
@@ -170,6 +220,8 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     :return: dataframe corregido
     """
 
+    columns = df.columns.tolist()
+
     logger.info(f"Inicia fix de variables por aguinaldo")
     sql = """
     SELECT a.* EXCLUDE(mpayroll, cpayroll_trx, flag_aguinaldo, mpayroll_lag_1, mpayroll_lag_2),
@@ -195,6 +247,8 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     df = con.execute(sql).df()
     con.close()
     logger.info(f"Finaliza fix de variables por aguinaldo")
+
+    df = df[columns]
 
     return df
 

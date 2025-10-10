@@ -6,7 +6,7 @@ import glob
 import argparse
 
 import lightgbm as lgb
-from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank
+from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -67,7 +67,7 @@ def main():
     print(">>> Inicio de ejecucion")
 
     ## Creacion de target
-    # create_target()
+    create_target()
 
     ## Carga de Datos
     os.makedirs('data', exist_ok=True)
@@ -79,14 +79,20 @@ def main():
 
     ## Feature Engineering
     atributos = list(df.drop(columns=['foto_mes', 'target', 'numero_de_cliente']).columns)
-    df = fix_aguinaldo(df)
-    df = feature_engineering_rank(df, columnas=atributos) # pandas
     cant_lag = 2
+
+    df = fix_aguinaldo(df)
+    df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
+    df = feature_engineering_rank(df, columnas=atributos) # pandas
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
     df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
 
     ## Convertir clase ternaria a target binaria
     df = convertir_clase_ternaria_a_target(df)
+    df.to_csv("data/competencia_01_processed.csv", index=False)
+
+    path = 'data/competencia_01_processed.csv'
+    df = cargar_datos(path)
 
     # ## Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
     reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
