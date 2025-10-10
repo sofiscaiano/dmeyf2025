@@ -178,7 +178,7 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     FROM (
     SELECT *,
            lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_1,
-           lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
+           lag(mpayroll, 2) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
            case when foto_mes = '2021-06-30' 
                and mpayroll/mpayroll_lag_1  >= 1.3 
                and mpayroll/mpayroll_lag_2  >= 1.3 
@@ -191,8 +191,6 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.execute("SET memory_limit='20GB';")
-    con.execute("SET threads=6;")
     con.register("df", df)
     df = con.execute(sql).df()
     con.close()
