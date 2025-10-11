@@ -95,7 +95,8 @@ def main():
 
     # Lag features
     # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-    # df = feature_engineering_rank(df, columnas=atributos) # pandas
+    df = feature_engineering_rank(df, columnas=atributos) # pandas
+    gc.collect()
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
     gc.collect()
     logger.info(f"Memory after lag features: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
