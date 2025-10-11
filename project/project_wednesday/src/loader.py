@@ -70,41 +70,60 @@ def convertir_clase_ternaria_a_target(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def reduce_mem_usage(df):
-    """ Itera sobre todas las columnas de un dataframe y modifica el tipo de dato
-        para reducir el uso de memoria.
+def reduce_mem_usage(df, verbose=True):
     """
-    start_mem = df.memory_usage().sum() / 1024**2
-    print('Uso de memoria del dataframe es {:.2f} MB'.format(start_mem))
+    Optimiza el uso de memoria del dataframe reduciendo los tipos de dato.
+    Versión optimizada con mejor manejo de float16 y procesamiento por tipo.
 
-    for col in df.columns:
-        col_type = df[col].dtype
+    Args:
+        df: DataFrame a optimizar
+        verbose: Si True, muestra información de progreso
 
-        if col_type != object:
-            c_min = df[col].min()
-            c_max = df[col].max()
-            if str(col_type)[:3] == 'int':
-                if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-                    df[col] = df[col].astype(np.int8)
-                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-                    df[col] = df[col].astype(np.int16)
-                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-                    df[col] = df[col].astype(np.int32)
-                elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
-                    df[col] = df[col].astype(np.int64)
-            else:
-                if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-                    df[col] = df[col].astype(np.float16)
-                elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-                    df[col] = df[col].astype(np.float32)
-                else:
-                    df[col] = df[col].astype(np.float64)
-        else:
-            # Convierte las columnas de tipo 'object' a 'category'
+    Returns:
+        DataFrame optimizado
+    """
+    start_mem = df.memory_usage(deep=True).sum() / 1024**2
+
+    if verbose:
+        logger.info(f'Uso de memoria inicial del dataframe: {start_mem:.2f} MB')
+
+    # Procesar columnas numéricas int
+    int_cols = df.select_dtypes(include=['int64', 'int32', 'int16']).columns
+    for col in int_cols:
+        c_min = df[col].min()
+        c_max = df[col].max()
+
+        if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
+            df[col] = df[col].astype(np.int8)
+        elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
+            df[col] = df[col].astype(np.int16)
+        elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
+            df[col] = df[col].astype(np.int32)
+
+    # Procesar columnas numéricas float (evitar float16 por pérdida de precisión en ML)
+    float_cols = df.select_dtypes(include=['float64']).columns
+    for col in float_cols:
+        c_min = df[col].min()
+        c_max = df[col].max()
+
+        # Solo usar float32 para reducir memoria, evitar float16
+        if c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
+            df[col] = df[col].astype(np.float32)
+
+    # Convertir columnas object a category si tienen pocos valores únicos
+    object_cols = df.select_dtypes(include=['object']).columns
+    for col in object_cols:
+        num_unique = df[col].nunique()
+        num_total = len(df[col])
+        # Solo convertir a category si tiene menos del 50% de valores únicos
+        if num_unique / num_total < 0.5:
             df[col] = df[col].astype('category')
 
-    end_mem = df.memory_usage().sum() / 1024**2
-    print('Uso de memoria después de la optimización: {:.2f} MB'.format(end_mem))
-    print('Disminución de {:.1f}%'.format(100 * (start_mem - end_mem) / start_mem))
+    end_mem = df.memory_usage(deep=True).sum() / 1024**2
+    reduction = 100 * (start_mem - end_mem) / start_mem
+
+    if verbose:
+        logger.info(f'Uso de memoria después de la optimización: {end_mem:.2f} MB')
+        logger.info(f'Reducción de memoria: {reduction:.1f}%')
 
     return df

@@ -117,7 +117,10 @@ def main():
     print(df.memory_usage(deep=True).sort_values(ascending=False))
     print(f"\nTotal profundo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
 
-    # df = reduce_mem_usage(df)
+    # Apply memory optimization
+    logger.info("=== Applying memory optimization ===")
+    df = reduce_mem_usage(df)
+    gc.collect()
 
     # logger.debug(df.columns.tolist())
 
