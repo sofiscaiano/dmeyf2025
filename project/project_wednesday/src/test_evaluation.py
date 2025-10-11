@@ -1,4 +1,5 @@
 import lightgbm as lgb
+from sklearn.metrics import roc_auc_score
 import pandas as pd
 import numpy as np
 import logging
@@ -43,6 +44,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
     y_train = df_train_completo['target']
 
     X_test = df_test.drop(['target', 'target_test'], axis=1)
+    y_test_check = df_test['target']
     y_test = df_test['target_test']
 
     train_data = lgb.Dataset(X_train, label=y_train)
@@ -122,6 +124,12 @@ def evaluar_en_test(df, mejores_params) -> dict:
 
     # Ensemble: promedio de predicciones
     y_pred = np.mean(preds, axis=0)
+
+    logging.info('=== Inicio Calculos de AUC ===')
+    # Calculo AUC para poder comparar si optimice con esa metrica
+    auc = roc_auc_score(y_test, y_pred)
+    auc_check = roc_auc_score(y_test_check, y_pred)
+    logging.debug(f'AUC (BAJA+1): {auc:.4f} | AUC (BAJA+1, BAJA+2): {auc_check:.4f}')
 
     logging.info('=== Inicio Grafico de Importancia ===')
     plot_mean_importance(all_importances, importance_type, type='test')
