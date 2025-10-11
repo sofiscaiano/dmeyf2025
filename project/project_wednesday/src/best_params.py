@@ -23,7 +23,8 @@ def cargar_mejores_hiperparametros(archivo_base: str = None) -> dict:
             'learning_rate': PARAMETROS_LGB_ADHOC['learning_rate'],
             'num_leaves': PARAMETROS_LGB_ADHOC['num_leaves'],
             'min_data_in_leaf': PARAMETROS_LGB_ADHOC['min_data_in_leaf'],
-            'feature_fraction': PARAMETROS_LGB_ADHOC['feature_fraction']
+            'feature_fraction': PARAMETROS_LGB_ADHOC['feature_fraction'],
+	    'bagging_fraction': PARAMETROS_LGB_ADHOC['bagging_fraction']
         }
 
         return mejores_params

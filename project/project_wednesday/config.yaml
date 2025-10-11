@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 STUDY_NAME : 'lgb_optimization_competencia24'
+=======
+STUDY_NAME : 'lgb_optimization_competencia25'
+>>>>>>> Stashed changes
 
 competencia01:
   DATA_PATH: '../data/competencia_01.csv'
@@ -11,7 +15,7 @@ competencia01:
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
   UNDERSAMPLING_FRACTION: 0.3
-  ADHOC: False
+  ADHOC: True
 
 parametros_lgb:
   n_trail: 100
@@ -27,8 +31,9 @@ parametros_lgb:
   metric: 'auc'
 
 parametros_adhoc:
-  num_iterations: 2610
-  learning_rate: 0.0219
-  feature_fraction: 0.61
-  num_leaves: 455
-  min_data_in_leaf: 20
+  num_iterations: 1383
+  learning_rate: 0.01669323296938561
+  feature_fraction: 0.8860187010472017
+  num_leaves: 734
+  min_data_in_leaf: 35
+  bagging_fraction: 0.2093419584365341
