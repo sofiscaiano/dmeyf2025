@@ -8,6 +8,7 @@ from .plots import plot_mean_importance
 from .config import FINAL_TRAIN, FINAL_PREDICT, SEMILLA
 from .config import *
 import glob
+import gc
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,9 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
     # Preparar features para predicción
     X_predict = df_predict.drop(['target', 'target_test'], axis=1)
     clientes_predict = df_predict['numero_de_cliente']
+
+    del df, df_predict, df_train
+    gc.collect()
 
     logger.info(f"Features utilizadas: {len(X_predict.columns)}")
     logger.info(f"Distribución del target - 0: {(y_train == 0).sum():,}, 1: {(y_train == 1).sum():,}")
@@ -98,6 +102,9 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
 
     # Crear dataset de LightGBM
     train_data = lgb.Dataset(X_train, label=y_train)
+
+    del X_train, y_train
+    gc.collect()
 
     logging.info('=== Inicio Entrenamiento del Modelo Final con 5 semillas ===')
 

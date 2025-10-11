@@ -1,16 +1,20 @@
 import pandas as pd
 import logging
+import pyarrow.csv as pv
+import numpy as np
+
 
 logger = logging.getLogger(__name__)
 def cargar_datos(path: str) -> pd.DataFrame | None:
 
     '''
-    Carga un CSV desde 'path' y retorna un pandas.DataFrame
+    Carga un CSV desde 'path' con pyarrow y retorna un pd.DataFrame
     '''
 
     logger.info(f'Cargando dataset desde {path}')
     try:
-        df = pd.read_csv(path)
+        tabla_pyarrow = pv.read_csv(path)
+        df = tabla_pyarrow.to_pandas()
         logger.info(f'Dataset cargado con {df.shape[0]} filas y {df.shape[1]} columnas')
         return df
     except Exception as e:
@@ -68,3 +72,43 @@ def convertir_clase_ternaria_a_target(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"  Real BAJA+2 -> Binario - 0: {n_ceros_test}, 1: {n_unos_test}")
 
     return df_result
+
+
+def reduce_mem_usage(df):
+    """ Itera sobre todas las columnas de un dataframe y modifica el tipo de dato
+        para reducir el uso de memoria.
+    """
+    start_mem = df.memory_usage().sum() / 1024**2
+    print('Uso de memoria del dataframe es {:.2f} MB'.format(start_mem))
+
+    for col in df.columns:
+        col_type = df[col].dtype
+
+        if col_type != object:
+            c_min = df[col].min()
+            c_max = df[col].max()
+            if str(col_type)[:3] == 'int':
+                if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
+                    df[col] = df[col].astype(np.int8)
+                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
+                    df[col] = df[col].astype(np.int16)
+                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
+                    df[col] = df[col].astype(np.int32)
+                elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
+                    df[col] = df[col].astype(np.int64)
+            else:
+                if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
+                    df[col] = df[col].astype(np.float16)
+                elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
+                    df[col] = df[col].astype(np.float32)
+                else:
+                    df[col] = df[col].astype(np.float64)
+        else:
+            # Convierte las columnas de tipo 'object' a 'category'
+            df[col] = df[col].astype('category')
+
+    end_mem = df.memory_usage().sum() / 1024**2
+    print('Uso de memoria después de la optimización: {:.2f} MB'.format(end_mem))
+    print('Disminución de {:.1f}%'.format(100 * (start_mem - end_mem) / start_mem))
+
+    return df

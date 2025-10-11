@@ -4,10 +4,14 @@ import os
 import logging
 import glob
 import argparse
+import pyarrow.parquet as pq
+import pyarrow as pa
+import numpy as np
+import gc
 
 import lightgbm as lgb
 from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend
-from src.loader import cargar_datos, convertir_clase_ternaria_a_target
+from src.loader import cargar_datos, convertir_clase_ternaria_a_target, reduce_mem_usage
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *
@@ -67,7 +71,7 @@ def main():
     print(">>> Inicio de ejecucion")
 
     ## Creacion de target
-    create_target()
+    # create_target()
 
     ## Carga de Datos
     os.makedirs('data', exist_ok=True)
@@ -82,36 +86,46 @@ def main():
     cant_lag = 2
 
     df = fix_aguinaldo(df)
-    df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-    df = feature_engineering_rank(df, columnas=atributos) # pandas
+    # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
+    # df = feature_engineering_rank(df, columnas=atributos) # pandas
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
     df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
 
     ## Convertir clase ternaria a target binaria
     df = convertir_clase_ternaria_a_target(df)
-    df.to_csv("data/competencia_01_processed.csv", index=False)
+    path = 'data/competencia_01_processed.parquet'
+    df.to_parquet('data/competencia_01_processed.parquet', engine='pyarrow')
 
-    path = 'data/competencia_01_processed.csv'
-    df = cargar_datos(path)
+    # df = cargar_datos(path)
+    df = pq.read_table(path).to_pandas()
 
-    # ## Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
-    reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
+    print(df.info())
+    print("--- Uso de memoria PROFUNDO y PRECISO (por columna) ---")
+    print(df.memory_usage(deep=True).sort_values(ascending=False))
+    print(f"\nTotal profundo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
 
-    ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    # df = reduce_mem_usage(df)
 
-    ## 5. Análisis adicional
-    logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    trials_df = study.trials_dataframe()
-    if len(trials_df) > 0:
-        top_5 = trials_df.nlargest(5, 'value')
-        logger.info("Top 5 mejores trials:")
-        for idx, trial in top_5.iterrows():
-            logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
-    logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+    # logger.debug(df.columns.tolist())
 
-    mejores_params = cargar_mejores_hiperparametros()
+    ## Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
+    # reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
+    #
+    # ## Ejecutar optimizacion de hiperparametros
+    # study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    #
+    # ## 5. Análisis adicional
+    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    # trials_df = study.trials_dataframe()
+    # if len(trials_df) > 0:
+    #     top_5 = trials_df.nlargest(5, 'value')
+    #     logger.info("Top 5 mejores trials:")
+    #     for idx, trial in top_5.iterrows():
+    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
+    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+
+    mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia14')
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
 
     ## Guardar resultados de test
@@ -122,8 +136,10 @@ def main():
     logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.0f}")
     logger.info(f"🎯 Predicciones positivas: {resultados_test['predicciones_positivas']:,} ({resultados_test['porcentaje_positivas']:.2f}%)")
 
-    # ## Entrenar modelo final
+    ## Entrenar modelo final
     X_train, y_train, X_predict, clientes_predict = preparar_datos_entrenamiento_final(df)
+    del df
+    gc.collect()
     modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
 
     ## Generar predicciones

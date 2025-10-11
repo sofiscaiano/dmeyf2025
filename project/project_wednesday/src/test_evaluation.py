@@ -9,6 +9,7 @@ from .config import *
 from matplotlib import pyplot as plt
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
 from .plots import plot_mean_importance
+import gc
 
 logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
@@ -47,6 +48,9 @@ def evaluar_en_test(df, mejores_params) -> dict:
     train_data = lgb.Dataset(X_train, label=y_train)
     test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
 
+    del X_train, y_train, df_train_completo, df_test
+    gc.collect()
+
     flag_GPU = int(os.getenv('GPU', 0))
 
     if flag_GPU == 0:
@@ -76,6 +80,8 @@ def evaluar_en_test(df, mejores_params) -> dict:
     }
 
     final_params = {**params, **mejores_params}
+
+    logger.info(f"Parámetros del modelo: {final_params}")
 
     logging.info('=== Inicio Entrenamiento del Modelo con 5 semillas ===')
 

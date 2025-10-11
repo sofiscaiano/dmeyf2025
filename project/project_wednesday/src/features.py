@@ -99,6 +99,7 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
         return df
 
     # Construir la consulta SQL
+    # sql = "SELECT *"
     sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE(foto_mes)"
 
     # Agregar los lags para los atributos especificados
@@ -246,12 +247,16 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     FROM df) as a
     WHERE foto_mes = '2021-06-30')
         
-    SELECT df.* REPLACE(case when aguinaldo.mpayroll_delta_1 is null then df.mpayroll when df.foto_mes = '2021-06-30' then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll, case when df.foto_mes = '2021-06-30' then aguinaldo.cpayroll_trx else aguinaldo.cpayroll_trx end as cpayroll_trx)
+    SELECT df.* REPLACE(
+                case when aguinaldo.mpayroll_delta_1 is null then df.mpayroll when df.foto_mes = '2021-06-30' then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll, 
+                case when aguinaldo.mpayroll_delta_1 is null then df.cpayroll_trx when df.foto_mes = '2021-06-30' then aguinaldo.cpayroll_trx else df.cpayroll_trx end as cpayroll_trx
+                )
     FROM df 
     LEFT JOIN aguinaldo
     ON df.numero_de_cliente = aguinaldo.numero_de_cliente
     ORDER BY df.numero_de_cliente, df.foto_mes
     """
+
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
