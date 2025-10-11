@@ -49,6 +49,7 @@ logger.info(f"MES_TEST: {MES_TEST}")
 logger.info(f"GANANCIA_ACIERTO: {GANANCIA_ACIERTO}")
 logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
 logger.info(f"UNDERSAMPLING_FRACTION: {UNDERSAMPLING_FRACTION}")
+logger.info(f"METRIC: {PARAMETROS_LGB['metric']}")
 
 def main():
 
@@ -88,9 +89,9 @@ def main():
     logger.info("=== Starting feature engineering pipeline ===")
 
     # Fix aguinaldo
-    df = fix_aguinaldo(df)
-    gc.collect()
-    logger.info(f"Memory after fix_aguinaldo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
+    # df = fix_aguinaldo(df)
+    # gc.collect()
+    # logger.info(f"Memory after fix_aguinaldo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
 
     # Lag features
     # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
@@ -112,17 +113,10 @@ def main():
     # Load parquet with optimized function
     df = cargar_datos(path)
 
-    print(df.info())
-    print("--- Uso de memoria PROFUNDO y PRECISO (por columna) ---")
-    print(df.memory_usage(deep=True).sort_values(ascending=False))
-    print(f"\nTotal profundo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
-
     # Apply memory optimization
     logger.info("=== Applying memory optimization ===")
     df = reduce_mem_usage(df)
     gc.collect()
-
-    # logger.debug(df.columns.tolist())
 
     ## Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
     reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
@@ -141,7 +135,7 @@ def main():
     logger.info(f'Mejores Hiperparametros: {study.best_params}')
     logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
-    mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia14')
+    mejores_params = cargar_mejores_hiperparametros()
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
 
     ## Guardar resultados de test

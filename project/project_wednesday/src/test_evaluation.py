@@ -129,7 +129,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
     # Calculo AUC para poder comparar si optimice con esa metrica
     auc = roc_auc_score(y_test, y_pred)
     auc_check = roc_auc_score(y_test_check, y_pred)
-    logging.debug(f'AUC (BAJA+1): {auc:.4f} | AUC (BAJA+1, BAJA+2): {auc_check:.4f}')
+    logging.debug(f'AUC (BAJA+2): {auc:.4f} | AUC (BAJA+1, BAJA+2): {auc_check:.4f}')
 
     logging.info('=== Inicio Grafico de Importancia ===')
     plot_mean_importance(all_importances, importance_type, type='test')
@@ -146,6 +146,8 @@ def evaluar_en_test(df, mejores_params) -> dict:
 
     resultados = {
         'ganancia_test': float(ganancia_test),
+        'auc_test': float(auc_check),
+        'auc_test_BAJA+2': float(auc),
         'total_predicciones': int(total_predicciones),
         'predicciones_positivas': int(predicciones_positivas),
         'porcentaje_positivas': float(porcentaje_positivas),
@@ -177,6 +179,8 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
     # Datos del resultado en test
     test_data = {
         'ganancia': resultados_test['ganancia_test'],
+        'auc': resultados_test['auc_test'],
+        'auc_BAJA+2': resultados_test['auc_test_BAJA+2'],
         'total_predicciones': resultados_test['total_predicciones'],
         'predicciones_positivas': resultados_test['predicciones_positivas'],
         'porcentaje_positivas': resultados_test['porcentaje_positivas'],
@@ -186,7 +190,7 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
         'configuracion': {
             'semilla': SEMILLA[0],
             'mes_train': MES_TRAIN,
-            'mes_validacion': MES_TEST
+            'mes_test': MES_TEST
         }
     }
 

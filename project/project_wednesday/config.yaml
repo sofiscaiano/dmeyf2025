@@ -1,21 +1,17 @@
-<<<<<<< Updated upstream
-STUDY_NAME : 'lgb_optimization_competencia24'
-=======
-STUDY_NAME : 'lgb_optimization_competencia25'
->>>>>>> Stashed changes
+STUDY_NAME : 'lgb_optimization_competencia27'
 
 competencia01:
   DATA_PATH: '../data/competencia_01.csv'
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
-  MES_TRAIN: [202101, 202102]
-  MES_VALIDACION: 202103
+  MES_TRAIN: [202103]
+  MES_VALIDACION:
   MES_TEST: 202104
   FINAL_TRAIN: [202101, 202102, 202103, 202104]
   FINAL_PREDICT: 202106
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
   UNDERSAMPLING_FRACTION: 0.3
-  ADHOC: True
+  ADHOC: False
 
 parametros_lgb:
   n_trail: 100
@@ -35,5 +31,5 @@ parametros_adhoc:
   learning_rate: 0.01669323296938561
   feature_fraction: 0.8860187010472017
   num_leaves: 734
-  min_data_in_leaf: 35
+  min_data_in_leaf: 116 #35
   bagging_fraction: 0.2093419584365341

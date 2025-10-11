@@ -127,9 +127,7 @@ def objetivo_ganancia(trial, df) -> float:
         'feature_fraction': trial.suggest_float('feature_fraction', PARAMETROS_LGB['feature_fraction'][0], PARAMETROS_LGB['feature_fraction'][1]),
         'num_leaves': trial.suggest_int("num_leaves", PARAMETROS_LGB['num_leaves'][0], PARAMETROS_LGB['num_leaves'][1]),
         'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', PARAMETROS_LGB['min_data_in_leaf'][0], PARAMETROS_LGB['min_data_in_leaf'][1]),
-        'seed': SEMILLA[0],
-        'data_random_seed': SEMILLA[0],
-        'feature_fraction_seed': SEMILLA[0]
+        'seed': SEMILLA[0]
     }
 
     # MES_TRAIN puede ser un unico mes o una lista de meses
