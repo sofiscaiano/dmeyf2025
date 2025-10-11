@@ -42,10 +42,10 @@ def create_target():
     con.register("df", df)
     df = con.execute(sql).df()
 
-    # 1. Convertir la columna 'fecha' a formato datetime
-    df['foto_mes'] = pd.to_datetime(df["foto_mes"])
-    # 2. Formatear la fecha a YYYYMM como cadena y convertir a entero
-    df['foto_mes'] = df['foto_mes'].dt.strftime('%Y%m').astype(int)
+    # # 1. Convertir la columna 'fecha' a formato datetime
+    # df['foto_mes'] = pd.to_datetime(df["foto_mes"])
+    # # 2. Formatear la fecha a YYYYMM como cadena y convertir a entero
+    # df['foto_mes'] = df['foto_mes'].dt.strftime('%Y%m').astype(int)
 
     print(df.shape)
     print(df['target'].value_counts(dropna=False))

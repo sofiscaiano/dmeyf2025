@@ -13,13 +13,13 @@ from .gain_function import ganancia_evaluator
 logger = logging.getLogger(__name__)
 
 
-def guardar_iteracion(trial, ganancia, archivo_base=None):
+def guardar_iteracion(trial, metrica, archivo_base=None):
     """
     Guarda cada iteración de la optimización en un único archivo JSON.
 
     Args:
         trial: Trial de Optuna
-        ganancia: Valor de ganancia obtenido
+        metrica: Valor de ganancia o auc obtenido
         archivo_base: Nombre base del archivo (si es None, usa el de config.yaml)
     """
     if archivo_base is None:
@@ -32,7 +32,7 @@ def guardar_iteracion(trial, ganancia, archivo_base=None):
     iteracion_data = {
         'trial_number': trial.number,
         'params': trial.params,
-        'value': float(ganancia),
+        'value': float(metrica),
         'datetime': datetime.now().isoformat(),
         'state': 'COMPLETE',  # Si llegamos aquí, el trial se completó exitosamente
         'configuracion': {
@@ -63,7 +63,7 @@ def guardar_iteracion(trial, ganancia, archivo_base=None):
         json.dump(datos_existentes, f, indent=2)
 
     logger.info(f"Iteración {trial.number} guardada en {archivo}")
-    logger.info(f"Ganancia: {ganancia:,.0f}" + "---" + "Parámetros: {params}")
+    logger.info(f"Ganancia/auc: {metrica:,.0f}" + "---" + "Parámetros: {params}")
 
 def objetivo_ganancia(trial, df) -> float:
     """
@@ -76,7 +76,7 @@ def objetivo_ganancia(trial, df) -> float:
     Utiliza configuración YAML para períodos y semilla.
     1. Define parametros para el modelo LightGBM
     2. Preparar dataset para entrenamiento y validación
-    3. Entrena modelo con función de ganancia personalizada (CV)
+    3. Entrena modelo con función de ganancia personalizada (CV) o AUC
     4. Ganancia promedio del CV
     5 .Guardar cada iteración en JSON
 
@@ -96,7 +96,8 @@ def objetivo_ganancia(trial, df) -> float:
     # Hiperparámetros a optimizar
     params = {
         'objective': 'binary',
-        'metric': 'None',  # Usamos nuestra métrica personalizada
+        # 'metric': 'None',  # Usamos nuestra métrica personalizada
+        'metric': PARAMETROS_LGB['metric'],
         'verbose': -1,
         'verbosity': -1,
         'silent': 1,
@@ -146,7 +147,7 @@ def objetivo_ganancia(trial, df) -> float:
     cv_results = lgb.cv(
         params,
         train_data,
-        feval=ganancia_evaluator,
+        # feval=ganancia_evaluator,
         stratified=True,
         shuffle=True,
         nfold=5,
@@ -154,14 +155,17 @@ def objetivo_ganancia(trial, df) -> float:
         callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False), lgb.log_evaluation(0)]
     )
 
-    ganancia_total = np.max(cv_results['valid ganancia-mean'])
+    if PARAMETROS_LGB['metric'] == 'auc':
+        metrica = cv_results['valid auc-mean'][-1]
+    else:
+        metrica = np.max(cv_results['valid ganancia-mean'])
 
     # Guardar cada iteración en JSON
-    guardar_iteracion(trial, ganancia_total)
+    guardar_iteracion(trial, metrica)
 
-    logger.debug(f"Trial {trial.number}: Ganancia = {ganancia_total:,.0f}")
+    logger.debug(f"Trial {trial.number}: Ganancia/AUC = {metrica:,.0f}")
 
-    return ganancia_total
+    return metrica
 
 
 def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
