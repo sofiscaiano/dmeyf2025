@@ -109,8 +109,8 @@ def main():
     path = 'data/competencia_01_processed.parquet'
     df.to_parquet('data/competencia_01_processed.parquet', engine='pyarrow')
 
-    # df = cargar_datos(path)
-    df = pq.read_table(path).to_pandas()
+    # Load parquet with optimized function
+    df = cargar_datos(path)
 
     print(df.info())
     print("--- Uso de memoria PROFUNDO y PRECISO (por columna) ---")
