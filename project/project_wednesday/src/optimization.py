@@ -65,7 +65,7 @@ def guardar_iteracion(trial, metrica, archivo_base=None):
         json.dump(datos_existentes, f, indent=2)
 
     logger.info(f"Iteración {trial.number} guardada en {archivo}")
-    logger.info(f"Ganancia/auc: {metrica:,.0f}" + "---" + "Parámetros: {params}")
+    logger.info(f"Ganancia/auc: {metrica:,.4f}" + "---" + "Parámetros: {params}")
 
 def objetivo_ganancia(trial, df) -> float:
     """

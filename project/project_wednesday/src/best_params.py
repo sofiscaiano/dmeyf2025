@@ -51,7 +51,7 @@ def cargar_mejores_hiperparametros(archivo_base: str = None) -> dict:
             mejor_ganancia = mejor_iteracion['value']
 
             logger.info(f"Mejores hiperparámetros cargados desde {archivo}")
-            logger.info(f"Mejor ganancia encontrada: {mejor_ganancia:,.0f}")
+            logger.info(f"Mejor ganancia/auc encontrada: {mejor_ganancia:,.4f}")
             logger.info(f"Trial número: {mejor_iteracion['trial_number']}")
             logger.info(f"Parámetros: {mejores_params}")
 
