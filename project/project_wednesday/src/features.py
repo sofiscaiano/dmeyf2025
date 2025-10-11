@@ -273,6 +273,7 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
 def undersample(df, sample_fraction):
     """
     Realiza un undersampling de la clase mayoritaria.
+    Versión optimizada usando boolean indexing en lugar de groupby.apply.
 
     Args:
         df (pd.DataFrame): El DataFrame de entrada.
@@ -281,24 +282,35 @@ def undersample(df, sample_fraction):
         pd.DataFrame: El DataFrame resultante submuestreado.
     """
 
-    # Función lambda para aplicar a cada grupo (clase)
-    # Si el grupo es la clase mayoritaria, se aplica el muestreo con la fracción.
-    # Para el resto de clases, se conserva el 100% de los datos (frac=1).
-    df_undersampled = df.groupby('target', group_keys=False).apply(
-        lambda x: x.sample(
-            frac=sample_fraction,
-            random_state=SEMILLA[1]
-        ) if x.name == 0 else x
-    ).reset_index(drop=True)
+    # Separar las clases usando máscaras booleanas (más rápido que groupby)
+    mask_mayoritaria = df['target'] == 0
+    mask_minoritaria = df['target'] == 1
 
-    prop_continua = (df_undersampled['target'] == 0).sum() / (df['target'] == 0).sum()
-    prop_baja = (df_undersampled['target'] == 1).sum() / (df['target'] == 1).sum()
+    df_mayoritaria = df[mask_mayoritaria]
+    df_minoritaria = df[mask_minoritaria]
+
+    # Sample de la clase mayoritaria
+    df_mayoritaria_sampled = df_mayoritaria.sample(
+        frac=sample_fraction,
+        random_state=SEMILLA[1]
+    )
+
+    # Concatenar las clases (minoritaria completa + mayoritaria submuestreada)
+    df_undersampled = pd.concat([df_mayoritaria_sampled, df_minoritaria], ignore_index=True)
+
+    # Shuffle para mezclar las clases
+    df_undersampled = df_undersampled.sample(frac=1, random_state=SEMILLA[1]).reset_index(drop=True)
+
+    # Calcular proporciones
+    prop_continua = len(df_mayoritaria_sampled) / len(df_mayoritaria)
+    prop_baja = len(df_minoritaria) / len(df_minoritaria)
 
     # Imprimir estadísticas para verificar la reducción
     logging.info(f"Tamaño original del DataFrame: {len(df)}")
     logging.info(f"Tamaño final del DataFrame: {len(df_undersampled)}")
     logging.info(f"Proporcion final de clase mayoritaria: {prop_continua:.2f}")
     logging.info(f"Proporcion final de clase minoritaria: {prop_baja:.2f}")
+    logging.info(f"Clase mayoritaria: {len(df_mayoritaria_sampled):,} / Clase minoritaria: {len(df_minoritaria):,}")
 
     return df_undersampled
 
