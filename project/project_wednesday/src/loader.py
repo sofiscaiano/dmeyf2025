@@ -34,36 +34,32 @@ def convertir_clase_ternaria_a_target(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame con clase_ternaria convertida a valores binarios (0, 1)
     """
-    # Crear copia del DataFrame para no modificar el original
-    df_result = df.copy()
-
-    # Contar valores originales para logging
-    n_continua_orig = (df_result['target'] == 'CONTINUA').sum()
-    n_baja1_orig = (df_result['target'] == 'BAJA+1').sum()
-    n_baja2_orig = (df_result['target'] == 'BAJA+2').sum()
+    # Contar valores originales para logging (before modification)
+    n_continua_orig = (df['target'] == 'CONTINUA').sum()
+    n_baja1_orig = (df['target'] == 'BAJA+1').sum()
+    n_baja2_orig = (df['target'] == 'BAJA+2').sum()
 
     # Convertir clase_ternaria a binario respetando mi objetivo principal que son los baja+2
-    df_result['target_test'] = df_result['target'].map({
+    df['target_test'] = df['target'].map({
         'CONTINUA': 0,
         'BAJA+1': 0,
         'BAJA+2': 1
     })
 
     # Convertir clase_ternaria a binario en el mismo atributo considerando todas las bajas para training
-    df_result['target'] = df_result['target'].map({
+    df['target'] = df['target'].map({
         'CONTINUA': 0,
         'BAJA+1': 1,
         'BAJA+2': 1
     })
 
+    # Log de la conversión
+    n_ceros = (df['target'] == 0).sum()
+    n_unos = (df['target'] == 1).sum()
 
     # Log de la conversión
-    n_ceros = (df_result['target'] == 0).sum()
-    n_unos = (df_result['target'] == 1).sum()
-
-    # Log de la conversión
-    n_ceros_test = (df_result['target_test'] == 0).sum()
-    n_unos_test = (df_result['target_test'] == 1).sum()
+    n_ceros_test = (df['target_test'] == 0).sum()
+    n_unos_test = (df['target_test'] == 1).sum()
 
     logger.info(f"Conversión completada:")
     logger.info(f"  Original - CONTINUA: {n_continua_orig}, BAJA+1: {n_baja1_orig}, BAJA+2: {n_baja2_orig}")
@@ -71,7 +67,7 @@ def convertir_clase_ternaria_a_target(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"  Distribución: {n_unos / (n_ceros + n_unos) * 100:.2f}% casos positivos")
     logger.info(f"  Real BAJA+2 -> Binario - 0: {n_ceros_test}, 1: {n_unos_test}")
 
-    return df_result
+    return df
 
 
 def reduce_mem_usage(df):
