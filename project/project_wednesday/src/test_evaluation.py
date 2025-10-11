@@ -91,7 +91,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
     importance_type = 'gain'  # O 'split'
 
     for i, seed in enumerate(SEMILLA):
-        logging.info(f'Entrenando modelo con seed = {seed}')
+        logging.info(f'Entrenando modelo con seed = {seed} ({i+1}/{len(SEMILLA)})')
 
         # Copia de parámetros con la semilla actual
         params_seed = final_params.copy()
@@ -113,6 +113,10 @@ def evaluar_en_test(df, mejores_params) -> dict:
 
         modelos.append(modelo)
         preds.append(modelo.predict(X_test))
+
+        # Memory cleanup after each model
+        del feature_imp, params_seed
+        gc.collect()
 
     logging.info('=== Finaliza Entrenamiento de los 5 Modelos ===')
 

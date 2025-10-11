@@ -117,7 +117,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     os.makedirs(models_dir, exist_ok=True)
 
     for i, seed in enumerate(SEMILLA):
-        logging.info(f'Entrenando modelo con seed = {seed}')
+        logging.info(f'Entrenando modelo con seed = {seed} ({i+1}/{len(SEMILLA)})')
 
         # Copia de parámetros con la semilla actual
         params_seed = params.copy()
@@ -143,6 +143,10 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
         logging.info(f'Modelo guardado en: {model_path}')
 
         modelos.append(modelo)
+
+        # Memory cleanup after each model
+        del feature_imp, params_seed
+        gc.collect()
 
     logging.info('=== Inicio Grafico de Importancia ===')
     plot_mean_importance(all_importances, importance_type, type='train')
