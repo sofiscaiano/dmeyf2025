@@ -85,11 +85,24 @@ def main():
     atributos = list(df.drop(columns=['foto_mes', 'target', 'numero_de_cliente']).columns)
     cant_lag = 2
 
+    logger.info("=== Starting feature engineering pipeline ===")
+
+    # Fix aguinaldo
     df = fix_aguinaldo(df)
+    gc.collect()
+    logger.info(f"Memory after fix_aguinaldo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
+
+    # Lag features
     # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
     # df = feature_engineering_rank(df, columnas=atributos) # pandas
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
+    gc.collect()
+    logger.info(f"Memory after lag features: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
+
+    # Delta features
     df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
+    gc.collect()
+    logger.info(f"Memory after delta features: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
 
     ## Convertir clase ternaria a target binaria
     df = convertir_clase_ternaria_a_target(df)
