@@ -98,6 +98,16 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
         **mejores_params
     }
 
+    if isinstance(MES_TRAIN, list):
+        periodos_validacion = MES_TRAIN
+    else:
+        periodos_validacion = [MES_TRAIN]
+
+    if MES_VALIDACION is not None:
+        periodos_validacion.append(MES_VALIDACION)
+
+    # params['min_data_in_leaf'] = round((len(FINAL_TRAIN)/len(periodos_validacion)) * params['min_data_in_leaf'])
+
     logger.info(f"Parámetros del modelo: {params}")
 
     # Crear dataset de LightGBM
