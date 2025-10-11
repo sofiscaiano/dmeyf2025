@@ -194,4 +194,5 @@ data/
 *.jpg
 *.json
 !*test_results.json
+!*iteraciones.json
 *.txt
