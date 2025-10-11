@@ -32,6 +32,7 @@ def guardar_iteracion(trial, metrica, archivo_base=None):
     iteracion_data = {
         'trial_number': trial.number,
         'params': trial.params,
+        'user_attrs': trial.user_attrs,
         'value': float(metrica),
         'datetime': datetime.now().isoformat(),
         'state': 'COMPLETE',  # Si llegamos aquí, el trial se completó exitosamente
@@ -39,7 +40,8 @@ def guardar_iteracion(trial, metrica, archivo_base=None):
             'semilla': SEMILLA[0],
             'mes_train': MES_TRAIN,
             'mes_validacion': MES_VALIDACION,
-            'undersampling': UNDERSAMPLING_FRACTION
+            'undersampling': UNDERSAMPLING_FRACTION,
+            'metric': PARAMETROS_LGB['metric']
         }
     }
 
@@ -155,15 +157,22 @@ def objetivo_ganancia(trial, df) -> float:
         callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False), lgb.log_evaluation(0)]
     )
 
+    # 1. Determina la métrica y su valor
     if PARAMETROS_LGB['metric'] == 'auc':
-        metrica = cv_results['valid auc-mean'][-1]
+        metrica_key = 'valid auc-mean'
     else:
-        metrica = np.max(cv_results['valid ganancia-mean'])
+        metrica_key = 'valid ganancia-mean'
+
+    metrica = np.max(cv_results[metrica_key])
+    best_num_iterations_cv = len(cv_results[metrica_key])
+
+    # 2. Guarda esta información en el trial para recuperarla después.
+    trial.set_user_attr('num_iterations', best_num_iterations_cv)
 
     # Guardar cada iteración en JSON
     guardar_iteracion(trial, metrica)
 
-    logger.debug(f"Trial {trial.number}: Ganancia/AUC = {metrica:,.0f}")
+    logger.debug(f"Trial {trial.number}: Ganancia/AUC = {metrica:,.4f}")
 
     return metrica
 

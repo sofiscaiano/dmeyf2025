@@ -24,7 +24,7 @@ def cargar_mejores_hiperparametros(archivo_base: str = None) -> dict:
             'num_leaves': PARAMETROS_LGB_ADHOC['num_leaves'],
             'min_data_in_leaf': PARAMETROS_LGB_ADHOC['min_data_in_leaf'],
             'feature_fraction': PARAMETROS_LGB_ADHOC['feature_fraction'],
-	    'bagging_fraction': PARAMETROS_LGB_ADHOC['bagging_fraction']
+	        'bagging_fraction': PARAMETROS_LGB_ADHOC['bagging_fraction']
         }
 
         return mejores_params
@@ -45,6 +45,8 @@ def cargar_mejores_hiperparametros(archivo_base: str = None) -> dict:
             # Encontrar la iteración con mayor ganancia
             mejor_iteracion = max(iteraciones, key=lambda x: x['value'])
             mejores_params = mejor_iteracion['params']
+            best_num_iterations = mejor_iteracion['user_attrs']['num_iterations'] # si hubo early_stopping num_iterations puede ser menor
+            mejores_params['num_iterations'] = best_num_iterations
             mejores_params['min_data_in_leaf'] = round(mejores_params['min_data_in_leaf'] / UNDERSAMPLING_FRACTION)
             mejor_ganancia = mejor_iteracion['value']
 
