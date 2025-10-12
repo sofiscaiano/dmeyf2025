@@ -1,4 +1,4 @@
-# Proyecto DMeyF 2025 - Script de Procesamiento Principal
+# Proyecto DMEyF 2025 - Script de Procesamiento Principal
 
 Este repositorio contiene el script principal (`main.py`) para el proyecto de la materia en la carpeta `project/project_wednesday/`.
 
