@@ -91,11 +91,11 @@ def main():
     # Fix aguinaldo
     # df = fix_aguinaldo(df)
     # gc.collect()
-    # logger.info(f"Memory after fix_aguinaldo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
+    logger.info(f"Memory after fix_aguinaldo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
 
     # Lag features
     # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-    df = feature_engineering_rank(df, columnas=atributos) # pandas
+    # df = feature_engineering_rank(df, columnas=atributos) # pandas
     gc.collect()
     df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
     gc.collect()
@@ -132,19 +132,19 @@ def main():
         top_5 = trials_df.nlargest(5, 'value')
         logger.info("Top 5 mejores trials:")
         for idx, trial in top_5.iterrows():
-            logger.info(f"  Trial {trial['number']}: {trial['value']:,.0f}")
+            logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
     logger.info(f'Mejores Hiperparametros: {study.best_params}')
     logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
 
-    ## Guardar resultados de test
+    # Guardar resultados de test
     guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
 
-    ## Resumen de evaluación en test
+    # Resumen de evaluación en test
     logger.info("=== RESUMEN DE EVALUACIÓN EN TEST ===")
-    logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.0f}")
+    logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.4f}")
     logger.info(f"🎯 Predicciones positivas: {resultados_test['predicciones_positivas']:,} ({resultados_test['porcentaje_positivas']:.2f}%)")
 
     ## Entrenar modelo final

@@ -1,0 +1,54 @@
+[
+  {
+    "ganancia": 365080000.0,
+    "auc": 0.9382630301825495,
+    "auc_BAJA+2": 0.9097773301958979,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 10705,
+    "porcentaje_positivas": 6.550685970945673,
+    "params": {
+      "bagging_fraction": 0.5934906918681969,
+      "num_iterations": 673,
+      "learning_rate": 0.01695236290145305,
+      "feature_fraction": 0.5624243797737721,
+      "num_leaves": 137,
+      "min_data_in_leaf": 107
+    },
+    "datetime": "2025-10-11T21:29:30.287541",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        202103
+      ],
+      "mes_test": 202104
+    }
+  },
+  {
+    "ganancia": 378580000.0,
+    "auc": 0.9427497063173966,
+    "auc_BAJA+2": 0.9165813818152629,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 9030,
+    "porcentaje_positivas": 5.525707082451137,
+    "params": {
+      "bagging_fraction": 0.5934906918681969,
+      "num_iterations": 673,
+      "learning_rate": 0.01695236290145305,
+      "feature_fraction": 0.5624243797737721,
+      "num_leaves": 137,
+      "min_data_in_leaf": 107
+    },
+    "datetime": "2025-10-11T21:39:05.701746",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        202101,
+        202102,
+        202103
+      ],
+      "mes_test": 202104
+    }
+  }
+]
