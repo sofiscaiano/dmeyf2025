@@ -167,7 +167,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
 
 
 def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.ndarray,
-                                 envios: int) -> pd.DataFrame:
+                                 envios: int, archivo_base: str = None) -> pd.DataFrame:
     """
     Genera las predicciones finales para el período objetivo.
 
@@ -181,8 +181,10 @@ def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.n
     """
     logger.info("Generando predicciones finales")
 
+    if archivo_base is None:
+        archivo_base = STUDY_NAME
     models_dir = "resultados/modelos/"
-    model_files = sorted(glob.glob(f"{models_dir}/{STUDY_NAME}_lgb_seed_*.txt"))
+    model_files = sorted(glob.glob(f"{models_dir}/{archivo_base}_lgb_seed_*.txt"))
 
     preds = []
 

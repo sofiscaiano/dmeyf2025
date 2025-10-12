@@ -1,11 +1,11 @@
 [
   {
-    "ganancia": 378160000.0,
-    "auc": 0.9400822889505642,
-    "auc_BAJA+2": 0.915765919039156,
+    "ganancia": 385280000.0,
+    "auc": 0.9394942206685397,
+    "auc_BAJA+2": 0.9154487400962693,
     "total_predicciones": 163418,
-    "predicciones_positivas": 9731,
-    "porcentaje_positivas": 5.954668396382283,
+    "predicciones_positivas": 8335,
+    "porcentaje_positivas": 5.100417334687733,
     "params": {
       "bagging_fraction": 0.39522373841819725,
       "num_iterations": 156,
@@ -14,7 +14,7 @@
       "num_leaves": 317,
       "min_data_in_leaf": 1300
     },
-    "datetime": "2025-10-11T20:27:20.456734",
+    "datetime": "2025-10-12T16:10:18.585300",
     "state": "COMPLETE",
     "configuracion": {
       "semilla": 131213,
@@ -25,6 +25,6 @@
       ],
       "mes_test": 202104
     },
-    "detalle": "hiperparametros del study27 pero entrene el modelo con los tres meses para calcular esta ganancia"
+    "detalle": "hiperparametros de study27 con ranks de variables monetarias y entrenamiento con 3 meses"
   }
 ]

@@ -5,6 +5,7 @@ import duckdb
 import logging
 from .config import SEMILLA
 import os
+import gc
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFr
     """
 
     logger.info(f"Realizando feature engineering para reducir data drift para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"Columnas: {columnas}")
 
     if columnas is None or len(columnas) == 0:
         logger.warning("No se especificaron atributos para generar rankings")
@@ -63,6 +65,7 @@ def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFr
 
         # aplicamos por grupo; transform devuelve una serie alineada con el índice original
         df[attr] = df.groupby('foto_mes')[attr].transform(rank_signed)
+        gc.collect()
 
     # Selecciono las columnas
     df = df[columnas_inicial]
