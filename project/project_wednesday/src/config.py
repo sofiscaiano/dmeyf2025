@@ -7,13 +7,14 @@ logger = logging.getLogger(__name__)
 PATH_CONFIG = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.yaml')
 
 try:
+    FLAG_GCP = int(os.getenv('GCP', 1))
     with open(PATH_CONFIG, 'r') as f:
         _cfgGeneral = yaml.safe_load(f)
         _cfg = _cfgGeneral['competencia01']
 
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
-        STUDY_NAME = _cfgGeneral.get("STUDY_NAME", 'Wednesday')
+        STUDY_NAME = _cfgGeneral.get("STUDY_NAME", 'Default')
         DATA_PATH = _cfg.get('DATA_PATH', "../data/competencia.csv")
         SEMILLA = _cfg.get('SEMILLA', [42])
         MES_TRAIN = _cfg.get('MES_TRAIN', [202102])
@@ -25,6 +26,11 @@ try:
         FINAL_PREDICT = _cfg.get('FINAL_PREDICT', "")
         UNDERSAMPLING_FRACTION = _cfg.get('UNDERSAMPLING_FRACTION', 1.0)
         ADHOC = _cfg.get('ADHOC', False)
+
+        if FLAG_GCP == 1:
+            BUCKET_NAME = _cfgGeneral.get("BUCKET_NAME", '~/buckets/')
+        else:
+            BUCKET_NAME = '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday/'
 
 except Exception as e:
     logger.error(f'Error al cargar el archivo de configuracion: {e}')

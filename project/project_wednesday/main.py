@@ -2,14 +2,10 @@ import pandas as pd
 from datetime import datetime
 import os
 import logging
-import glob
 import argparse
-import pyarrow.parquet as pq
-import pyarrow as pa
 import numpy as np
 import gc
 
-import lightgbm as lgb
 from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target, reduce_mem_usage
 from src.optimization import optimizar
@@ -21,16 +17,18 @@ from src.output_manager import guardar_predicciones_finales
 from src.create_target import create_target
 
 # config basico logging
-os.makedirs("logs", exist_ok=True)
+path_logs = os.path.join(BUCKET_NAME, "logs")
+os.makedirs(path_logs, exist_ok=True)
 
 fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 nombre_log = f"log_{STUDY_NAME}_{fecha}.log"
+log_path = os.path.join(path_logs, nombre_log)
 
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(lineno)d - %(message)s',
     handlers=[
-        logging.FileHandler(f'logs/{nombre_log}', mode='w', encoding='utf-8'),
+        logging.FileHandler(log_path, mode='w', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -74,52 +72,45 @@ def main():
     ## Creacion de target
     # create_target()
 
-    ## Carga de Datos
-    os.makedirs('data', exist_ok=True)
-    path = 'data/competencia_01.csv'
-    df = cargar_datos(path)
+    if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv")):
+        logger.info("✅ df_fe.csv encontrado")
+        df = pd.read_csv(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv"))
+    else:
+        ## Carga de Datos
+        logger.info("❌ df_fe.csv no encontrado")
+        os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
+        data_path = os.path.join(BUCKET_NAME, DATA_PATH)
+        df = cargar_datos(data_path)
 
-    ## Reporte HTML de evolucion de features
-    # generar_reporte_mensual_html(df, nombre_archivo='reporte_evolucion_features.html')
+        ## Reporte HTML de evolucion de features
+        # generar_reporte_mensual_html(df, nombre_archivo='reporte_evolucion_features.html')
 
-    ## Feature Engineering
-    atributos = list(df.drop(columns=['foto_mes', 'target', 'numero_de_cliente']).columns)
-    cant_lag = 2
+        ## Feature Engineering
+        atributos = list(df.drop(columns=['foto_mes', 'target', 'numero_de_cliente']).columns)
+        cant_lag = 2
+        # Fix aguinaldo
+        # df = fix_aguinaldo(df)
+        # gc.collect()
+        # Lag features
+        # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
+        # df = feature_engineering_rank(df, columnas=atributos) # pandas
+        gc.collect()
+        df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
+        gc.collect()
+        # Delta features
+        df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
+        gc.collect()
 
-    logger.info("=== Starting feature engineering pipeline ===")
-
-    # Fix aguinaldo
-    # df = fix_aguinaldo(df)
-    # gc.collect()
-    logger.info(f"Memory after fix_aguinaldo: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
-
-    # Lag features
-    # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-    # df = feature_engineering_rank(df, columnas=atributos) # pandas
-    gc.collect()
-    df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
-    gc.collect()
-    logger.info(f"Memory after lag features: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
-
-    # Delta features
-    df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
-    gc.collect()
-    logger.info(f"Memory after delta features: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
-
-    ## Convertir clase ternaria a target binaria
-    df = convertir_clase_ternaria_a_target(df)
-    path = 'data/competencia_01_processed.parquet'
-    df.to_parquet('data/competencia_01_processed.parquet', engine='pyarrow')
-
-    # Load parquet with optimized function
-    df = cargar_datos(path)
+        ## Convertir clase ternaria a target binaria
+        df = convertir_clase_ternaria_a_target(df)
+        df.to_csv(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv"), index=False)
 
     # Apply memory optimization
     logger.info("=== Applying memory optimization ===")
     df = reduce_mem_usage(df)
     gc.collect()
 
-    ## Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
+    # Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
     reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
 
     ## Ejecutar optimizacion de hiperparametros

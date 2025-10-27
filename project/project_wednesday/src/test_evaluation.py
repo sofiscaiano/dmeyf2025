@@ -1,5 +1,8 @@
 import lightgbm as lgb
 from sklearn.metrics import roc_auc_score
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import logging
@@ -217,14 +220,84 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
     logger.info(f"Ganancia: {resultados_test['ganancia_test']:,.0f}")
 
 
-import os
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter
-from datetime import datetime
-
 def crear_grafico_ganancia_test(y_pred_proba: np.array, ganancias_acumuladas: np.array) -> str:
+    """
+    Genera un gráfico de la ganancia acumulada en test y lo guarda como JPG.
+
+    :param y_pred_proba: Probabilidades predichas
+    :param ganancias_acumuladas: Vector con ganancias acumuladas
+    :return: ruta del archivo de salida
+    """
+
+    os.makedirs("resultados", exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    ruta_probabilidades = f"resultados/{STUDY_NAME}_probabilidades_{timestamp}.csv"
+
+    df_probabilidades = pd.DataFrame(
+        {
+            'probabilidad': y_pred_proba,
+            'ganancia_acumulada': ganancias_acumuladas,
+            'cliente_ordenado': range(len(y_pred_proba))
+        }
+    )
+
+    df_probabilidades.to_csv(ruta_probabilidades, index=False)
+    logger.info(f'Probabilidades guardadas en: {ruta_probabilidades}')
+
+    ganancia_maxima = np.max(ganancias_acumuladas)
+    indice_maximo = np.argmax(ganancias_acumuladas)
+
+    # umbral para filtrar el grafico
+    umbral_ganancia = ganancia_maxima * 0.66
+
+    indices_filtrados = ganancias_acumuladas >= umbral_ganancia
+    x_filtrado = np.where(indices_filtrados)[0]
+    y_filtrado = ganancias_acumuladas[indices_filtrados]
+
+    # umbral_probabilidad = 0.025
+    # clientes_sobre_umbral = np.sum(y_pred_proba >= umbral_probabilidad)
+
+    plt.style.use('seaborn-v0_8')
+    plt.figure(figsize=(14, 8))
+
+    plt.plot(x_filtrado, y_filtrado, color='blue', linewidth=2.5, label='Ganancia Acumulada')
+
+    plt.scatter(indice_maximo, ganancia_maxima, color='red', s=100, zorder=5, label='Ganancia Máxima')
+
+    plt.annotate(f'Ganancia Máxima\n{ganancia_maxima:,.0f}',
+                 xy=(indice_maximo, ganancia_maxima),
+                 xytext=(indice_maximo + len(x_filtrado) * 0.1, ganancia_maxima * 1.05),
+                 arrowprops=dict(arrowstyle="->", color='red', lw=1.5),
+                 fontsize=10, fontweight='bold', color='red',
+                 bbox=dict(facecolor='white', alpha=0.8, boxstyle='round, pad=0.3'))
+
+    plt.xlabel('Clientes ordenados por probabilidad', fontsize=12)
+    plt.ylabel('Ganancia Acumulada', fontsize=12)
+    plt.title(f'Ganancia acumulada por orden de predicción (filtrada) - {STUDY_NAME}',
+              fontsize=14, fontweight='bold')
+    plt.grid(True, alpha=0.3)
+    plt.legend(fontsize=10)
+
+    # ✅ corregido: usar el valor x en el formato
+    plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:,.0f}"))
+    plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:,.0f}"))
+
+    plt.tight_layout()
+
+    ruta_archivo = f'resultados/{STUDY_NAME}_grafico_test_{timestamp}.jpg'
+
+    plt.savefig(ruta_archivo, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    logger.info(f'Archivo guardado: {ruta_archivo}')
+    logger.info('Estadísticas del gráfico:')
+    logger.info(f'  - Ganancia máxima: {ganancia_maxima:,.0f}')
+    logger.info(f'  - Corte ideal por cliente: {indice_maximo:,.0f}')
+
+    return ruta_archivo
+
+
+def crear_grafico_ganancia_test_individual(y_pred_proba: list, ganancias_acumuladas: list) -> str:
     """
     Genera un gráfico de la ganancia acumulada en test y lo guarda como JPG.
 

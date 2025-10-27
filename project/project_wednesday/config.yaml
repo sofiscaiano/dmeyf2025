@@ -1,9 +1,12 @@
-STUDY_NAME : 'lgb_optimization_competencia32'
+STUDY_NAME : 'lgb_optimization_competencia106'
+
+BUCKET_NAME: '~/buckets/b1'
+LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday'
 
 competencia01:
-  DATA_PATH: '../data/competencia_01.csv'
+  DATA_PATH: 'datasets/competencia_01.csv'
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
-  MES_TRAIN: [202101, 202102, 202103]
+  MES_TRAIN: [202103]
   MES_VALIDACION:
   MES_TEST: 202104
   FINAL_TRAIN: [202101, 202102, 202103, 202104]
@@ -17,19 +20,19 @@ parametros_lgb:
   n_trail: 100
   num_leaves: [10, 1000]
   learning_rate: [0.005, 0.3]
-  feature_fraction: [0.2, 1.0]
-  bagging_fraction: [0.2, 1.0]
-  min_data_in_leaf: [2, 3000]
-  num_iterations: [500, 2000]
+  feature_fraction: [0.5, 0.5]
+  bagging_fraction: [0.5, 0.5]
+  min_data_in_leaf: [2, 2000]
+  num_iterations: [200, 2000]
   feature_pre_filter: False
   force_row_wise: True
   max_bin: 31
   metric: 'auc'
 
 parametros_adhoc:
-  num_iterations: 1383
-  learning_rate: 0.01669323296938561
-  feature_fraction: 0.8860187010472017
-  num_leaves: 734
-  min_data_in_leaf: 116 #35
-  bagging_fraction: 0.2093419584365341
+  num_iterations: 244 #156
+  learning_rate: 0.02445596482887544 #0.043900455244426595
+  feature_fraction: 0.2980742584938477 #0.2063929274410056
+  num_leaves: 682 #317
+  min_data_in_leaf: 357 #1300
+  bagging_fraction: 0.7429819063716396 #0.39522373841819725

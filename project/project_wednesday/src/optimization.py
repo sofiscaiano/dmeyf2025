@@ -132,18 +132,28 @@ def objetivo_ganancia(trial, df) -> float:
 
     # MES_TRAIN puede ser un unico mes o una lista de meses
     if isinstance(MES_TRAIN, list):
-        periodos_cv = MES_TRAIN + [MES_VALIDACION]
+        periodos_train = MES_TRAIN + [MES_VALIDACION]
     else:
-        periodos_cv = [MES_TRAIN, MES_VALIDACION]
+        periodos_train = [MES_TRAIN, MES_VALIDACION]
 
-    df_train = df[df['foto_mes'].isin(periodos_cv)]
+    # if isinstance(MES_VALIDACION, list):
+    #     periodos_val = MES_VALIDACION
+    # else:
+    #     periodos_val = [MES_VALIDACION]
+
+    df_train = df[df['foto_mes'].isin(periodos_train)]
+    # df_val = df[df['foto_mes'].isin(periodos_val)]
     logging.info(df_train.shape)
+    # logging.info(df_val.shape)
     X_train = df_train.drop(['target', 'target_test'], axis=1)
     y_train = df_train['target']
+    # X_val = df_val.drop(['target', 'target_test'], axis=1)
+    # y_val = df_val['target']
 
     train_data = lgb.Dataset(X_train, label=y_train)
+    # val_data = lgb.Dataset(X_val, label=y_val)
 
-    # logger.debug(f"Iniciando CV de trial:{trial.number}")
+    logger.debug(f"Iniciando CV de trial:{trial.number}")
     cv_results = lgb.cv(
         params,
         train_data,
@@ -154,6 +164,15 @@ def objetivo_ganancia(trial, df) -> float:
         seed=SEMILLA[0],
         callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False), lgb.log_evaluation(0)]
     )
+
+    # Entrenamiento
+    # modelo = lgb.train(
+    #     params,
+    #     train_data,
+    #     feval=ganancia_evaluator,
+    #     seed=SEMILLA[0],
+    #     callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False), lgb.log_evaluation(0)]
+    # )
 
     # 1. Determina la métrica y su valor
     if PARAMETROS_LGB['metric'] == 'auc':
@@ -174,6 +193,67 @@ def objetivo_ganancia(trial, df) -> float:
 
     return metrica
 
+
+def crear_o_cargar_estudio(study_name: str = None, semilla: int = None) -> optuna.Study:
+    """
+    Crea un nuevo estudio de Optuna o carga uno existente desde SQLite.
+
+    Args:
+        study_name: Nombre del estudio (si es None, usa STUDY_NAME del config)
+        semilla: Semilla para reproducibilidad
+
+    Returns:
+        optuna.Study: Estudio de Optuna (nuevo o cargado)
+    """
+    study_name = STUDY_NAME
+
+    if semilla is None:
+        semilla = SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA
+
+    # Crear carpeta para bases de datos si no existe
+    path_db = os.path.join(BUCKET_NAME, "optuna_db")
+    os.makedirs(path_db, exist_ok=True)
+
+    # Ruta completa de la base de datos
+    db_file = os.path.join(path_db, f"{study_name}.db")
+    storage = f"sqlite:///{db_file}"
+
+    # Verificar si existe un estudio previo
+    if os.path.exists(db_file):
+        logger.info(f"⚡ Base de datos encontrada: {db_file}")
+        logger.info(f"🔄 Cargando estudio existente: {study_name}")
+
+        try:
+            study = optuna.load_study(study_name=study_name, storage=storage)
+            n_trials_previos = len(study.trials)
+
+            logger.info(f"✅ Estudio cargado exitosamente")
+            logger.info(f"📊 Trials previos: {n_trials_previos}")
+
+            if n_trials_previos > 0:
+                logger.info(f"🏆 Mejor ganancia hasta ahora: {study.best_value:,.0f}")
+
+            return study
+
+        except Exception as e:
+            logger.warning(f"⚠️ No se pudo cargar el estudio: {e}")
+            logger.info(f"🆕 Creando nuevo estudio...")
+    else:
+        logger.info(f"🆕 No se encontró base de datos previa")
+        logger.info(f"📁 Creando nueva base de datos: {db_file}")
+
+    # Crear nuevo estudio
+    study = optuna.create_study(
+        direction="maximize",
+        study_name=study_name,
+        sampler=optuna.samplers.TPESampler(seed=SEMILLA[0]),
+        storage=storage,
+    )
+
+    logger.info(f"✅ Nuevo estudio creado: {study_name}")
+    logger.info(f"💾 Storage: {storage}")
+
+    return study
 
 def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     """
@@ -199,29 +279,37 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     logger.info(f"Iniciando optimización con {n_trials} trials")
     logger.info(f"Configuración: TRAIN={MES_TRAIN}, VALID={MES_VALIDACION}, SEMILLA={SEMILLA}")
 
-    study = optuna.create_study(
-        direction="maximize",
-        study_name=study_name,
-        sampler=optuna.samplers.TPESampler(seed=SEMILLA[0])
-        # storage=storage_name,
-        # load_if_exists=True,
-    )
+    # Crear o cargar estudio desde DuckDB
+    study = crear_o_cargar_estudio(study_name, SEMILLA)
 
-    study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=n_trials, show_progress_bar=True, n_jobs=n_jobs, gc_after_trial=True)
+    # Calcular cuántos trials faltan
+    trials_previos = len(study.trials)
+    trials_a_ejecutar = max(0, n_trials - trials_previos)
 
-    # Generar el gráfico
-    fig_importancia = optuna.visualization.plot_param_importances(study)
-    fig_importancia.write_html(f"resultados/{STUDY_NAME}_importancia_parametros.html")
+    if trials_previos > 0:
+        logger.info(f"🔄 Retomando desde trial {trials_previos}")
+        logger.info(f"📝 Trials a ejecutar: {trials_a_ejecutar} (total objetivo: {n_trials})")
+    else:
+        logger.info(f"🆕 Nueva optimización: {n_trials} trials")
 
-    fig_contour = optuna.visualization.plot_contour(study, params=['num_leaves', 'min_data_in_leaf'])
-    fig_contour.write_html(f"resultados/{STUDY_NAME}_contour.html")
+    # Ejecutar optimización
+    if trials_a_ejecutar > 0:
+        study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=trials_a_ejecutar, show_progress_bar=True, n_jobs=n_jobs, gc_after_trial=True)
 
-    fig_slice = optuna.visualization.plot_slice(study)
-    fig_slice.write_html(f"resultados/{STUDY_NAME}_slice.html")
+        # Generar el gráfico
+        fig_importancia = optuna.visualization.plot_param_importances(study)
+        fig_importancia.write_html(f"resultados/{STUDY_NAME}_importancia_parametros.html")
 
-    # Resultados
-    logger.info(f"Mejor ganancia: {study.best_value:,.0f}")
-    logger.info(f"Mejores parámetros: {study.best_params}")
+        fig_contour = optuna.visualization.plot_contour(study, params=['num_leaves', 'min_data_in_leaf'])
+        fig_contour.write_html(f"resultados/{STUDY_NAME}_contour.html")
+
+        fig_slice = optuna.visualization.plot_slice(study)
+        fig_slice.write_html(f"resultados/{STUDY_NAME}_slice.html")
+
+        logger.info(f"🏆 Mejor ganancia: {study.best_value:,.0f}")
+        logger.info(f"Mejores parámetros: {study.best_params}")
+    else:
+        logger.info(f"✅ Ya se completaron {n_trials} trials")
 
     return study
 

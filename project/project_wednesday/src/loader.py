@@ -1,14 +1,12 @@
 import pandas as pd
 import logging
-import pyarrow.csv as pv
-import pyarrow.parquet as pq
 import numpy as np
 
 
 logger = logging.getLogger(__name__)
 def cargar_datos(path: str, columns: list = None, use_threads: bool = True) -> pd.DataFrame | None:
     '''
-    Carga un CSV o Parquet desde 'path' con pyarrow y retorna un pd.DataFrame.
+    Carga un CSV o Parquet desde 'path' y retorna un pd.DataFrame.
     Versión optimizada con soporte para columnas específicas y multithreading.
 
     Args:
@@ -22,20 +20,9 @@ def cargar_datos(path: str, columns: list = None, use_threads: bool = True) -> p
 
     logger.info(f'Cargando dataset desde {path}')
     try:
-        if path.endswith('.parquet'):
-            # Cargar parquet con optimizaciones
-            tabla_pyarrow = pq.read_table(
-                path,
-                columns=columns,
-                use_threads=use_threads
-            )
-        else:
-            # Cargar CSV
-            tabla_pyarrow = pv.read_csv(path)
-            if columns is not None:
-                tabla_pyarrow = tabla_pyarrow.select(columns)
+        # Cargar CSV
+        df = pd.read_csv(path)
 
-        df = tabla_pyarrow.to_pandas()
         logger.info(f'Dataset cargado con {df.shape[0]:,} filas y {df.shape[1]} columnas')
         return df
     except Exception as e:
