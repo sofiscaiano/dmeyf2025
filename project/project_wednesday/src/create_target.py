@@ -49,6 +49,6 @@ def create_target(path):
 
     print(df.shape)
     print(df['target'].value_counts(dropna=False))
-    df.to_csv("data/competencia_01.csv", index=False)
+    df.to_csv("datasets/competencia_02.csv.gz", index=False)
 
     con.close()

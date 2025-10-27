@@ -4,7 +4,7 @@ BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday'
 
 competencia01:
-  DATA_PATH: 'datasets/competencia_01.csv'
+  DATA_PATH: 'datasets/competencia_02.csv.gz'
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
   MES_TRAIN: [202103]
   MES_VALIDACION:
