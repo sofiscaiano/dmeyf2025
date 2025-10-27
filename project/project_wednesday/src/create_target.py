@@ -1,6 +1,9 @@
 import duckdb
 import pandas as pd
 import logging
+import os
+from .config import BUCKET_NAME
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +52,7 @@ def create_target(path):
 
     print(df.shape)
     print(df['target'].value_counts(dropna=False))
-    df.to_csv("datasets/competencia_02.csv.gz", index=False)
+    export_path = os.path.join(BUCKET_NAME, "datasets/competencia_02.csv.gz")
+    df.to_csv(export_path, index=False)
 
     con.close()
