@@ -5,8 +5,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def create_target():
-    df = pd.read_csv('data/competencia_01_crudo.csv')
+def create_target(path):
+    df = pd.read_csv(path)
 
     sql = """
     with cte as (
