@@ -70,7 +70,8 @@ def main():
     print(">>> Inicio de ejecucion")
 
     ## Creacion de target
-    create_target(path='datasets/competencia_02_crudo.csv.gz')
+    crudo_path = os.path.join(BUCKET_NAME, "/datasets/competencia_02_crudo.csv.gz")
+    create_target(path=crudo_path)
 
     if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv")):
         logger.info("✅ df_fe.csv encontrado")
