@@ -176,8 +176,10 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
     if archivo_base is None:
         archivo_base = STUDY_NAME
 
+    path_resultados = os.path.join(BUCKET_NAME, "resultados")
+    os.makedirs(path_resultados, exist_ok=True)
     # Nombre del archivo único para todas las iteraciones
-    archivo = f"resultados/{archivo_base}_test_results.json"
+    archivo = os.path.join(path_resultados, f"{archivo_base}_test_results.json")
 
     # Datos del resultado en test
     test_data = {
@@ -229,9 +231,10 @@ def crear_grafico_ganancia_test(y_pred_proba: np.array, ganancias_acumuladas: np
     :return: ruta del archivo de salida
     """
 
-    os.makedirs("resultados", exist_ok=True)
+    path_resultados = os.path.join(BUCKET_NAME, "resultados")
+    os.makedirs(path_resultados, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    ruta_probabilidades = f"resultados/{STUDY_NAME}_probabilidades_{timestamp}.csv"
+    ruta_probabilidades = os.path.join(path_resultados, f"{STUDY_NAME}_probabilidades_{timestamp}.csv")
 
     df_probabilidades = pd.DataFrame(
         {
@@ -253,9 +256,6 @@ def crear_grafico_ganancia_test(y_pred_proba: np.array, ganancias_acumuladas: np
     indices_filtrados = ganancias_acumuladas >= umbral_ganancia
     x_filtrado = np.where(indices_filtrados)[0]
     y_filtrado = ganancias_acumuladas[indices_filtrados]
-
-    # umbral_probabilidad = 0.025
-    # clientes_sobre_umbral = np.sum(y_pred_proba >= umbral_probabilidad)
 
     plt.style.use('seaborn-v0_8')
     plt.figure(figsize=(14, 8))
@@ -284,7 +284,7 @@ def crear_grafico_ganancia_test(y_pred_proba: np.array, ganancias_acumuladas: np
 
     plt.tight_layout()
 
-    ruta_archivo = f'resultados/{STUDY_NAME}_grafico_test_{timestamp}.jpg'
+    ruta_archivo = os.path.join(path_resultados, f"{STUDY_NAME}_grafico_test_{timestamp}.jpg")
 
     plt.savefig(ruta_archivo, dpi=300, bbox_inches='tight')
     plt.close()
@@ -306,9 +306,10 @@ def crear_grafico_ganancia_test_individual(y_pred_proba: list, ganancias_acumula
     :return: ruta del archivo de salida
     """
 
-    os.makedirs("resultados", exist_ok=True)
+    path_resultados = os.path.join(BUCKET_NAME, "resultados")
+    os.makedirs(path_resultados, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    ruta_probabilidades = f"resultados/{STUDY_NAME}_probabilidades_{timestamp}.csv"
+    ruta_probabilidades = os.path.join(path_resultados, f"{STUDY_NAME}_probabilidades_{timestamp}.csv")
 
     df_probabilidades = pd.DataFrame(
         {
@@ -330,9 +331,6 @@ def crear_grafico_ganancia_test_individual(y_pred_proba: list, ganancias_acumula
     indices_filtrados = ganancias_acumuladas >= umbral_ganancia
     x_filtrado = np.where(indices_filtrados)[0]
     y_filtrado = ganancias_acumuladas[indices_filtrados]
-
-    # umbral_probabilidad = 0.025
-    # clientes_sobre_umbral = np.sum(y_pred_proba >= umbral_probabilidad)
 
     plt.style.use('seaborn-v0_8')
     plt.figure(figsize=(14, 8))
@@ -361,7 +359,7 @@ def crear_grafico_ganancia_test_individual(y_pred_proba: list, ganancias_acumula
 
     plt.tight_layout()
 
-    ruta_archivo = f'resultados/{STUDY_NAME}_grafico_test_{timestamp}.jpg'
+    ruta_archivo = os.path.join(path_resultados, f"{STUDY_NAME}_grafico_test_{timestamp}.jpg")
 
     plt.savefig(ruta_archivo, dpi=300, bbox_inches='tight')
     plt.close()

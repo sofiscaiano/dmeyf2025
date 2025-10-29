@@ -17,12 +17,13 @@ from src.output_manager import guardar_predicciones_finales
 from src.create_target import create_target
 
 # config basico logging
-path_logs = os.path.join(BUCKET_NAME, "logs")
+path_logs = os.path.join(BUCKET_NAME, "log")
 os.makedirs(path_logs, exist_ok=True)
 
 fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 nombre_log = f"log_{STUDY_NAME}_{fecha}.log"
 log_path = os.path.join(path_logs, nombre_log)
+logger.info(f"Guardo archivo de logs en {log_path}")
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -70,13 +71,12 @@ def main():
     print(">>> Inicio de ejecucion")
 
     ## Creacion de target
-    print(BUCKET_NAME)
     crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
     create_target(path=crudo_path)
 
-    if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv")):
+    if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv.gz")):
         logger.info("✅ df_fe.csv encontrado")
-        df = pd.read_csv(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv"))
+        df = pd.read_csv(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv.gz"))
     else:
         ## Carga de Datos
         logger.info("❌ df_fe.csv no encontrado")
@@ -105,7 +105,7 @@ def main():
 
         ## Convertir clase ternaria a target binaria
         df = convertir_clase_ternaria_a_target(df)
-        df.to_csv(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv"), index=False)
+        df.to_csv(os.path.join(BUCKET_NAME, "datasets", "df_fe.csv.gz"), index=False)
 
     # Apply memory optimization
     logger.info("=== Applying memory optimization ===")
@@ -113,21 +113,21 @@ def main():
     gc.collect()
 
     # Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
-    reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
-
-    ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
-
-    ## 5. Análisis adicional
-    logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    trials_df = study.trials_dataframe()
-    if len(trials_df) > 0:
-        top_5 = trials_df.nlargest(5, 'value')
-        logger.info("Top 5 mejores trials:")
-        for idx, trial in top_5.iterrows():
-            logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
-    logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+    # reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
+    #
+    # ## Ejecutar optimizacion de hiperparametros
+    # study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    #
+    # ## 5. Análisis adicional
+    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    # trials_df = study.trials_dataframe()
+    # if len(trials_df) > 0:
+    #     top_5 = trials_df.nlargest(5, 'value')
+    #     logger.info("Top 5 mejores trials:")
+    #     for idx, trial in top_5.iterrows():
+    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
+    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
@@ -160,9 +160,9 @@ def main():
     logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
     logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
     logger.info(f"📁 Archivo de salida: {salida_kaggle}")
-    logger.info(f"📝 Log detallado: logs/{nombre_log}")
+    logger.info(f"📝 Log detallado: log/{nombre_log}")
 
-    logger.info(f'Ejecucion finalizada. Revisar logs para mas detalles. {nombre_log}')
+    logger.info(f'Ejecucion finalizada. Revisar log para mas detalles. {nombre_log}')
 
 if __name__ == '__main__':
     main()

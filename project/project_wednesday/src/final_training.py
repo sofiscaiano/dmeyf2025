@@ -123,7 +123,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     importance_type = 'gain'  # O 'split'
 
     # Carpeta donde guardar los modelos
-    models_dir = "resultados/modelos/"
+    models_dir = os.path.join(BUCKET_NAME, "resultados/modelos/")
     os.makedirs(models_dir, exist_ok=True)
 
     for i, seed in enumerate(SEMILLA):
@@ -183,8 +183,8 @@ def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.n
 
     if archivo_base is None:
         archivo_base = STUDY_NAME
-    models_dir = "resultados/modelos/"
-    model_files = sorted(glob.glob(f"{models_dir}/{archivo_base}_lgb_seed_*.txt"))
+    model_files = sorted(glob.glob(os.path.join(BUCKET_NAME, f"resultados/modelos/{archivo_base}_lgb_seed_*.txt")))
+    # model_files = sorted(glob.glob(f"{models_dir}/{archivo_base}_lgb_seed_*.txt"))
 
     preds = []
 
