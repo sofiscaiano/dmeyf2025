@@ -28,7 +28,7 @@ try:
         ADHOC = _cfg.get('ADHOC', False)
 
         if FLAG_GCP == 1:
-            BUCKET_NAME = _cfgGeneral.get("BUCKET_NAME", '~/buckets/')
+            BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))
         else:
             BUCKET_NAME = '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday/'
 
