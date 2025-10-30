@@ -50,7 +50,7 @@ def create_target(path):
 
     df = df.with_columns([
         pl.col("tmobile_app").cast(pl.Int64),
-        pl.col("cmobile_app").cast(pl.Int64)
+        pl.col("cmobile_app_trx").cast(pl.Int64)
     ])
 
     export_path = os.path.join(BUCKET_NAME, "datasets/competencia_02.parquet")
