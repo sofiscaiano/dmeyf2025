@@ -3,13 +3,16 @@ import pandas as pd
 import logging
 import os
 from .config import BUCKET_NAME
+import pyarrow as pa
+import pyarrow.parquet as pq
+from .loader import cargar_datos_csv
 
 
 logger = logging.getLogger(__name__)
 
 
 def create_target(path):
-    df = pd.read_csv(path)
+    # df = cargar_datos_csv(path)
 
     sql = """
     with cte as (
@@ -19,7 +22,7 @@ def create_target(path):
         CAST(SUBSTR(CAST(foto_mes AS VARCHAR), 5, 2) AS INTEGER),
         1
       )) as foto_mes)
-    from df)
+    from '{}')
     
     select t0.*,
            --t0.numero_de_cliente, 
@@ -38,21 +41,17 @@ def create_target(path):
     and last_day(date_add(t0.foto_mes, INTERVAL 2 MONTH)) = t2.foto_mes
     --where t0.foto_mes <= '2021-04-30'
     ORDER BY t0.numero_de_cliente, t0.foto_mes
-    """
+    """.format(path)
 
     # Ejecutar la consulta SQL
+    # df = df.to_arrow()
     con = duckdb.connect(database=":memory:")
-    con.register("df", df)
-    df = con.execute(sql).df()
+    # con.register("df", df)
+    # df = con.execute(sql).pl()
 
-    # # 1. Convertir la columna 'fecha' a formato datetime
-    # df['foto_mes'] = pd.to_datetime(df["foto_mes"])
-    # # 2. Formatear la fecha a YYYYMM como cadena y convertir a entero
-    # df['foto_mes'] = df['foto_mes'].dt.strftime('%Y%m').astype(int)
+    df = con.execute(sql).pl()
 
-    print(df.shape)
-    print(df['target'].value_counts(dropna=False))
-    export_path = os.path.join(BUCKET_NAME, "datasets/competencia_02.csv.gz")
-    df.to_csv(export_path, index=False)
+    export_path = os.path.join(BUCKET_NAME, "datasets/competencia_02.parquet")
+    df.write_parquet(export_path, compression="gzip")
 
     con.close()

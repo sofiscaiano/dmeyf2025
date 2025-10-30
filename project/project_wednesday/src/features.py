@@ -122,12 +122,11 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
     con.register("df", df)
-    df = con.execute(sql).df()
+    df = con.execute(sql).pl()
     con.close()
 
-    print(df.head())
-
-    logger.info(f"Feature engineering completado. DataFrame resultante con {df.shape[1]} columnas")
+    logger.info(f"Feature engineering [lags] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
 
@@ -188,9 +187,9 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
     """
     Genera variables delta (attr - attr_lag_i) usando Polars.
     """
-    logger.info(f"Comienzo feature delta (Polars). df shape: {df.shape}")
+    logger.info(f"Comienzo feature delta. df shape: {df.shape}")
 
-    df = pl.from_pandas(df)
+    # df = pl.from_pandas(df)
 
     exprs = []
     for attr in columnas:
@@ -209,7 +208,7 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
     if exprs:
         df = df.with_columns(exprs)
 
-    df = df.to_pandas()
+    # df = df.to_pandas()
 
     logger.info(df.head())
 

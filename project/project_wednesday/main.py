@@ -5,6 +5,7 @@ import logging
 import argparse
 import numpy as np
 import gc
+import polars as pl
 
 from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target, reduce_mem_usage
@@ -76,7 +77,9 @@ def main():
 
     if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv.gz")):
         logger.info("✅ df_fe.csv encontrado")
-        df = pd.read_csv(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv.gz"))
+        data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv.gz")
+        df = cargar_datos(data_path)
+
     else:
         ## Carga de Datos
         logger.info("❌ df_fe.csv no encontrado")
@@ -88,7 +91,7 @@ def main():
         # generar_reporte_mensual_html(df, nombre_archivo='reporte_evolucion_features.html')
 
         ## Feature Engineering
-        atributos = list(df.drop(columns=['foto_mes', 'target', 'numero_de_cliente']).columns)
+        atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
         cant_lag = 2
         # Fix aguinaldo
         # df = fix_aguinaldo(df)
@@ -105,7 +108,8 @@ def main():
 
         ## Convertir clase ternaria a target binaria
         df = convertir_clase_ternaria_a_target(df)
-        df.to_csv(os.path.join(BUCKET_NAME, "datasets", "df_fe.csv.gz"), index=False)
+        data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
+        df.write_parquet(data_path, compression="gzip")
 
     # Apply memory optimization
     logger.info("=== Applying memory optimization ===")

@@ -1,79 +1,94 @@
 import pandas as pd
 import logging
 import numpy as np
+import polars as pl
 
 
 logger = logging.getLogger(__name__)
-def cargar_datos(path: str, columns: list = None, use_threads: bool = True) -> pd.DataFrame | None:
-    '''
-    Carga un CSV o Parquet desde 'path' y retorna un pd.DataFrame.
-    Versión optimizada con soporte para columnas específicas y multithreading.
 
-    Args:
-        path: Ruta al archivo CSV o Parquet
-        columns: Lista de columnas a cargar (None = todas)
-        use_threads: Si True, usa multithreading para lectura
+def cargar_datos(path: str) -> pl.DataFrame:
+    """
+    Carga un archivo Parquet en un DataFrame de Polars.
 
-    Returns:
-        pd.DataFrame con los datos cargados
-    '''
+    Parámetros:
+        ruta (str): Ruta del archivo Parquet a cargar.
 
-    logger.info(f'Cargando dataset desde {path}')
+    Retorna:
+        pl.DataFrame: DataFrame con los datos cargados.
+    """
     try:
-        # Cargar CSV
-        df = pd.read_csv(path)
-
-        logger.info(f'Dataset cargado con {df.shape[0]:,} filas y {df.shape[1]} columnas')
+        df = pl.read_parquet(path)
+        print(f"✅ Archivo cargado correctamente: {path}")
+        print(f"Filas: {df.height}, Columnas: {df.width}")
         return df
+    except FileNotFoundError:
+        print(f"❌ Error: no se encontró el archivo '{path}'.")
     except Exception as e:
-        logger.error(f'Error al cargar el dataset: {e}')
-        raise
+        print(f"⚠️ Error al cargar el archivo Parquet: {e}")
 
-
-def convertir_clase_ternaria_a_target(df: pd.DataFrame) -> pd.DataFrame:
+def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 10000) -> pl.DataFrame:
     """
-    Convierte clase_ternaria a target binario reemplazando en el mismo atributo:
-    - CONTINUA = 0
-    - BAJA+1 y BAJA+2 = 1
+    Carga un archivo CSV comprimido (.csv.gz) en un DataFrame de Polars.
 
-    Args:
-        df: DataFrame con columna 'clase_ternaria'
+    Parámetros:
+        ruta (str): Ruta del archivo CSV comprimido.
+        sep (str): Separador de columnas (por defecto ',').
+        infer_schema_length (int): Número de filas a usar para inferir el esquema.
 
-    Returns:
-        pd.DataFrame: DataFrame con clase_ternaria convertida a valores binarios (0, 1)
+    Retorna:
+        pl.DataFrame: DataFrame con los datos cargados.
     """
-    # Contar valores originales para logging (before modification)
-    n_continua_orig = (df['target'] == 'CONTINUA').sum()
-    n_baja1_orig = (df['target'] == 'BAJA+1').sum()
-    n_baja2_orig = (df['target'] == 'BAJA+2').sum()
+    try:
+        df = pl.read_csv(
+            path,
+            separator=sep,
+            infer_schema_length=infer_schema_length,
+            has_header=True,
+            try_parse_dates=True
+        )
+        print(f"✅ Archivo CSV.gz cargado correctamente: {path}")
+        print(f"Filas: {df.height}, Columnas: {df.width}")
+        return df
+    except FileNotFoundError:
+        print(f"❌ Error: no se encontró el archivo '{path}'.")
+    except Exception as e:
+        print(f"⚠️ Error al cargar el CSV.gz: {e}")
 
-    # Convertir clase_ternaria a binario respetando mi objetivo principal que son los baja+2
-    df['target_test'] = df['target'].map({
-        'CONTINUA': 0,
-        'BAJA+1': 0,
-        'BAJA+2': 1
-    })
 
-    # Convertir clase_ternaria a binario en el mismo atributo considerando todas las bajas para training
-    df['target'] = df['target'].map({
-        'CONTINUA': 0,
-        'BAJA+1': 1,
-        'BAJA+2': 1
-    })
+def convertir_clase_ternaria_a_target(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Convierte 'target' a binario de forma eficiente para datasets grandes:
+      - target_test: solo BAJA+2 = 1
+      - target: BAJA+1 y BAJA+2 = 1, CONTINUA = 0
+    """
+    # Contar valores originales antes de convertir
+    counts_orig = df.select([
+        (pl.col("target") == "CONTINUA").sum().alias("n_continua_orig"),
+        (pl.col("target") == "BAJA+1").sum().alias("n_baja1_orig"),
+        (pl.col("target") == "BAJA+2").sum().alias("n_baja2_orig"),
+    ]).to_dict(as_series=False)
 
-    # Log de la conversión
-    n_ceros = (df['target'] == 0).sum()
-    n_unos = (df['target'] == 1).sum()
+    # Crear columnas binarias de forma vectorizada
+    df = df.with_columns([
+        (pl.col("target") == "BAJA+2").cast(pl.Int8).alias("target_test"),
+        (pl.col("target").is_in(["BAJA+1", "BAJA+2"])).cast(pl.Int8).alias("target")
+    ])
 
-    # Log de la conversión
-    n_ceros_test = (df['target_test'] == 0).sum()
-    n_unos_test = (df['target_test'] == 1).sum()
+    # Contar 0s y 1s después de la conversión
+    counts_bin = df.select([
+        (pl.col("target") == 0).sum().alias("n_ceros"),
+        (pl.col("target") == 1).sum().alias("n_unos"),
+        (pl.col("target_test") == 0).sum().alias("n_ceros_test"),
+        (pl.col("target_test") == 1).sum().alias("n_unos_test")
+    ]).to_dict(as_series=False)
 
-    logger.info(f"Conversión completada:")
-    logger.info(f"  Original - CONTINUA: {n_continua_orig}, BAJA+1: {n_baja1_orig}, BAJA+2: {n_baja2_orig}")
-    logger.info(f"  Binario - 0: {n_ceros}, 1: {n_unos}")
-    logger.info(f"  Distribución: {n_unos / (n_ceros + n_unos) * 100:.2f}% casos positivos")
-    logger.info(f"  Real BAJA+2 -> Binario - 0: {n_ceros_test}, 1: {n_unos_test}")
+    logger.info("Conversión completada:")
+    logger.info(f"  Original - CONTINUA: {counts_orig['n_continua_orig'][0]}, "
+                f"BAJA+1: {counts_orig['n_baja1_orig'][0]}, BAJA+2: {counts_orig['n_baja2_orig'][0]}")
+    logger.info(f"  Binario - 0: {counts_bin['n_ceros'][0]}, 1: {counts_bin['n_unos'][0]}")
+    total = counts_bin['n_ceros'][0] + counts_bin['n_unos'][0]
+    logger.info(f"  Distribución: {counts_bin['n_unos'][0] / total * 100:.2f}% casos positivos")
+    logger.info(f"  Real BAJA+2 -> Binario - 0: {counts_bin['n_ceros_test'][0]}, 1: {counts_bin['n_unos_test'][0]}")
 
     return df
 
