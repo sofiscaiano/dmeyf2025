@@ -26,7 +26,7 @@ def cargar_datos(path: str) -> pl.DataFrame:
     except Exception as e:
         print(f"⚠️ Error al cargar el archivo Parquet: {e}")
 
-def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 10000) -> pl.DataFrame:
+def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 300000) -> pl.DataFrame:
     """
     Carga un archivo CSV comprimido (.csv.gz) en un DataFrame de Polars.
 
