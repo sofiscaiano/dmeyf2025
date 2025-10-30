@@ -53,5 +53,6 @@ def create_target(path):
 
     export_path = os.path.join(BUCKET_NAME, "datasets/competencia_02.parquet")
     df.write_parquet(export_path, compression="gzip")
+    logger.info(">>> Creacion de target finalizada -> {export_path}")
 
     con.close()
