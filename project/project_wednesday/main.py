@@ -75,14 +75,14 @@ def main():
     crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
     create_target(path=crudo_path)
 
-    if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv.gz")):
-        logger.info("✅ df_fe.csv encontrado")
-        data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.csv.gz")
+    if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
+        logger.info("✅ df_fe encontrado")
+        data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
         df = cargar_datos(data_path)
 
     else:
         ## Carga de Datos
-        logger.info("❌ df_fe.csv no encontrado")
+        logger.info("❌ df_fe no encontrado")
         os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
         data_path = os.path.join(BUCKET_NAME, DATA_PATH)
         df = cargar_datos(data_path)
@@ -112,26 +112,26 @@ def main():
         df.write_parquet(data_path, compression="gzip")
 
     # Apply memory optimization
-    logger.info("=== Applying memory optimization ===")
-    df = reduce_mem_usage(df)
-    gc.collect()
+    # logger.info("=== Applying memory optimization ===")
+    # df = reduce_mem_usage(df)
+    # gc.collect()
 
     # Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
-    # reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
-    #
-    # ## Ejecutar optimizacion de hiperparametros
-    # study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
-    #
-    # ## 5. Análisis adicional
-    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    # trials_df = study.trials_dataframe()
-    # if len(trials_df) > 0:
-    #     top_5 = trials_df.nlargest(5, 'value')
-    #     logger.info("Top 5 mejores trials:")
-    #     for idx, trial in top_5.iterrows():
-    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
-    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+    reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
+
+    ## Ejecutar optimizacion de hiperparametros
+    study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+
+    ## 5. Análisis adicional
+    logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    trials_df = study.trials_dataframe()
+    if len(trials_df) > 0:
+        top_5 = trials_df.nlargest(5, 'value')
+        logger.info("Top 5 mejores trials:")
+        for idx, trial in top_5.iterrows():
+            logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
+    logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
