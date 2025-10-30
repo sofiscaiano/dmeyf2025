@@ -76,6 +76,7 @@ def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFr
 
     return df
 
+
 def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
     """
     Genera variables de lag para los atributos especificados utilizando SQL.

@@ -3,10 +3,7 @@ import pandas as pd
 import logging
 import os
 from .config import BUCKET_NAME
-import pyarrow as pa
-import pyarrow.parquet as pq
-from .loader import cargar_datos_csv
-
+import polars as pl
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +47,11 @@ def create_target(path):
     # df = con.execute(sql).pl()
 
     df = con.execute(sql).pl()
+
+    df = df.with_columns([
+        pl.col("tmobile_app").cast(pl.Int64),
+        pl.col("cmobile_app").cast(pl.Int64)
+    ])
 
     export_path = os.path.join(BUCKET_NAME, "datasets/competencia_02.parquet")
     df.write_parquet(export_path, compression="gzip")
