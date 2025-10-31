@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 def create_target(path):
-    # df = cargar_datos_csv(path)
 
     sql = """
     with cte as (
@@ -24,8 +23,8 @@ def create_target(path):
     select t0.*,
            --t0.numero_de_cliente, 
            --t0.foto_mes, 
-           case when t0.foto_mes = '2021-06-30' then NULL -- todavia no tengo datos para conocer las bajas 
-                when t2.foto_mes is null and t0.foto_mes = '2021-05-31' then NULL -- no tengo todavia el dato para mayo
+           case when t0.foto_mes = '2021-08-31' then NULL -- todavia no tengo datos para conocer las bajas 
+                when t2.foto_mes is null and t0.foto_mes = '2021-07-31' then NULL -- no tengo todavia el dato para julio
                 when t1.foto_mes is null then 'BAJA+1' 
                 when t2.foto_mes is null then 'BAJA+2'
                 else 'CONTINUA' end as target
@@ -41,10 +40,7 @@ def create_target(path):
     """.format(path)
 
     # Ejecutar la consulta SQL
-    # df = df.to_arrow()
     con = duckdb.connect(database=":memory:")
-    # con.register("df", df)
-    # df = con.execute(sql).pl()
 
     df = con.execute(sql).pl()
 

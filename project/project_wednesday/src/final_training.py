@@ -28,13 +28,10 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
     logger.info(f"Período de predicción: {FINAL_PREDICT}")
 
     # Datos de entrenamiento: todos los períodos en FINAL_TRAIN
-    if isinstance(FINAL_TRAIN, list):
-        df_train = df[df['foto_mes'].isin(FINAL_TRAIN)]
-    else:
-        df_train = df[df['foto_mes'] == FINAL_TRAIN]
+    df_train = df[df['foto_mes'].isin(FINAL_TRAIN)]
 
     # Datos de predicción: período FINAL_PREDIC
-    df_predict = df[df['foto_mes'] == FINAL_PREDICT]
+    df_predict = df[df['foto_mes'].isin(FINAL_PREDICT)]
 
     logger.info(f"Registros de entrenamiento: {len(df_train):,}")
     logger.info(f"Registros de predicción: {len(df_predict):,}")
@@ -97,16 +94,6 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
         # 'feature_fraction_seed': SEMILLA[0],
         **mejores_params
     }
-
-    if isinstance(MES_TRAIN, list):
-        periodos_validacion = MES_TRAIN
-    else:
-        periodos_validacion = [MES_TRAIN]
-
-    if MES_VALIDACION is not None:
-        periodos_validacion.append(MES_VALIDACION)
-
-    # params['min_data_in_leaf'] = round((len(FINAL_TRAIN)/len(periodos_validacion)) * params['min_data_in_leaf'])
 
     logger.info(f"Parámetros del modelo: {params}")
 

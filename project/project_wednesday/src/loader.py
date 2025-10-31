@@ -2,29 +2,45 @@ import pandas as pd
 import logging
 import numpy as np
 import polars as pl
+from typing import List
 
 
 logger = logging.getLogger(__name__)
 
-def cargar_datos(path: str) -> pl.DataFrame:
+def cargar_datos(path: str, lazy: bool, months: List[int] = None) -> pl.DataFrame:
     """
-    Carga un archivo Parquet en un DataFrame de Polars.
+    Carga un archivo Parquet en un DataFrame de Polars. Tiene la opcion de cargar en modo lazy para filtrar meses.
 
     Parámetros:
-        ruta (str): Ruta del archivo Parquet a cargar.
+        path (str): Ruta del archivo Parquet a cargar.
+        lazy (bool): Indica si la carga es lazy o no.
+        months (list): Indica la lista de meses a filtrar si es lazy
 
     Retorna:
         pl.DataFrame: DataFrame con los datos cargados.
     """
-    try:
-        df = pl.read_parquet(path)
-        print(f"✅ Archivo cargado correctamente: {path}")
-        print(f"Filas: {df.height}, Columnas: {df.width}")
-        return df
-    except FileNotFoundError:
-        print(f"❌ Error: no se encontró el archivo '{path}'.")
-    except Exception as e:
-        print(f"⚠️ Error al cargar el archivo Parquet: {e}")
+
+    if lazy:
+        try:
+            df_lazy = pl.scan_parquet(path)
+            df_lazy = df_lazy.filter(pl.col("foto_mes").is_in(months)).sort(['numero_de_cliente', 'foto_mes'])
+            print(f"✅ Archivo cargado correctamente: {path}")
+            return df_lazy.collect()
+
+        except FileNotFoundError:
+            print(f"❌ Error: no se encontró el archivo '{path}'.")
+        except Exception as e:
+            print(f"⚠️ Error al cargar el archivo Parquet: {e}")
+    else:
+        try:
+            df = pl.read_parquet(path)
+            print(f"✅ Archivo cargado correctamente: {path}")
+            print(f"Filas: {df.height}, Columnas: {df.width}")
+            return df
+        except FileNotFoundError:
+            print(f"❌ Error: no se encontró el archivo '{path}'.")
+        except Exception as e:
+            print(f"⚠️ Error al cargar el archivo Parquet: {e}")
 
 def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 300000, schema_overrides: dict = None) -> pl.DataFrame:
     """

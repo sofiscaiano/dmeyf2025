@@ -34,14 +34,10 @@ def evaluar_en_test(df, mejores_params) -> dict:
     logger.info("=== EVALUACIÓN EN CONJUNTO DE TEST ===")
     logger.info(f"Período de test: {MES_TEST}")
 
-    # Preparar datos de entrenamiento (TRAIN + VALIDACION)
-    if isinstance(MES_TRAIN, list):
-        periodos_entrenamiento = MES_TRAIN + [MES_VALIDACION]
-    else:
-        periodos_entrenamiento = [MES_TRAIN, MES_VALIDACION]
+    periodos_entrenamiento = MES_TRAIN + MES_VALIDACION
 
     df_train_completo = df[df['foto_mes'].isin(periodos_entrenamiento)]
-    df_test = df[df['foto_mes'] == MES_TEST]
+    df_test = df[df['foto_mes'].isin(MES_TEST)]
 
     X_train = df_train_completo.drop(['target', 'target_test'], axis=1)
     y_train = df_train_completo['target']

@@ -25,6 +25,7 @@ try:
         FINAL_TRAIN = _cfg.get('FINAL_TRAIN', [])
         FINAL_PREDICT = _cfg.get('FINAL_PREDICT', "")
         UNDERSAMPLING_FRACTION = _cfg.get('UNDERSAMPLING_FRACTION', 1.0)
+        DROP = _cfg.get('DROP', [])
         ADHOC = _cfg.get('ADHOC', False)
 
         if FLAG_GCP == 1:

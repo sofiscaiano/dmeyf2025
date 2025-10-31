@@ -130,16 +130,8 @@ def objetivo_ganancia(trial, df) -> float:
         'seed': SEMILLA[0]
     }
 
-    # MES_TRAIN puede ser un unico mes o una lista de meses
-    if isinstance(MES_TRAIN, list):
-        periodos_train = MES_TRAIN + [MES_VALIDACION]
-    else:
-        periodos_train = [MES_TRAIN, MES_VALIDACION]
-
-    # if isinstance(MES_VALIDACION, list):
-    #     periodos_val = MES_VALIDACION
-    # else:
-    #     periodos_val = [MES_VALIDACION]
+    periodos_train = MES_TRAIN + MES_VALIDACION
+    # periodos_val = MES_VALIDACION
 
     df_train = df[df['foto_mes'].isin(periodos_train)]
     # df_val = df[df['foto_mes'].isin(periodos_val)]

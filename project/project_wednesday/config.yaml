@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia107'
+STUDY_NAME : 'lgb_optimization_competencia108'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday'
@@ -6,22 +6,23 @@ LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/projec
 competencia01:
   DATA_PATH: 'datasets/competencia_02.parquet'
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
-  MES_TRAIN: [202103]
-  MES_VALIDACION:
-  MES_TEST: 202104
+  MES_TRAIN: [202101, 202102, 202103]
+  MES_VALIDACION: []
+  MES_TEST: [202106]
   FINAL_TRAIN: [202101, 202102, 202103, 202104]
-  FINAL_PREDICT: 202106
+  FINAL_PREDICT: [202106]
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
   UNDERSAMPLING_FRACTION: 0.3
   ADHOC: False
+  DROP: []
 
 parametros_lgb:
   n_trail: 100
   num_leaves: [10, 1000]
   learning_rate: [0.005, 0.3]
-  feature_fraction: [0.5, 0.5]
-  bagging_fraction: [0.5, 0.5]
+  feature_fraction: [0.2, 1]
+  bagging_fraction: [0.2, 1]
   min_data_in_leaf: [2, 2000]
   num_iterations: [200, 2000]
   feature_pre_filter: False
