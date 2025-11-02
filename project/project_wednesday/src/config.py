@@ -25,6 +25,7 @@ try:
         FINAL_TRAIN = _cfg.get('FINAL_TRAIN', [])
         FINAL_PREDICT = _cfg.get('FINAL_PREDICT', "")
         UNDERSAMPLING_FRACTION = _cfg.get('UNDERSAMPLING_FRACTION', 1.0)
+        UNDERSAMPLING_FINAL_TRAINING = _cfg.get('UNDERSAMPLING_FINAL_TRAINING', False)
         DROP = _cfg.get('DROP', [])
         ADHOC = _cfg.get('ADHOC', False)
         ENVIOS = _cfg.get('ENVIOS', None)

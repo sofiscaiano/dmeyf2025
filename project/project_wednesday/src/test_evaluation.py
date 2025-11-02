@@ -162,11 +162,15 @@ def evaluar_en_test(df, mejores_params) -> dict:
     }
     logging.info('=== Finaliza Calculo de Ganancias Acumuladas en Test ===')
 
-
     logger.info("=== INICIANDO GENERACION DE GRAFICO DE TEST")
     ruta_grafico = crear_grafico_ganancia(y_pred, ganancia_ensamble)
     ruta_grafico_multiple = crear_grafico_multiple_ganancia(ganancias_acumuladas)
     logger.info("=== GRAFICO DE TEST COMPLETADO")
+
+    ## Resumen de evaluación en test
+    logger.info("=== RESUMEN DE EVALUACIÓN EN TEST ===")
+    logger.info(f"✅ Ganancia en test: {resultados['ganancia_test']:,.4f}")
+    logger.info(f"🎯 Predicciones positivas: {resultados['predicciones_positivas']:,} ({resultados['porcentaje_positivas']:.2f}%)")
 
     return resultados, y_pred, ganancias_acumuladas
 

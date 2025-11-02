@@ -8,7 +8,7 @@ import gc
 import polars as pl
 
 from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend
-from src.loader import cargar_datos, convertir_clase_ternaria_a_target, reduce_mem_usage
+from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target, reduce_mem_usage
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *
@@ -49,6 +49,7 @@ logger.info(f"MES_TEST: {MES_TEST}")
 logger.info(f"GANANCIA_ACIERTO: {GANANCIA_ACIERTO}")
 logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
 logger.info(f"UNDERSAMPLING_FRACTION: {UNDERSAMPLING_FRACTION}")
+logger.info(f"UNDERSAMPLING_FINAL_TRAINING: {UNDERSAMPLING_FINAL_TRAINING}")
 logger.info(f"METRIC: {PARAMETROS_LGB['metric']}")
 logger.info(f"DROP FEATURES: {DROP}")
 logger.info(f"CANTIDAD DE ENVIOS: {ENVIOS}")
@@ -76,7 +77,8 @@ def main():
 
     ## Creacion de target
     # crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
-    # create_target(path=crudo_path)
+    # df = cargar_datos_csv(crudo_path)
+    # df = create_target(df=df)
 
     if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
         logger.info("✅ df_fe encontrado")
@@ -122,7 +124,7 @@ def main():
     gc.collect()
 
     # Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
-    # reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
+    reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
 
     # ## Ejecutar optimizacion de hiperparametros
     # study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
@@ -137,23 +139,16 @@ def main():
     #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
     # logger.info(f'Mejores Hiperparametros: {study.best_params}')
     # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
-    #
+
     mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia27')
-    resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
-
-    # Guardar resultados de test
-    guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-
-    # Resumen de evaluación en test
-    logger.info("=== RESUMEN DE EVALUACIÓN EN TEST ===")
-    logger.info(f"✅ Ganancia en test: {resultados_test['ganancia_test']:,.4f}")
-    logger.info(f"🎯 Predicciones positivas: {resultados_test['predicciones_positivas']:,} ({resultados_test['porcentaje_positivas']:.2f}%)")
-
-    ## Entrenar modelo final
-    X_train, y_train, X_predict, clientes_predict = preparar_datos_entrenamiento_final(df)
-    del df
-    gc.collect()
-    modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
+    if UNDERSAMPLING_FINAL_TRAINING:
+        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(reduced_df, mejores_params)
+        guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
+        entrenar_modelo_final(reduced_df, mejores_params)
+    else:
+        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
+        guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
+        entrenar_modelo_final(df, mejores_params)
 
     ## Generar predicciones
     if ENVIOS is not None:
@@ -161,9 +156,7 @@ def main():
     else:
         envios = cargar_mejores_envios()
 
-    predicciones = generar_predicciones_finales(X_predict, clientes_predict, envios)
-
-    ## Guardar predicciones
+    predicciones = generar_predicciones_finales(df, envios)
     salida_kaggle = guardar_predicciones_finales(predicciones)
 
     ## Resumen final

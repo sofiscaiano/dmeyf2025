@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia113'
+STUDY_NAME : 'lgb_optimization_competencia114'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday'
@@ -8,16 +8,17 @@ competencia01:
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
   MES_TRAIN: [202101, 202102, 202103]
   MES_VALIDACION: []
-  MES_TEST: [202106]
+  MES_TEST: [202104]
   FINAL_TRAIN: [202101, 202102, 202103, 202104]
   FINAL_PREDICT: [202106]
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
   UNDERSAMPLING_FRACTION: 0.3
+  UNDERSAMPLING_FINAL_TRAINING: True
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
   ENVIOS:
-  DESCRIPCION: 'Pruebo descartar las dos variables de prestamos personales con mis hiperparametros de competencia 1 con los envios optimos de junio'
+  DESCRIPCION: 'Pruebo mantener el undersampling en el test y training final'
 
 parametros_lgb:
   n_trail: 100

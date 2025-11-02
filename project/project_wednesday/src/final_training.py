@@ -52,20 +52,51 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
 
     return X_train, y_train, X_predict, clientes_predict
 
+def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
+    """
+    Prepara los datos para el entrenamiento final usando todos los períodos de FINAL_TRAIN.
 
-def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_params: dict) -> list:
+    Args:
+        df: DataFrame con todos los datos
+
+    Returns:
+        tuple: (X_train, y_train, X_predict, clientes_predict)
+    """
+    logger.info(f"Preparando datos para entrenamiento final")
+    logger.info(f"Períodos de entrenamiento: {FINAL_TRAIN}")
+
+
+    # Datos de entrenamiento: todos los períodos en FINAL_TRAIN
+    df_train = df[df['foto_mes'].isin(FINAL_TRAIN)]
+
+    logger.info(f"Registros de entrenamiento: {len(df_train):,}")
+
+
+    # Preparar features y target para entrenamiento
+    X_train = df_train.drop(['target', 'target_test'], axis=1)
+    y_train = df_train['target']
+
+    del df, df_train
+    gc.collect()
+
+    logger.info(f"Distribución del target - 0: {(y_train == 0).sum():,}, 1: {(y_train == 1).sum():,}")
+
+    return X_train, y_train
+
+def entrenar_modelo_final(df: pd.DataFrame, mejores_params: dict) -> list:
     """
     Entrena el modelo final con los mejores hiperparámetros.
 
     Args:
-        X_train: Features de entrenamiento
-        y_train: Target de entrenamiento
+        df: Dataframe de entrenamiento
         mejores_params: Mejores hiperparámetros de Optuna
 
     Returns:
-        lgb.Booster: Modelo entrenado
+        modelos: Lista de los modelos entrenados
     """
     logger.info("Iniciando entrenamiento del modelo final")
+
+    X_train, y_train = preparar_datos_entrenamiento_final(df)
 
     flag_GPU = int(os.getenv('GPU', 0))
 
@@ -153,8 +184,7 @@ def entrenar_modelo_final(X_train: pd.DataFrame, y_train: pd.Series, mejores_par
     return modelos
 
 
-def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.ndarray,
-                                 envios: int, archivo_base: str = None) -> pd.DataFrame:
+def generar_predicciones_finales(df: pd.DataFrame, envios: int, archivo_base: str = None) -> pd.DataFrame:
     """
     Genera las predicciones finales para el período objetivo.
 
@@ -166,6 +196,15 @@ def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.n
     Returns:
         pd.DataFrame: DataFrame con numero_cliente y predict
     """
+    logger.info(f"Período de predicción: {FINAL_PREDICT}")
+    df_predict = df[df['foto_mes'].isin(FINAL_PREDICT)]
+
+    logger.info(f"Registros de predicción: {len(df_predict):,}")
+    X_predict = df_predict.drop(['target', 'target_test'], axis=1)
+    clientes_predict = df_predict['numero_de_cliente']
+
+    logger.info(f"Features utilizadas: {len(X_predict.columns)}")
+
     logger.info("Generando predicciones finales")
 
     if archivo_base is None:
