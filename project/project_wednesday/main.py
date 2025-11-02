@@ -51,6 +51,8 @@ logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
 logger.info(f"UNDERSAMPLING_FRACTION: {UNDERSAMPLING_FRACTION}")
 logger.info(f"METRIC: {PARAMETROS_LGB['metric']}")
 logger.info(f"DROP FEATURES: {DROP}")
+logger.info(f"CANTIDAD DE ENVIOS: {ENVIOS}")
+logger.info(f"DESCRIPCION DE EXPERIMENTO: {DESCRIPCION}")
 
 def main():
 
@@ -73,8 +75,8 @@ def main():
     print(">>> Inicio de ejecucion")
 
     ## Creacion de target
-    crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
-    create_target(path=crudo_path)
+    # crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
+    # create_target(path=crudo_path)
 
     if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
         logger.info("✅ df_fe encontrado")
@@ -115,7 +117,8 @@ def main():
 
     df = df.to_pandas()
     df = reduce_mem_usage(df)
-    df.drop(columns=DROP, inplace=True)
+    cols_to_drop = [col for col in df.columns for prefix in DROP if col.startswith(prefix)]
+    df.drop(columns=cols_to_drop, inplace=True)
     gc.collect()
 
     # Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
@@ -134,7 +137,7 @@ def main():
     #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
     # logger.info(f'Mejores Hiperparametros: {study.best_params}')
     # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
-
+    #
     mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia27')
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
 
@@ -153,7 +156,11 @@ def main():
     modelo_final = entrenar_modelo_final(X_train, y_train, mejores_params)
 
     ## Generar predicciones
-    envios = cargar_mejores_envios()
+    if ENVIOS is not None:
+        envios = ENVIOS
+    else:
+        envios = cargar_mejores_envios()
+
     predicciones = generar_predicciones_finales(X_predict, clientes_predict, envios)
 
     ## Guardar predicciones

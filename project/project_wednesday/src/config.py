@@ -27,6 +27,8 @@ try:
         UNDERSAMPLING_FRACTION = _cfg.get('UNDERSAMPLING_FRACTION', 1.0)
         DROP = _cfg.get('DROP', [])
         ADHOC = _cfg.get('ADHOC', False)
+        ENVIOS = _cfg.get('ENVIOS', None)
+        DESCRIPCION = _cfg.get('DESCRIPCION', '')
 
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))

@@ -170,8 +170,11 @@ def generar_predicciones_finales(X_predict: pd.DataFrame, clientes_predict: np.n
 
     if archivo_base is None:
         archivo_base = STUDY_NAME
+
     model_files = sorted(glob.glob(os.path.join(BUCKET_NAME, f"resultados/modelos/{archivo_base}_lgb_seed_*.txt")))
-    # model_files = sorted(glob.glob(f"{models_dir}/{archivo_base}_lgb_seed_*.txt"))
+    if not model_files:
+        mensaje_error = f"🔍 No se encontraron los modelos correspondientes al experimento '{archivo_base}'."
+        raise FileNotFoundError(mensaje_error)
 
     preds = []
 

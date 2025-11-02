@@ -1,0 +1,31 @@
+[
+  {
+    "ganancia": 373400000.0,
+    "auc": 0.9389053764767129,
+    "auc_BAJA+2": 0.9161553774389068,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 8569,
+    "porcentaje_positivas": 5.243608415229657,
+    "params": {
+      "bagging_fraction": 0.39522373841819725,
+      "num_iterations": 156,
+      "learning_rate": 0.043900455244426595,
+      "feature_fraction": 0.2063929274410056,
+      "num_leaves": 317,
+      "min_data_in_leaf": 1300
+    },
+    "datetime": "2025-11-01T19:22:32.623437",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        202101,
+        202102,
+        202103
+      ],
+      "mes_test": [
+        202104
+      ]
+    }
+  }
+]

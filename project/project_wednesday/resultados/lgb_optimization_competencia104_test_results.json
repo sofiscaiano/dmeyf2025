@@ -1,0 +1,30 @@
+[
+  {
+    "ganancia": 381780000.0,
+    "auc": 0.941999342081999,
+    "auc_BAJA+2": 0.9146144535793026,
+    "total_predicciones": 163418,
+    "predicciones_positivas": 8470,
+    "porcentaje_positivas": 5.18302757346192,
+    "params": {
+      "num_iterations": 244,
+      "learning_rate": 0.02445596482887544,
+      "num_leaves": 682,
+      "min_data_in_leaf": 357,
+      "feature_fraction": 0.2980742584938477,
+      "bagging_fraction": 0.7429819063716396
+    },
+    "datetime": "2025-10-23T20:36:19.697641",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        202101,
+        202102,
+        202103
+      ],
+      "mes_test": 202104
+    },
+    "detalle": "los hiperparametros del segundo mejor modelo del study 101 (iteracion 72)"
+  }
+]

@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia108'
+STUDY_NAME : 'lgb_optimization_competencia113'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday'
@@ -15,7 +15,9 @@ competencia01:
   COSTO_ESTIMULO: 20000
   UNDERSAMPLING_FRACTION: 0.3
   ADHOC: False
-  DROP: []
+  DROP: ['mprestamos_personales', 'cprestamos_personales']
+  ENVIOS:
+  DESCRIPCION: 'Pruebo descartar las dos variables de prestamos personales con mis hiperparametros de competencia 1 con los envios optimos de junio'
 
 parametros_lgb:
   n_trail: 100
