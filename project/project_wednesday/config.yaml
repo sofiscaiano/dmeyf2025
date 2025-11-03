@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia114'
+STUDY_NAME : 'lgb_optimization_competencia118'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday'
@@ -8,7 +8,7 @@ competencia01:
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
   MES_TRAIN: [202101, 202102, 202103]
   MES_VALIDACION: []
-  MES_TEST: [202104]
+  MES_TEST: [202106]
   FINAL_TRAIN: [202101, 202102, 202103, 202104]
   FINAL_PREDICT: [202106]
   GANANCIA_ACIERTO: 780000
@@ -18,7 +18,7 @@ competencia01:
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
   ENVIOS:
-  DESCRIPCION: 'Pruebo mantener el undersampling en el test y training final'
+  DESCRIPCION: 'Pruebo hacer un undersampling manteniendo todos los registros de los clientes muestreados'
 
 parametros_lgb:
   n_trail: 100

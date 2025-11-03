@@ -6,6 +6,11 @@ import logging
 from .config import SEMILLA
 import os
 import gc
+import plotly.express as px
+from io import StringIO
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -293,10 +298,19 @@ def undersample(df, sample_fraction):
     df_minoritaria = df[mask_minoritaria]
 
     # Sample de la clase mayoritaria
-    df_mayoritaria_sampled = df_mayoritaria.sample(
-        frac=sample_fraction,
-        random_state=SEMILLA[1]
-    )
+    clientes_unicos = df_mayoritaria['numero_de_cliente'].drop_duplicates().reset_index(drop=True)
+    clientes_unicos_sampled = clientes_unicos.sample(frac=sample_fraction, random_state=SEMILLA[1])
+
+    print("Clientes únicos totales:", len(clientes_unicos))
+    print("Clientes sampleados:", len(clientes_unicos_sampled))
+
+    # Hago un listado de todos los clientes muestreados y agrego todos los registros de esos clientes
+    df_mayoritaria_sampled = df_mayoritaria[
+        df_mayoritaria['numero_de_cliente'].isin(clientes_unicos_sampled)
+    ]
+
+    print("Filas originales:", len(df_mayoritaria))
+    print("Filas muestreadas:", len(df_mayoritaria_sampled))
 
     # Concatenar las clases (minoritaria completa + mayoritaria submuestreada)
     df_undersampled = pd.concat([df_mayoritaria_sampled, df_minoritaria], ignore_index=True)
@@ -316,14 +330,6 @@ def undersample(df, sample_fraction):
     logging.info(f"Clase mayoritaria: {len(df_mayoritaria_sampled):,} / Clase minoritaria: {len(df_minoritaria):,}")
 
     return df_undersampled
-
-
-import pandas as pd
-import plotly.express as px
-from io import StringIO
-import warnings
-
-warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def generar_reporte_mensual_html(df, columna_fecha='foto_mes', nombre_archivo='reporte_mensual.html'):
