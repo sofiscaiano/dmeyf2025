@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia118'
+STUDY_NAME : 'lgb_optimization_competencia119'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday'
@@ -31,7 +31,7 @@ parametros_lgb:
   feature_pre_filter: False
   force_row_wise: True
   max_bin: 31
-  metric: 'auc'
+  metric: 'ganancia'
 
 parametros_adhoc:
   num_iterations: 244 #156

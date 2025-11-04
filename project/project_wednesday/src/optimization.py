@@ -98,8 +98,8 @@ def objetivo_ganancia(trial, df) -> float:
     # Hiperparámetros a optimizar
     params = {
         'objective': 'binary',
-        # 'metric': 'None',  # Usamos nuestra métrica personalizada
-        'metric': PARAMETROS_LGB['metric'],
+        'metric': 'None',  # Usamos nuestra métrica personalizada
+        # 'metric': PARAMETROS_LGB['metric'],
         'verbose': -1,
         'verbosity': -1,
         'silent': 1,
@@ -149,7 +149,7 @@ def objetivo_ganancia(trial, df) -> float:
     cv_results = lgb.cv(
         params,
         train_data,
-        # feval=ganancia_evaluator,
+        feval=ganancia_evaluator,
         stratified=True,
         shuffle=True,
         nfold=5,
