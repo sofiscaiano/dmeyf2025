@@ -34,7 +34,7 @@ try:
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))
         else:
-            BUCKET_NAME = '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday/'
+            BUCKET_NAME = '/Users/sofi/Documents/dmeyf2025/project/project_wednesday/'
 
 except Exception as e:
     logger.error(f'Error al cargar el archivo de configuracion: {e}')

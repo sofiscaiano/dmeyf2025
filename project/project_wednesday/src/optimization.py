@@ -100,12 +100,12 @@ def objetivo_ganancia(trial, df) -> float:
 
     df_train = df[df['foto_mes'].isin(periodos_train)]
     df_val = df[df['foto_mes'].isin(periodos_val)]
-    logging.info(df_train.shape)
-    logging.info(df_val.shape)
+    # logging.info(df_train.shape)
+    # logging.info(df_val.shape)
     X_train = df_train.drop(['target', 'target_test'], axis=1)
     y_train = df_train['target']
     X_val = df_val.drop(['target', 'target_test'], axis=1)
-    y_val = df_val['target']
+    y_val = df_val['target_test']
 
     train_data = lgb.Dataset(X_train, label=y_train)
     val_data = lgb.Dataset(X_val, label=y_val)
@@ -155,7 +155,6 @@ def objetivo_ganancia(trial, df) -> float:
 
     for seed in SEMILLA:
         params['seed'] = seed
-        ganancia = {}
 
         modelo = lgb.train(
             params,
@@ -163,7 +162,6 @@ def objetivo_ganancia(trial, df) -> float:
             valid_sets=[train_data, val_data],
             valid_names=['train', 'validation'],
             feval=ganancia_evaluator,
-            evals_result=ganancia,
             callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False)]
         )
 
