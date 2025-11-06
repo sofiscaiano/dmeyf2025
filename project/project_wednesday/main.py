@@ -127,20 +127,20 @@ def main():
     reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
 
     # ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    # study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    #
+    # ## 5. Análisis adicional
+    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    # trials_df = study.trials_dataframe()
+    # if len(trials_df) > 0:
+    #     top_5 = trials_df.nlargest(5, 'value')
+    #     logger.info("Top 5 mejores trials:")
+    #     for idx, trial in top_5.iterrows():
+    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
+    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
-    ## 5. Análisis adicional
-    logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    trials_df = study.trials_dataframe()
-    if len(trials_df) > 0:
-        top_5 = trials_df.nlargest(5, 'value')
-        logger.info("Top 5 mejores trials:")
-        for idx, trial in top_5.iterrows():
-            logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
-    logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
-
-    mejores_params = cargar_mejores_hiperparametros()
+    mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia27')
     if UNDERSAMPLING_FINAL_TRAINING:
         resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(reduced_df, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
@@ -162,7 +162,7 @@ def main():
     ## Resumen final
     logger.info("=== RESUMEN FINAL ===")
     logger.info(f"✅ Entrenamiento final completado exitosamente")
-    logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
+    # logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
     logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
     logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
     logger.info(f"📁 Archivo de salida: {salida_kaggle}")
