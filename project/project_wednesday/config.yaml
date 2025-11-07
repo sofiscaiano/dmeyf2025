@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia121'
+STUDY_NAME : 'lgb_optimization_competencia122'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -18,7 +18,7 @@ competencia02:
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
   ENVIOS: 11000
-  DESCRIPCION: 'Chequeo mi nuevo script con los hiperparametros buenos de la competencia 1'
+  DESCRIPCION: 'Pruebo undersampling solo en train y dejar la validacion completa para medir bien el valor de la ganancia y que sea comparable'
 
 parametros_lgb:
   n_trail: 100
@@ -31,7 +31,7 @@ parametros_lgb:
   feature_pre_filter: False
   force_row_wise: True
   max_bin: 31
-  metric: 'auc'
+  metric: 'ganancia'
 
 parametros_adhoc:
   num_iterations: 244 #156

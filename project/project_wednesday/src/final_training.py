@@ -1,6 +1,7 @@
 import pandas as pd
 import lightgbm as lgb
 import numpy as np
+import polars as pl
 import logging
 import os
 from datetime import datetime
@@ -13,46 +14,7 @@ import gc
 logger = logging.getLogger(__name__)
 
 
-def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
-    """
-    Prepara los datos para el entrenamiento final usando todos los períodos de FINAL_TRAIN.
-
-    Args:
-        df: DataFrame con todos los datos
-
-    Returns:
-        tuple: (X_train, y_train, X_predict, clientes_predict)
-    """
-    logger.info(f"Preparando datos para entrenamiento final")
-    logger.info(f"Períodos de entrenamiento: {FINAL_TRAIN}")
-    logger.info(f"Período de predicción: {FINAL_PREDICT}")
-
-    # Datos de entrenamiento: todos los períodos en FINAL_TRAIN
-    df_train = df[df['foto_mes'].isin(FINAL_TRAIN)]
-
-    # Datos de predicción: período FINAL_PREDIC
-    df_predict = df[df['foto_mes'].isin(FINAL_PREDICT)]
-
-    logger.info(f"Registros de entrenamiento: {len(df_train):,}")
-    logger.info(f"Registros de predicción: {len(df_predict):,}")
-
-    # Preparar features y target para entrenamiento
-    X_train = df_train.drop(['target', 'target_test'], axis=1)
-    y_train = df_train['target']
-
-    # Preparar features para predicción
-    X_predict = df_predict.drop(['target', 'target_test'], axis=1)
-    clientes_predict = df_predict['numero_de_cliente']
-
-    del df, df_predict, df_train
-    gc.collect()
-
-    logger.info(f"Features utilizadas: {len(X_predict.columns)}")
-    logger.info(f"Distribución del target - 0: {(y_train == 0).sum():,}, 1: {(y_train == 1).sum():,}")
-
-    return X_train, y_train, X_predict, clientes_predict
-
-def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
+def preparar_datos_entrenamiento_final(df: pl.DataFrame) -> tuple:
     """
     Prepara los datos para el entrenamiento final usando todos los períodos de FINAL_TRAIN.
 
@@ -65,16 +27,14 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
     logger.info(f"Preparando datos para entrenamiento final")
     logger.info(f"Períodos de entrenamiento: {FINAL_TRAIN}")
 
-
     # Datos de entrenamiento: todos los períodos en FINAL_TRAIN
-    df_train = df[df['foto_mes'].isin(FINAL_TRAIN)]
+    df_train = df.filter(pl.col("foto_mes").is_in(FINAL_TRAIN))
 
-    logger.info(f"Registros de entrenamiento: {len(df_train):,}")
-
+    logger.info(f"Registros de entrenamiento: {df_train.height:,}")
 
     # Preparar features y target para entrenamiento
-    X_train = df_train.drop(['target', 'target_test'], axis=1)
-    y_train = df_train['target']
+    X_train = df_train.drop(["target", "target_test"]).to_pandas()
+    y_train = df_train['target'].to_pandas()
 
     del df, df_train
     gc.collect()
@@ -83,7 +43,7 @@ def preparar_datos_entrenamiento_final(df: pd.DataFrame) -> tuple:
 
     return X_train, y_train
 
-def entrenar_modelo_final(df: pd.DataFrame, mejores_params: dict) -> list:
+def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     """
     Entrena el modelo final con los mejores hiperparámetros.
 
@@ -184,7 +144,7 @@ def entrenar_modelo_final(df: pd.DataFrame, mejores_params: dict) -> list:
     return modelos
 
 
-def generar_predicciones_finales(df: pd.DataFrame, envios: int, archivo_base: str = None) -> pd.DataFrame:
+def generar_predicciones_finales(df: pl.DataFrame, envios: int, archivo_base: str = None) -> pd.DataFrame:
     """
     Genera las predicciones finales para el período objetivo.
 
@@ -197,11 +157,11 @@ def generar_predicciones_finales(df: pd.DataFrame, envios: int, archivo_base: st
         pd.DataFrame: DataFrame con numero_cliente y predict
     """
     logger.info(f"Período de predicción: {FINAL_PREDICT}")
-    df_predict = df[df['foto_mes'].isin(FINAL_PREDICT)]
+    df_predict = df.filter(pl.col("foto_mes").is_in(FINAL_PREDICT))
 
-    logger.info(f"Registros de predicción: {len(df_predict):,}")
-    X_predict = df_predict.drop(['target', 'target_test'], axis=1)
-    clientes_predict = df_predict['numero_de_cliente']
+    logger.info(f"Registros de predicción: {df_predict.height:,}")
+    X_predict = df_predict.drop(['target', 'target_test']).to_pandas()
+    clientes_predict = df_predict['numero_de_cliente'].to_pandas()
 
     logger.info(f"Features utilizadas: {len(X_predict.columns)}")
 

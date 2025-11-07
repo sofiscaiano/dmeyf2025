@@ -278,56 +278,45 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def undersample(df, sample_fraction):
+def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     """
-    Realiza un undersampling de la clase mayoritaria.
-    Versión optimizada usando boolean indexing en lugar de groupby.apply.
+    Realiza un undersampling de la clase mayoritaria (target == 0) en Polars.
 
     Args:
-        df (pd.DataFrame): El DataFrame de entrada.
-        sample_fraction (float): Fracción de la clase mayoritaria a conservar (entre 0 y 1).
+        df (pl.DataFrame): DataFrame de entrada (con columnas 'target' y 'numero_de_cliente').
+        sample_fraction (float): Fracción de la clase mayoritaria a conservar (0 < frac ≤ 1).
+        semilla (int): Semilla aleatoria para reproducibilidad.
+
     Returns:
-        pd.DataFrame: El DataFrame resultante submuestreado.
+        pl.DataFrame: DataFrame resultante submuestreado y mezclado.
     """
 
-    # Separar las clases usando máscaras booleanas (más rápido que groupby)
-    mask_mayoritaria = df['target'] == 0
-    mask_minoritaria = df['target'] == 1
+    # Separar clases
+    df_mayoritaria = df.filter(pl.col("target") == 0)
+    df_minoritaria = df.filter(pl.col("target") == 1)
 
-    df_mayoritaria = df[mask_mayoritaria]
-    df_minoritaria = df[mask_minoritaria]
+    # Obtener clientes únicos de la clase mayoritaria
+    clientes_unicos = df_mayoritaria.select("numero_de_cliente").unique()
 
-    # Sample de la clase mayoritaria
-    clientes_unicos = df_mayoritaria['numero_de_cliente'].drop_duplicates().reset_index(drop=True)
-    clientes_unicos_sampled = clientes_unicos.sample(frac=sample_fraction, random_state=SEMILLA[1])
+    # Muestrear fracción de clientes únicos
+    clientes_sampled = clientes_unicos.sample(
+        fraction=sample_fraction,
+        with_replacement=False,
+        seed=SEMILLA[1]
+    )
 
-    print("Clientes únicos totales:", len(clientes_unicos))
-    print("Clientes sampleados:", len(clientes_unicos_sampled))
+    # Filtrar los registros de esos clientes
+    df_mayoritaria_sampled = df_mayoritaria.join(
+        clientes_sampled,
+        on="numero_de_cliente",
+        how="inner"
+    )
 
-    # Hago un listado de todos los clientes muestreados y agrego todos los registros de esos clientes
-    df_mayoritaria_sampled = df_mayoritaria[
-        df_mayoritaria['numero_de_cliente'].isin(clientes_unicos_sampled)
-    ]
+    # Concatenar ambas clases
+    df_undersampled = pl.concat([df_mayoritaria_sampled, df_minoritaria])
 
-    print("Filas originales:", len(df_mayoritaria))
-    print("Filas muestreadas:", len(df_mayoritaria_sampled))
-
-    # Concatenar las clases (minoritaria completa + mayoritaria submuestreada)
-    df_undersampled = pd.concat([df_mayoritaria_sampled, df_minoritaria], ignore_index=True)
-
-    # Shuffle para mezclar las clases
-    df_undersampled = df_undersampled.sample(frac=1, random_state=SEMILLA[1]).reset_index(drop=True)
-
-    # Calcular proporciones
-    prop_continua = len(df_mayoritaria_sampled) / len(df_mayoritaria)
-    prop_baja = len(df_minoritaria) / len(df_minoritaria)
-
-    # Imprimir estadísticas para verificar la reducción
-    logging.info(f"Tamaño original del DataFrame: {len(df)}")
-    logging.info(f"Tamaño final del DataFrame: {len(df_undersampled)}")
-    logging.info(f"Proporcion final de clase mayoritaria: {prop_continua:.2f}")
-    logging.info(f"Proporcion final de clase minoritaria: {prop_baja:.2f}")
-    logging.info(f"Clase mayoritaria: {len(df_mayoritaria_sampled):,} / Clase minoritaria: {len(df_minoritaria):,}")
+    # Mezclar (shuffle)
+    df_undersampled = df_undersampled.sample(fraction=1.0, seed=SEMILLA[1])
 
     return df_undersampled
 

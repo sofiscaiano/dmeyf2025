@@ -3,12 +3,14 @@ import lightgbm as lgb
 # from lightgbm import early_stopping, log_evaluation
 import pandas as pd
 import numpy as np
+import polars as pl
 import logging
 import json
 import os
 from datetime import datetime
 from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
+from .features import undersample
 
 logger = logging.getLogger(__name__)
 
@@ -95,22 +97,26 @@ def objetivo_ganancia(trial, df) -> float:
         'gpu_platform_id': 0,
         'gpu_device_id': 0}
 
-    periodos_train = MES_TRAIN
-    periodos_val = MES_VALIDACION
 
-    df_train = df[df['foto_mes'].isin(periodos_train)]
-    df_val = df[df['foto_mes'].isin(periodos_val)]
-    # logging.info(df_train.shape)
-    # logging.info(df_val.shape)
-    X_train = df_train.drop(['target', 'target_test'], axis=1)
-    y_train = df_train['target']
-    X_val = df_val.drop(['target', 'target_test'], axis=1)
-    y_val = df_val['target_test']
+    # Filtrar períodos de entrenamiento y validación
+    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
+    df_val = df.filter(pl.col("foto_mes").is_in(MES_VALIDACION))
 
-    train_data = lgb.Dataset(X_train, label=y_train)
-    val_data = lgb.Dataset(X_val, label=y_val)
+    # Aplicar undersampling al df train unicamente
+    df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
-    n_rows = len(df_train)
+    X_train = df_train.drop(["target", "target_test"])
+    y_train = df_train["target"]
+
+    X_val = df_val.drop(["target", "target_test"])
+    y_val = df_val["target_test"]
+
+    # Convertir a LightGBM Dataset
+    train_data = lgb.Dataset(X_train.to_pandas(), label=y_train.to_pandas())
+    val_data = lgb.Dataset(X_val.to_pandas(), label=y_val.to_pandas())
+
+    # Número de filas de entrenamiento
+    n_rows = df_train.height
 
     # Hiperparámetros a optimizar
     params = {
