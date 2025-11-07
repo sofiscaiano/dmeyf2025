@@ -137,7 +137,7 @@ def main():
     # logger.info(f'Mejores Hiperparametros: {study.best_params}')
     # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
-    # mejores_params = cargar_mejores_hiperparametros()
+    # mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia123')
     #
     # resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
     # guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
@@ -146,6 +146,7 @@ def main():
     ## Generar predicciones
     if ENVIOS is not None:
         envios = ENVIOS
+        logger.info(f"Envios: {envios}")
     else:
         envios = cargar_mejores_envios()
 
