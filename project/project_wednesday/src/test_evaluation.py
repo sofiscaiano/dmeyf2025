@@ -5,6 +5,7 @@ from matplotlib.ticker import FuncFormatter
 from datetime import datetime
 import pandas as pd
 import numpy as np
+import polars as pl
 import logging
 import json
 import os
@@ -12,6 +13,7 @@ from datetime import datetime
 from .config import *
 from matplotlib import pyplot as plt
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
+from .features import undersample
 from .plots import plot_mean_importance
 import gc
 
@@ -34,22 +36,23 @@ def evaluar_en_test(df, mejores_params) -> dict:
     logger.info("=== EVALUACIÓN EN CONJUNTO DE TEST ===")
     logger.info(f"Período de test: {MES_TEST}")
 
-    periodos_entrenamiento = MES_TRAIN + MES_VALIDACION
+    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN + MES_VALIDACION))
+    df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST))
 
-    df_train_completo = df[df['foto_mes'].isin(periodos_entrenamiento)]
-    df_test = df[df['foto_mes'].isin(MES_TEST)]
+    # Aplicar undersampling al df train unicamente
+    df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
-    X_train = df_train_completo.drop(['target', 'target_test'], axis=1)
-    y_train = df_train_completo['target']
+    X_train = df_train.drop(["target", "target_test"])
+    y_train = df_train["target"]
 
-    X_test = df_test.drop(['target', 'target_test'], axis=1)
+    X_test = df_test.drop(['target', 'target_test'])
     y_test_check = df_test['target']
     y_test = df_test['target_test']
 
-    train_data = lgb.Dataset(X_train, label=y_train)
-    test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
+    train_data = lgb.Dataset(X_train.to_pandas(), label=y_train.to_pandas())
+    test_data = lgb.Dataset(X_test.to_pandas(), label=y_test.to_pandas(), reference=train_data)
 
-    del X_train, y_train, df_train_completo, df_test
+    del X_train, y_train, df_train, df_test
     gc.collect()
 
     flag_GPU = int(os.getenv('GPU', 0))
@@ -113,7 +116,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
         all_importances.append(feature_imp)
 
         modelos.append(modelo)
-        preds.append(modelo.predict(X_test))
+        preds.append(modelo.predict(X_test.to_pandas()))
 
         # Memory cleanup after each model
         del feature_imp, params_seed
@@ -126,8 +129,8 @@ def evaluar_en_test(df, mejores_params) -> dict:
 
     logging.info('=== Inicio Calculos de AUC ===')
     # Calculo AUC para poder comparar si optimice con esa metrica
-    auc = roc_auc_score(y_test, y_pred)
-    auc_check = roc_auc_score(y_test_check, y_pred)
+    auc = roc_auc_score(y_test.to_pandas(), y_pred)
+    auc_check = roc_auc_score(y_test_check.to_pandas(), y_pred)
     logging.debug(f'AUC (BAJA+2): {auc:.4f} | AUC (BAJA+1, BAJA+2): {auc_check:.4f}')
 
     logging.info('=== Inicio Grafico de Importancia ===')
@@ -138,11 +141,11 @@ def evaluar_en_test(df, mejores_params) -> dict:
     # Calcular la ganancia de cada modelo individual
     ganancias_acumuladas = []
     for i, pred_semilla in enumerate(preds):
-        ganancia = calcular_ganancias_acumuladas(y_test, pred_semilla)
+        ganancia = calcular_ganancias_acumuladas(y_test.to_pandas(), pred_semilla)
         ganancias_acumuladas.append(ganancia)
 
     # Calculo la ganancia del ensamble
-    ganancia_ensamble = calcular_ganancias_acumuladas(y_test, y_pred)
+    ganancia_ensamble = calcular_ganancias_acumuladas(y_test.to_pandas(), y_pred)
     ganancias_acumuladas.append(ganancia_ensamble)
 
     # Estadísticas básicas del ensamble

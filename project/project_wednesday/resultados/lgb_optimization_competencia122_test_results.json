@@ -1,0 +1,56 @@
+[
+  {
+    "descripcion_experimento": "Pruebo undersampling solo en train y dejar la validacion completa para medir bien el valor de la ganancia y que sea comparable",
+    "ganancia": 385000000.0,
+    "auc": 0.9312802509885765,
+    "auc_BAJA+2": 0.9229128315857206,
+    "total_predicciones": 164313,
+    "predicciones_positivas": 13589,
+    "porcentaje_positivas": 8.270191646430897,
+    "params": {
+      "bagging_fraction": 0.5366507535557921,
+      "num_iterations": 55,
+      "learning_rate": 0.29475465624596153,
+      "feature_fraction": 0.3101756495622121,
+      "num_leaves": 12,
+      "min_data_in_leaf": 28
+    },
+    "datetime": "2025-11-06T23:13:50.806893",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012,
+        202101,
+        202102,
+        202103
+      ],
+      "mes_test": [
+        202106
+      ]
+    }
+  }
+]

@@ -1,0 +1,55 @@
+[
+  {
+    "descripcion_experimento": "Pruebo los rangos de hiperparametros que surgen de la notebook workflow jueves de gustavo para la competencia 2",
+    "ganancia": 406060000.0,
+    "auc": 0.9339638776393735,
+    "auc_BAJA+2": 0.9267823501037741,
+    "total_predicciones": 164313,
+    "predicciones_positivas": 9856,
+    "porcentaje_positivas": 5.998308107088301,
+    "params": {
+      "num_iterations": 159,
+      "learning_rate": 0.04933436787987954,
+      "feature_fraction": 0.10792833595158158,
+      "num_leaves": 274,
+      "min_data_in_leaf": 235
+    },
+    "datetime": "2025-11-07T12:03:23.242343",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012,
+        202101,
+        202102,
+        202103
+      ],
+      "mes_test": [
+        202106
+      ]
+    }
+  }
+]

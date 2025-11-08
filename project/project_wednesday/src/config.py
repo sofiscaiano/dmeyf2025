@@ -10,7 +10,7 @@ try:
     FLAG_GCP = int(os.getenv('GCP', 1))
     with open(PATH_CONFIG, 'r') as f:
         _cfgGeneral = yaml.safe_load(f)
-        _cfg = _cfgGeneral['competencia01']
+        _cfg = _cfgGeneral['competencia02']
 
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
@@ -34,7 +34,7 @@ try:
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))
         else:
-            BUCKET_NAME = '/Users/sofiascaiano/Documents/maestria/Data Mining EyF/DMEYF/project/project_wednesday/'
+            BUCKET_NAME = '/Users/sofi/Documents/dmeyf2025/project/project_wednesday/'
 
 except Exception as e:
     logger.error(f'Error al cargar el archivo de configuracion: {e}')

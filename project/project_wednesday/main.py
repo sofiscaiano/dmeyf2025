@@ -117,17 +117,14 @@ def main():
         data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
         df.write_parquet(data_path, compression="gzip")
 
-    df = df.to_pandas()
-    df = reduce_mem_usage(df)
-    cols_to_drop = [col for col in df.columns for prefix in DROP if col.startswith(prefix)]
-    df.drop(columns=cols_to_drop, inplace=True)
+    # df = df.to_pandas()
+    # df = reduce_mem_usage(df)
+    # Si defini atributos para descartar los elimino ahora
+    df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
     gc.collect()
 
-    # Realizo undersampling de la clase mayoritaria para agilizar la optimizacion
-    reduced_df = undersample(df, UNDERSAMPLING_FRACTION)
-
-    # ## Ejecutar optimizacion de hiperparametros
-    # study = optimizar(reduced_df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    ## Ejecutar optimizacion de hiperparametros
+    # study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
     #
     # ## 5. Análisis adicional
     # logger.info("=== ANÁLISIS DE RESULTADOS ===")
@@ -140,19 +137,16 @@ def main():
     # logger.info(f'Mejores Hiperparametros: {study.best_params}')
     # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
-    mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia27')
-    if UNDERSAMPLING_FINAL_TRAINING:
-        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(reduced_df, mejores_params)
-        guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-        entrenar_modelo_final(reduced_df, mejores_params)
-    else:
-        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
-        guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-        entrenar_modelo_final(df, mejores_params)
+    mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia123')
+
+    resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
+    guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
+    entrenar_modelo_final(df, mejores_params)
 
     ## Generar predicciones
     if ENVIOS is not None:
         envios = ENVIOS
+        logger.info(f"Envios: {envios}")
     else:
         envios = cargar_mejores_envios()
 
@@ -162,7 +156,7 @@ def main():
     ## Resumen final
     logger.info("=== RESUMEN FINAL ===")
     logger.info(f"✅ Entrenamiento final completado exitosamente")
-    logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
+    # logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
     logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
     logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
     logger.info(f"📁 Archivo de salida: {salida_kaggle}")

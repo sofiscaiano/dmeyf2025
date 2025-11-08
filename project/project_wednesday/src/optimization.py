@@ -3,12 +3,14 @@ import lightgbm as lgb
 # from lightgbm import early_stopping, log_evaluation
 import pandas as pd
 import numpy as np
+import polars as pl
 import logging
 import json
 import os
 from datetime import datetime
 from .config import *
-from .gain_function import ganancia_evaluator
+from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
+from .features import undersample
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +97,27 @@ def objetivo_ganancia(trial, df) -> float:
         'gpu_platform_id': 0,
         'gpu_device_id': 0}
 
+
+    # Filtrar períodos de entrenamiento y validación
+    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
+    df_val = df.filter(pl.col("foto_mes").is_in(MES_VALIDACION))
+
+    # Aplicar undersampling al df train unicamente
+    df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+
+    X_train = df_train.drop(["target", "target_test"])
+    y_train = df_train["target"]
+
+    X_val = df_val.drop(["target", "target_test"])
+    y_val = df_val["target_test"]
+
+    # Convertir a LightGBM Dataset
+    train_data = lgb.Dataset(X_train.to_pandas(), label=y_train.to_pandas())
+    val_data = lgb.Dataset(X_val.to_pandas(), label=y_val.to_pandas())
+
+    # Número de filas de entrenamiento
+    n_rows = df_train.height
+
     # Hiperparámetros a optimizar
     params = {
         'objective': 'binary',
@@ -121,69 +144,54 @@ def objetivo_ganancia(trial, df) -> float:
         # 'is_unbalance': False,
         # 'scale_pos_weight': 1,
         # 'extra_trees': False,
-        'bagging_fraction': trial.suggest_float('bagging_fraction', PARAMETROS_LGB['bagging_fraction'][0], PARAMETROS_LGB['bagging_fraction'][1]),
-        'num_iterations': trial.suggest_int('num_iterations', PARAMETROS_LGB['num_iterations'][0], PARAMETROS_LGB['num_iterations'][1]),
-        'learning_rate': trial.suggest_float('learning_rate', PARAMETROS_LGB['learning_rate'][0], PARAMETROS_LGB['learning_rate'][1]),
+        # 'bagging_fraction': trial.suggest_float('bagging_fraction', PARAMETROS_LGB['bagging_fraction'][0], PARAMETROS_LGB['bagging_fraction'][1]),
+        'num_iterations': trial.suggest_int('num_iterations', PARAMETROS_LGB['num_iterations'][0], PARAMETROS_LGB['num_iterations'][1], log=True),
+        'learning_rate': trial.suggest_float('learning_rate', PARAMETROS_LGB['learning_rate'][0], PARAMETROS_LGB['learning_rate'][1], log=True),
         'feature_fraction': trial.suggest_float('feature_fraction', PARAMETROS_LGB['feature_fraction'][0], PARAMETROS_LGB['feature_fraction'][1]),
-        'num_leaves': trial.suggest_int("num_leaves", PARAMETROS_LGB['num_leaves'][0], PARAMETROS_LGB['num_leaves'][1]),
-        'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', PARAMETROS_LGB['min_data_in_leaf'][0], PARAMETROS_LGB['min_data_in_leaf'][1]),
+        'num_leaves': trial.suggest_int("num_leaves", PARAMETROS_LGB['num_leaves'][0], PARAMETROS_LGB['num_leaves'][1], log=True),
+        'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', PARAMETROS_LGB['min_data_in_leaf'][0], int(n_rows/2), log=True),
         'seed': SEMILLA[0]
     }
 
-    periodos_train = MES_TRAIN + MES_VALIDACION
-    # periodos_val = MES_VALIDACION
+    # --- Restricción ("forbidden") ---
+    if (params['min_data_in_leaf'] * params['num_leaves']) > n_rows:
+        raise optuna.TrialPruned()  # descartamos configuraciones no válidas
 
-    df_train = df[df['foto_mes'].isin(periodos_train)]
-    # df_val = df[df['foto_mes'].isin(periodos_val)]
-    logging.info(df_train.shape)
-    # logging.info(df_val.shape)
-    X_train = df_train.drop(['target', 'target_test'], axis=1)
-    y_train = df_train['target']
-    # X_val = df_val.drop(['target', 'target_test'], axis=1)
-    # y_val = df_val['target']
+    preds = []
 
-    train_data = lgb.Dataset(X_train, label=y_train)
-    # val_data = lgb.Dataset(X_val, label=y_val)
+    for seed in SEMILLA:
+        params['seed'] = seed
 
-    logger.debug(f"Iniciando CV de trial:{trial.number}")
-    cv_results = lgb.cv(
-        params,
-        train_data,
-        feval=ganancia_evaluator,
-        stratified=True,
-        shuffle=True,
-        nfold=5,
-        seed=SEMILLA[0],
-        callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False), lgb.log_evaluation(0)]
+        modelo = lgb.train(
+            params,
+            train_data,
+            valid_sets=[train_data, val_data],
+            valid_names=['train', 'validation'],
+            feval=ganancia_evaluator,
+            callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False)]
+        )
+
+        trial.set_user_attr('num_iterations', modelo.best_iteration)
+
+        preds.append(modelo.predict(X_val))
+
+    y_pred = np.mean(preds, axis=0)
+    ganancias = calcular_ganancias_acumuladas(y_val, y_pred)
+
+    ganancias_meseta = (
+        pd.Series(ganancias)
+        .rolling(window=2001, center=True, min_periods=1)
+        .mean()
     )
 
-    # Entrenamiento
-    # modelo = lgb.train(
-    #     params,
-    #     train_data,
-    #     feval=ganancia_evaluator,
-    #     seed=SEMILLA[0],
-    #     callbacks=[lgb.early_stopping(stopping_rounds=100, verbose=False), lgb.log_evaluation(0)]
-    # )
-
-    # 1. Determina la métrica y su valor
-    if PARAMETROS_LGB['metric'] == 'auc':
-        metrica_key = 'valid auc-mean'
-    else:
-        metrica_key = 'valid ganancia-mean'
-
-    metrica = np.max(cv_results[metrica_key])
-    best_num_iterations_cv = len(cv_results[metrica_key])
-
-    # 2. Guarda esta información en el trial para recuperarla después.
-    trial.set_user_attr('num_iterations', best_num_iterations_cv)
+    max_ganancia = ganancias_meseta.max(skipna=True)
 
     # Guardar cada iteración en JSON
-    guardar_iteracion(trial, metrica)
+    guardar_iteracion(trial, max_ganancia)
 
-    logger.debug(f"Trial {trial.number}: Ganancia/AUC = {metrica:,.4f}")
+    logger.debug(f"Trial {trial.number}: Ganancia = {max_ganancia:,.2f}")
 
-    return metrica
+    return max_ganancia
 
 
 def crear_o_cargar_estudio(study_name: str = None, semilla: int = None) -> optuna.Study:
