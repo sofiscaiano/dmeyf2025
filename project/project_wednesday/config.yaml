@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia124'
+STUDY_NAME : 'lgb_optimization_competencia125'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -14,11 +14,11 @@ competencia02:
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
   UNDERSAMPLING_FRACTION: 0.05
-  UNDERSAMPLING_FINAL_TRAINING: True
+  UNDERSAMPLING_FINAL_TRAINING: False
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
   ENVIOS:
-  DESCRIPCION: 'Pruebo los rangos de hiperparametros que surgen de la notebook workflow jueves de gustavo para la competencia 2'
+  DESCRIPCION: 'Pruebo entrenar con el 100% de los datos en vez de hacer undersampling'
 
 parametros_lgb:
   n_trail: 50
