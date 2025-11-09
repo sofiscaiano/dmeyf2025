@@ -80,8 +80,6 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],
         'seed': SEMILLA[0] if isinstance(SEMILLA, list) else SEMILLA,
-        # 'data_random_seed': SEMILLA[0],
-        # 'feature_fraction_seed': SEMILLA[0],
         **mejores_params
     }
 
@@ -180,8 +178,6 @@ def generar_predicciones_finales(df: pl.DataFrame, envios: int, archivo_base: st
 
     for file in model_files:
         modelo = lgb.Booster(model_file=file)
-        feature_names = modelo.feature_name() # obtengo los nombres de las features
-        X_predict = X_predict[feature_names]  # respeto el orden por si hice cambios
         preds.append(modelo.predict(X_predict))
 
     # Ensemble final (promedio)

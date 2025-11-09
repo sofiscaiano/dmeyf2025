@@ -37,7 +37,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
     logger.info("=== EVALUACIÓN EN CONJUNTO DE TEST ===")
     logger.info(f"Período de test: {MES_TEST}")
 
-    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN + MES_VALIDACION))
+    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
     df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST))
 
     # Aplicar undersampling al df train unicamente
@@ -78,10 +78,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
         'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
         'max_bin': PARAMETROS_LGB['max_bin'],
-        # 'random_state': SEMILLA[0],
         'seed': SEMILLA[0]
-        # 'data_random_seed': SEMILLA[0],
-        # 'feature_fraction_seed': SEMILLA[0]
     }
 
     final_params = {**params, **mejores_params}

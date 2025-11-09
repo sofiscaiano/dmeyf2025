@@ -98,13 +98,14 @@ def main():
 
         ## Feature Engineering
         atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
+        atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'visa_m', 'master_m'])]
         cant_lag = 2
         ## Fix aguinaldo
         # df = fix_aguinaldo(df)
         # gc.collect()
 
         # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-        # df = feature_engineering_rank(df, columnas=atributos) # pandas
+        df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
         gc.collect()
         df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
         gc.collect()
@@ -137,7 +138,7 @@ def main():
     # logger.info(f'Mejores Hiperparametros: {study.best_params}')
     # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
-    mejores_params = cargar_mejores_hiperparametros('lgb_optimization_competencia123')
+    mejores_params = cargar_mejores_hiperparametros()
 
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
     guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)

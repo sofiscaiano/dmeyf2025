@@ -15,70 +15,67 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 logger = logging.getLogger(__name__)
 
 
-def feature_engineering_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
+def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: str = "foto_mes") -> pl.DataFrame:
     """
-    Para cada columna en `columnas`, calcula un ranking percentil por grupo (group_col).
-    - Valores > 0: percentil en (0, 1]
-    - Valores < 0: percentil en [-1, 0)
-    - Valores == 0 -> 0
-    NaNs se mantienen como NaN.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-    columnas : list[str]
+    - Para cada columna en `columnas`, calcula ranking percentil firmado por grupo (group_col).
+    - Valores > 0: percentil en (0, 1] calculado solo entre los positivos del grupo.
+    - Valores < 0: percentil en [-1, 0) calculado por magnitud solo entre los negativos del grupo.
+    - Valores == 0 -> 0.0
+    - Nulls se mantienen como Null (None).
     """
 
-    logger.info(f"Realizando feature engineering para reducir data drift para {len(columnas) if columnas else 0} atributos")
-    logger.info(f"Columnas: {columnas}")
+    logger.info(f"Realizando rankings para {len(columnas) if columnas else 0} atributos")
 
-    if columnas is None or len(columnas) == 0:
+    if not columnas:
         logger.warning("No se especificaron atributos para generar rankings")
         return df
 
-    columnas_inicial = df.columns.tolist()
+    group = group_col
 
     for attr in columnas:
         if attr not in df.columns:
             logger.warning(f"Advertencia: El atributo {attr} no existe en el DataFrame")
             continue
 
-        def rank_signed(s: pd.Series) -> pd.Series:
-            # resultado inicial con NaNs
-            res = pd.Series(index=s.index, dtype=float)
+        # contar positivos / negativos por grupo (True->1 sumado por ventana)
+        pos_count = (pl.col(attr) > 0).cast(pl.Int64).sum().over(group)
+        neg_count = (pl.col(attr) < 0).cast(pl.Int64).sum().over(group)
 
-            mask_neg = s < 0
-            mask_pos = s > 0
-            mask_zero = s == 0
+        # Rank entre positivos: rank de (valor si >0 else null) sobre grupo, dividido por pos_count
+        pos_rank = (
+            pl.when(pl.col(attr) > 0)
+            .then(pl.col(attr))
+            .otherwise(None)
+            .rank(method="average")
+            .over(group)
+            / pos_count
+        )
 
-            # Negativos
-            if mask_neg.any():
-                # rank por magnitud: mayor |valor| -> percentil más alto -> mapeo a -1
-                abs_rank = s.loc[mask_neg].abs().rank(pct=True, method='average')
-                res.loc[mask_neg] = -abs_rank
+        # Rank entre negativos por magnitud: rank de (abs(valor) si <0 else null) sobre grupo,
+        # dividido por neg_count, y luego negado.
+        neg_rank = (
+            pl.when(pl.col(attr) < 0)
+            .then(pl.col(attr).abs())
+            .otherwise(None)
+            .rank(method="average")
+            .over(group)
+            / neg_count
+        )
+        neg_rank = -neg_rank
 
-            # Positivos
-            if mask_pos.any():
-                pos_rank = s.loc[mask_pos].rank(pct=True, method='average', ascending=True)
-                res.loc[mask_pos] = pos_rank
+        # Combinamos: si original es null -> None; si ==0 -> 0.0; sino pos_rank o neg_rank
+        expr = (
+            pl.when(pl.col(attr).is_null()).then(None)
+            .when(pl.col(attr) == 0).then(0.0)
+            .otherwise(pl.coalesce([pos_rank, neg_rank]))
+            .alias(attr)
+        )
 
-            # Ceros → 0 exactamente
-            if mask_zero.any():
-                res.loc[mask_zero] = 0.0
-
-            return res
-
-        # aplicamos por grupo; transform devuelve una serie alineada con el índice original
-        df[attr] = df.groupby('foto_mes')[attr].transform(rank_signed)
+        df = df.with_columns(expr)
         gc.collect()
 
-    # Selecciono las columnas
-    df = df[columnas_inicial]
-
-    print(df.head())
-
-    logger.info(f"Feature engineering rank finalizado. DataFrame resultante con {df.shape[1]} columnas")
-
+    # mantener mismo orden de columnas original
+    df = df.select(df.columns)
     return df
 
 
