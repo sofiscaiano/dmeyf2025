@@ -99,10 +99,10 @@ def main():
         ## Feature Engineering
         atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
         cant_lag = 2
-        # Fix aguinaldo
+        ## Fix aguinaldo
         # df = fix_aguinaldo(df)
         # gc.collect()
-        # Lag features
+
         # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
         # df = feature_engineering_rank(df, columnas=atributos) # pandas
         gc.collect()
@@ -156,7 +156,7 @@ def main():
     ## Resumen final
     logger.info("=== RESUMEN FINAL ===")
     logger.info(f"✅ Entrenamiento final completado exitosamente")
-    # logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
+    logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
     logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
     logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
     logger.info(f"📁 Archivo de salida: {salida_kaggle}")

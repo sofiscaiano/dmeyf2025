@@ -15,6 +15,7 @@ from matplotlib import pyplot as plt
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
 from .features import undersample
 from .plots import plot_mean_importance
+from .basic_functions import generar_semillas
 import gc
 
 logger = logging.getLogger(__name__)
@@ -94,8 +95,10 @@ def evaluar_en_test(df, mejores_params) -> dict:
     all_importances = []
     importance_type = 'gain'  # O 'split'
 
-    for i, seed in enumerate(SEMILLA):
-        logging.info(f'Entrenando modelo con seed = {seed} ({i+1}/{len(SEMILLA)})')
+    semillas = generar_semillas(SEMILLA[0], KSEMILLERIO)
+
+    for i, seed in enumerate(semillas):
+        logging.info(f'Entrenando modelo con seed = {seed} ({i+1}/{len(semillas)})')
 
         # Copia de parámetros con la semilla actual
         params_seed = final_params.copy()

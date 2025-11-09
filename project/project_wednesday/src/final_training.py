@@ -4,9 +4,8 @@ import numpy as np
 import polars as pl
 import logging
 import os
-from datetime import datetime
 from .plots import plot_mean_importance
-from .config import FINAL_TRAIN, FINAL_PREDICT, SEMILLA
+from .basic_functions import generar_semillas
 from .config import *
 import glob
 import gc
@@ -94,7 +93,7 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     del X_train, y_train
     gc.collect()
 
-    logging.info('=== Inicio Entrenamiento del Modelo Final con 5 semillas ===')
+    logging.info(f'=== Inicio Entrenamiento del Modelo Final con {KSEMILLERIO} semillas ===')
 
     modelos = []
     all_importances = []
@@ -104,8 +103,10 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     models_dir = os.path.join(BUCKET_NAME, "resultados/modelos/")
     os.makedirs(models_dir, exist_ok=True)
 
-    for i, seed in enumerate(SEMILLA):
-        logging.info(f'Entrenando modelo con seed = {seed} ({i+1}/{len(SEMILLA)})')
+    semillas = generar_semillas(SEMILLA[0], KSEMILLERIO)
+
+    for i, seed in enumerate(semillas):
+        logging.info(f'Entrenando modelo con seed = {seed} ({i+1}/{len(semillas)})')
 
         # Copia de parámetros con la semilla actual
         params_seed = params.copy()

@@ -8,9 +8,12 @@ import logging
 import json
 import os
 from datetime import datetime
+from sympy import primerange
+import random
 from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
 from .features import undersample
+from .basic_functions import generar_semillas
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +43,7 @@ def guardar_iteracion(trial, metrica, archivo_base=None):
         'state': 'COMPLETE',  # Si llegamos aquí, el trial se completó exitosamente
         'configuracion': {
             'semilla': SEMILLA[0],
-            'mes_train': MES_TRAIN,
+            'mes_train': MES_TRAIN_BO,
             'mes_validacion': MES_VALIDACION,
             'undersampling': UNDERSAMPLING_FRACTION,
             'metric': PARAMETROS_LGB['metric']
@@ -99,7 +102,7 @@ def objetivo_ganancia(trial, df) -> float:
 
 
     # Filtrar períodos de entrenamiento y validación
-    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
+    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN_BO))
     df_val = df.filter(pl.col("foto_mes").is_in(MES_VALIDACION))
 
     # Aplicar undersampling al df train unicamente
@@ -157,9 +160,11 @@ def objetivo_ganancia(trial, df) -> float:
     if (params['min_data_in_leaf'] * params['num_leaves']) > n_rows:
         raise optuna.TrialPruned()  # descartamos configuraciones no válidas
 
+    semillas = generar_semillas(SEMILLA[0], KSEMILLERIO_BO)
+
     preds = []
 
-    for seed in SEMILLA:
+    for seed in semillas:
         params['seed'] = seed
 
         modelo = lgb.train(
@@ -277,7 +282,7 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     study_name = STUDY_NAME
 
     logger.info(f"Iniciando optimización con {n_trials} trials")
-    logger.info(f"Configuración: TRAIN={MES_TRAIN}, VALID={MES_VALIDACION}, SEMILLA={SEMILLA}")
+    logger.info(f"Configuración: TRAIN={MES_TRAIN_BO}, VALID={MES_VALIDACION}, SEMILLA={SEMILLA}")
 
     # Crear o cargar estudio desde DuckDB
     study = crear_o_cargar_estudio(study_name, SEMILLA)
