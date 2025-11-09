@@ -43,9 +43,12 @@ logger.info("Configuración cargada desde YAML")
 logger.info(f"STUDY_NAME: {STUDY_NAME}")
 logger.info(f"DATA_PATH: {DATA_PATH}")
 logger.info(f"SEMILLA: {SEMILLA}")
-logger.info(f"MES_TRAIN: {MES_TRAIN}")
+logger.info(f"MES_TRAIN_BO: {MES_TRAIN_BO}")
 logger.info(f"MES_VALIDACION: {MES_VALIDACION}")
+logger.info(f"KSEMILLERIO_BO: {KSEMILLERIO_BO}")
+logger.info(f"MES_TRAIN: {MES_TRAIN}")
 logger.info(f"MES_TEST: {MES_TEST}")
+logger.info(f"KSEMILLERIO: {KSEMILLERIO}")
 logger.info(f"GANANCIA_ACIERTO: {GANANCIA_ACIERTO}")
 logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
 logger.info(f"UNDERSAMPLING_FRACTION: {UNDERSAMPLING_FRACTION}")
@@ -125,18 +128,18 @@ def main():
     gc.collect()
 
     ## Ejecutar optimizacion de hiperparametros
-    # study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
-    #
-    # ## 5. Análisis adicional
-    # logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    # trials_df = study.trials_dataframe()
-    # if len(trials_df) > 0:
-    #     top_5 = trials_df.nlargest(5, 'value')
-    #     logger.info("Top 5 mejores trials:")
-    #     for idx, trial in top_5.iterrows():
-    #         logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
-    # logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    # logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+    study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+
+    ## 5. Análisis adicional
+    logger.info("=== ANÁLISIS DE RESULTADOS ===")
+    trials_df = study.trials_dataframe()
+    if len(trials_df) > 0:
+        top_5 = trials_df.nlargest(5, 'value')
+        logger.info("Top 5 mejores trials:")
+        for idx, trial in top_5.iterrows():
+            logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
+    logger.info(f'Mejores Hiperparametros: {study.best_params}')
+    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
 

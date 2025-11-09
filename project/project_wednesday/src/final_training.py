@@ -6,6 +6,7 @@ import logging
 import os
 from .plots import plot_mean_importance
 from .basic_functions import generar_semillas
+from .features import undersample
 from .config import *
 import glob
 import gc
@@ -28,6 +29,10 @@ def preparar_datos_entrenamiento_final(df: pl.DataFrame) -> tuple:
 
     # Datos de entrenamiento: todos los períodos en FINAL_TRAIN
     df_train = df.filter(pl.col("foto_mes").is_in(FINAL_TRAIN))
+
+    # Aplicar undersampling al df train
+    if UNDERSAMPLING_FINAL_TRAINING:
+        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
     logger.info(f"Registros de entrenamiento: {df_train.height:,}")
 

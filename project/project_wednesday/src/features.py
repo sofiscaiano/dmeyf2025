@@ -76,6 +76,9 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
 
     # mantener mismo orden de columnas original
     df = df.select(df.columns)
+    logger.info(f"Feature engineering [ranks] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
     return df
 
 
@@ -181,7 +184,8 @@ def feature_engineering_trend(df: pd.DataFrame, columnas: list[str]) -> pd.DataF
 
     print(df.head())
 
-    logger.info(f"Feature engineering completado. DataFrame resultante con {df.shape[1]} columnas")
+    logger.info(f"Feature engineering [trends] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
 
@@ -213,9 +217,9 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
 
     # df = df.to_pandas()
 
-    logger.info(df.head())
+    logger.info(f"Feature engineering [deltas] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
-    logger.info(f"Ejecución delta finalizada. df shape: {df.shape}")
     return df
 
 

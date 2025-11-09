@@ -85,7 +85,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
 
     logger.info(f"Parámetros del modelo: {final_params}")
 
-    logging.info('=== Inicio Entrenamiento del Modelo con 5 semillas ===')
+    logging.info(f'=== Inicio Entrenamiento del Modelo con {KSEMILLERIO} semillas ===')
 
     modelos = []
     preds = []

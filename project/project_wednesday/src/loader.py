@@ -24,23 +24,26 @@ def cargar_datos(path: str, lazy: bool, months: List[int] = None) -> pl.DataFram
         try:
             df_lazy = pl.scan_parquet(path)
             df_lazy = df_lazy.filter(pl.col("foto_mes").is_in(months)).sort(['numero_de_cliente', 'foto_mes'])
-            print(f"✅ Archivo cargado correctamente: {path}")
+            logging.info(f"✅ Archivo cargado correctamente: {path}")
+            num_columnas = len(df_lazy.columns)
+            num_filas = df_lazy.select(pl.count()).collect().item()
+            logging.info(f"Columnas: {num_columnas}, Filas: {num_filas}")
             return df_lazy.collect()
 
         except FileNotFoundError:
-            print(f"❌ Error: no se encontró el archivo '{path}'.")
+            logging.info(f"❌ Error: no se encontró el archivo '{path}'.")
         except Exception as e:
-            print(f"⚠️ Error al cargar el archivo Parquet: {e}")
+            logging.info(f"⚠️ Error al cargar el archivo Parquet: {e}")
     else:
         try:
             df = pl.read_parquet(path)
-            print(f"✅ Archivo cargado correctamente: {path}")
-            print(f"Filas: {df.height}, Columnas: {df.width}")
+            logging.info(f"✅ Archivo cargado correctamente: {path}")
+            logging.info(f"Filas: {df.height}, Columnas: {df.width}")
             return df
         except FileNotFoundError:
-            print(f"❌ Error: no se encontró el archivo '{path}'.")
+            logging.info(f"❌ Error: no se encontró el archivo '{path}'.")
         except Exception as e:
-            print(f"⚠️ Error al cargar el archivo Parquet: {e}")
+            logging.info(f"⚠️ Error al cargar el archivo Parquet: {e}")
 
 def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 10000, schema_overrides: dict = None, columns=None) -> pl.DataFrame:
     """
@@ -65,13 +68,13 @@ def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 10000
             try_parse_dates=True,
             columns=columns
         )
-        print(f"✅ Archivo CSV.gz cargado correctamente: {path}")
-        print(f"Filas: {df.height}, Columnas: {df.width}")
+        logging.info(f"✅ Archivo CSV.gz cargado correctamente: {path}")
+        logging.info(f"Filas: {df.height}, Columnas: {df.width}")
         return df
     except FileNotFoundError:
-        print(f"❌ Error: no se encontró el archivo '{path}'.")
+        logging.info(f"❌ Error: no se encontró el archivo '{path}'.")
     except Exception as e:
-        print(f"⚠️ Error al cargar el CSV.gz: {e}")
+        logging.info(f"⚠️ Error al cargar el CSV.gz: {e}")
 
 
 def convertir_clase_ternaria_a_target(df: pl.DataFrame) -> pl.DataFrame:
