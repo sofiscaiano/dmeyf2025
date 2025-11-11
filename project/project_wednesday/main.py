@@ -7,13 +7,13 @@ import numpy as np
 import gc
 import polars as pl
 
-from src.features import feature_engineering_lag, undersample, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend
-from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target, reduce_mem_usage
+from src.features import feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd
+from src.loader import cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *
 from src.best_params import cargar_mejores_hiperparametros, cargar_mejores_envios
-from src.final_training import preparar_datos_entrenamiento_final, generar_predicciones_finales, entrenar_modelo_final
+from src.final_training import generar_predicciones_finales, entrenar_modelo_final
 from src.output_manager import guardar_predicciones_finales
 from src.create_target import create_target
 
@@ -96,9 +96,6 @@ def main():
         data_path = os.path.join(BUCKET_NAME, DATA_PATH)
         df = cargar_datos(data_path, lazy=False)
 
-        ## Reporte HTML de evolucion de features
-        # generar_reporte_mensual_html(df, nombre_archivo='reporte_evolucion_features.html')
-
         ## Feature Engineering
         atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
         atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'visa_m', 'master_m'])]
@@ -107,8 +104,13 @@ def main():
         # df = fix_aguinaldo(df)
         # gc.collect()
 
+        # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
+
+        df = fix_zero_sd(df, columnas=atributos)
+        # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
+
         # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-        df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
+        # df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
         gc.collect()
         df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
         gc.collect()

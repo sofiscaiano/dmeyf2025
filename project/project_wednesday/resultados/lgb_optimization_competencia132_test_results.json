@@ -1,0 +1,56 @@
+[
+  {
+    "descripcion_experimento": "Pruebo FE con ranks en variables monetarias",
+    "ganancia": 395500000.0,
+    "auc": 0.935468266620442,
+    "auc_BAJA+2": 0.9263369070697218,
+    "total_predicciones": 164313,
+    "predicciones_positivas": 11464,
+    "porcentaje_positivas": 6.976928179754493,
+    "params": {
+      "num_iterations": 184,
+      "learning_rate": 0.16417258346769856,
+      "feature_fraction": 0.6782681675111035,
+      "num_leaves": 17,
+      "min_data_in_leaf": 554
+    },
+    "datetime": "2025-11-09T21:57:16.970259",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012,
+        202101,
+        202102,
+        202103,
+        202104
+      ],
+      "mes_test": [
+        202106
+      ]
+    }
+  }
+]

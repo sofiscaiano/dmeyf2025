@@ -279,6 +279,78 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def fix_zero_sd(df: pl.DataFrame, columnas: list) -> pl.DataFrame:
+    """
+    Identifica qué atributos (columnas) tienen una desviación estándar de 0
+    para cada grupo de 'foto_mes' en un DataFrame de Polars.
+
+    Args:
+        df: Un DataFrame de Polars que debe contener la columna 'foto_mes'.
+
+    Returns:
+        Un DataFrame de Polars con las columnas ['foto_mes', 'atributo', 'std_dev'],
+        mostrando solo las combinaciones donde std_dev es 0.
+    """
+
+    # Agrupar por 'foto_mes' y calcular la desviación estándar
+    df_std = df.group_by("foto_mes").agg(
+        pl.col(columnas).std()
+    )
+
+    # Reformatear
+    df_long = df_std.unpivot(
+        index="foto_mes",
+        on=columnas,
+        variable_name="atributo",
+        value_name="std_dev"
+    )
+
+    # Filtrar solo los atributos con std_dev == 0
+    columnas_zero_sd = df_long.filter(
+        pl.col("std_dev") == 0
+    )
+
+    # Si no hay nada que nulificar, retornamos el DF original
+    if columnas_zero_sd.height == 0:
+        logging.info("No se encontraron atributos constantes.")
+        return df
+
+    # Agrupamos por 'atributo' para obtener una LISTA de 'foto_mes'
+    # donde ese atributo debe ser nulificado.
+    mapa_constantes = columnas_zero_sd.group_by("atributo").agg(
+        pl.col("foto_mes")
+    )
+
+    # Convertimos a un diccionario de Python para fácil acceso.
+    mapa = dict(
+        zip(
+            mapa_constantes.get_column("atributo").to_list(),
+            mapa_constantes.get_column("foto_mes").to_list()
+        )
+    )
+
+    logging.info(f"Mapa de atributos constantes: {mapa}")
+
+    expresiones = []
+
+    # Iteramos SOLO sobre las columnas que sabemos que tienen constantes
+    for col_name in mapa.keys():
+        # Obtenemos la lista de meses a nulificar para esta columna
+        meses_a_nulificar = mapa[col_name]
+
+        # Creamos la expresión
+        expr = (
+            pl.when(pl.col("foto_mes").is_in(meses_a_nulificar))
+            .then(None)  # Si el mes está en la lista -> Null
+            .otherwise(pl.col(col_name))  # Si no -> Mantener valor original
+            .alias(col_name)  # Sobrescribir la columna
+        )
+
+        expresiones.append(expr)
+
+    return df.with_columns(expresiones)
+
+
 def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     """
     Realiza un undersampling de la clase mayoritaria (target == 0) en Polars.
@@ -322,74 +394,147 @@ def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     return df_undersampled
 
 
-def generar_reporte_mensual_html(df, columna_fecha='foto_mes', nombre_archivo='reporte_mensual.html'):
+import polars as pl
+import plotly.express as px
+from datetime import date
+
+# Asegúrate de tener polars y plotly instalados:
+# pip install polars plotly
+
+def generar_reporte_mensual_html(
+    df: pl.DataFrame,
+    columna_fecha: str = 'foto_mes',
+    columna_target: str | None = None,
+    nombre_archivo: str = 'reporte_atributos.html'
+):
     """
     Genera un archivo HTML con gráficos de líneas interactivos de Plotly,
-    mostrando la evolución mensual del promedio de cada feature.
+    mostrando la evolución mensual del promedio de cada feature, usando Polars.
 
     Args:
-        df (pd.DataFrame): DataFrame de entrada que contiene la columna de fecha y features.
+        df (pl.DataFrame): DataFrame de Polars de entrada.
         columna_fecha (str): Nombre de la columna que contiene la fecha mensual (ej: 'foto_mes').
+        columna_target (str, optional): Nombre de la columna para usar como 'hue' (color)
+                                        en un segundo gráfico.
         nombre_archivo (str): Nombre del archivo HTML de salida.
     """
 
-    print(f"Iniciando generación de reporte para {len(df.columns) - 1} features...")
+    print(f"Iniciando generación de reporte (con Polars) para {len(df.columns) - 1} features...")
 
     # --- 1. Preparación de datos: Calcular el promedio mensual para cada feature ---
 
-    # Excluir la columna de fecha para agrupar las features numéricas
-    features_numericas = df.drop(columns=[columna_fecha]).select_dtypes(include=np.number).columns
+    # Excluir la columna de fecha y la columna target (si existe) de las features
+    exclusion_cols = [columna_fecha]
+    if columna_target:
+        exclusion_cols.append(columna_target)
 
-    if features_numericas.empty:
+    # En Polars, usamos selectores para encontrar las columnas numéricas.
+    # pl.selectors.numeric() selecciona todas las columnas de tipo numérico.
+    # .exclude() nos permite quitar las columnas de agrupación.
+    features_numericas = df.select(
+        pl.selectors.numeric().exclude(exclusion_cols)
+    ).columns
+
+    if not features_numericas:
         print("Error: No se encontraron features numéricas para graficar.")
         return
 
-    # Calcular el promedio mensual para todas las features numéricas
-    df_agrupado = df.groupby(columna_fecha)[features_numericas].mean().reset_index()
+    # La sintaxis de Polars para group_by y agregación:
+    # 1. .group_by() especifica la columna de agrupación.
+    # 2. .agg() define las agregaciones.
+    #    pl.col(features_numericas).mean() aplica la media a todas las columnas
+    #    en la lista 'features_numericas'.
+    df_agrupado = df.group_by(columna_fecha).agg(
+        pl.col(features_numericas).mean()
+    )
 
     # Asegurarse de que la columna de fecha esté ordenada
-    df_agrupado = df_agrupado.sort_values(columna_fecha)
+    # En Polars se usa .sort()
+    df_agrupado = df_agrupado.sort(columna_fecha)
+
+    # --- 1b. Preparación de datos CON TARGET (si se proporciona) ---
+    df_agrupado_con_target = None
+    if columna_target:
+        if columna_target not in df.columns:
+            print(f"Advertencia: La columna target '{columna_target}' no se encontró. Se omitirán los gráficos con 'hue'.")
+        else:
+            grouping_keys = [columna_fecha, columna_target]
+            df_agrupado_con_target = df.group_by(grouping_keys).agg(
+                pl.col(features_numericas).mean()
+            ).sort(columna_fecha, columna_target)
+            print(f"Datos para gráficos con 'hue' por '{columna_target}' preparados.")
+
 
     # --- 2. Generar el contenido HTML de cada gráfico ---
 
     graficos_html = []
 
     for feature in features_numericas:
-        # Generar el gráfico de línea interactivo con Plotly Express
-        fig = px.line(
+        # --- Gráfico 1: Promedio General ---
+        fig_general = px.line(
             df_agrupado,
             x=columna_fecha,
             y=feature,
-            title=f'Evolución Mensual de {feature} (Promedio)'
+            title=f'Evolución Mensual de {feature} (Promedio General)'
         )
 
         # Mejorar el layout y el formato de los ejes
-        fig.update_traces(mode='lines+markers')
-        fig.update_layout(
+        fig_general.update_traces(mode='lines+markers')
+        fig_general.update_layout(
             xaxis_title="Período Mensual",
             yaxis_title=f"Promedio de {feature}",
             title_x=0.5  # Centrar el título
         )
 
         # Exportar el gráfico como una cadena HTML
-        # full_html=False asegura que solo se exporte el <div> que contiene el gráfico
-        # y no un documento HTML completo
-        html_string = fig.to_html(full_html=False, include_plotlyjs='cdn')
+        html_string_general = fig_general.to_html(full_html=False, include_plotlyjs='cdn')
         graficos_html.append(f"""
             <div style="width: 80%; margin: 40px auto; border: 1px solid #ddd; padding: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                {html_string}
+                {html_string_general}
             </div>
-            <hr>
         """)
 
+        # --- Gráfico 2: Promedio por Target (NUEVO) ---
+        if df_agrupado_con_target is not None:
+            fig_target = px.line(
+                df_agrupado_con_target,
+                x=columna_fecha,
+                y=feature,
+                color=columna_target, # <-- AQUI USAMOS EL 'HUE'
+                title=f'Evolución Mensual de {feature} (Promedio por {columna_target})'
+            )
+            fig_target.update_traces(mode='lines+markers')
+            fig_target.update_layout(
+                xaxis_title="Período Mensual",
+                yaxis_title=f"Promedio de {feature}",
+                title_x=0.5
+            )
+
+            # Exportar el gráfico como una cadena HTML
+            html_string_target = fig_target.to_html(full_html=False, include_plotlyjs='cdn')
+            graficos_html.append(f"""
+                <div style="width: 80%; margin: 40px auto; border: 1px solid #ddd; padding: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                    {html_string_target}
+                </div>
+            """)
+
+        # Separador entre features
+        graficos_html.append("<hr style='border: 1px solid #ccc; margin-top: 20px;'>")
+
+
     # --- 3. Unir los gráficos en un solo archivo HTML ---
+
+    # Obtener min/max de la columna fecha de Polars
+    # .min() y .max() en una Polars Series devuelven un escalar
+    fecha_min = df_agrupado[columna_fecha].min()
+    fecha_max = df_agrupado[columna_fecha].max()
 
     # Plantilla HTML básica
     html_template = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Reporte de Evolución Mensual</title>
+        <title>Reporte de Evolución Mensual (Polars)</title>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <style>
             body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; }}
@@ -397,7 +542,7 @@ def generar_reporte_mensual_html(df, columna_fecha='foto_mes', nombre_archivo='r
         </style>
     </head>
     <body>
-        <h1>Reporte de Evolución Mensual de Features ({df_agrupado[columna_fecha].min()} a {df_agrupado[columna_fecha].max()})</h1>
+        <h1>Reporte de Evolución Mensual de Features ({fecha_min} a {fecha_max})</h1>
 
         {''.join(graficos_html)}
 
@@ -409,5 +554,47 @@ def generar_reporte_mensual_html(df, columna_fecha='foto_mes', nombre_archivo='r
     with open(nombre_archivo, 'w', encoding='utf-8') as f:
         f.write(html_template)
 
-    print(f"\n✅ Reporte HTML generado exitosamente: {nombre_archivo}")
+    print(f"\n✅ Reporte HTML (Polars) generado exitosamente: {nombre_archivo}")
     print("Abre el archivo en tu navegador web para ver los gráficos interactivos.")
+
+def create_features(df: pl.DataFrame) -> pl.DataFrame:
+
+    df = (df.with_columns([
+        (pl.col("foto_mes") % 100).alias("kmes"),
+        (pl.col("Master_delinquency").fill_null(0) + pl.col("Visa_delinquency").fill_null(0)).alias("tc_delinquency"),
+        (pl.col("Master_status").fill_null(0) + pl.col("Visa_status").fill_null(0)).alias("tc_status"),
+        (pl.col("Master_mfinanciacion_limite").fill_null(0) + pl.col("Visa_mfinanciacion_limite").fill_null(0)).alias("tc_mfinanciacion_limite"),
+        (pl.col("Master_msaldototal").fill_null(0) + pl.col("Visa_msaldototal").fill_null(0)).alias("tc_msaldototal"),
+        (pl.col("Master_msaldopesos").fill_null(0) + pl.col("Visa_msaldopesos").fill_null(0)).alias("tc_msaldopesos"),
+        (pl.col("Master_msaldodolares").fill_null(0) + pl.col("Visa_msaldodolares").fill_null(0)).alias("tc_msaldodolares"),
+        (pl.col("Master_mconsumospesos").fill_null(0) + pl.col("Visa_mconsumospesos").fill_null(0)).alias("tc_mconsumospesos"),
+        (pl.col("Master_mconsumosdolares").fill_null(0) + pl.col("Visa_mconsumosdolares").fill_null(0)).alias("tc_mconsumosdolares"),
+        (pl.col("Master_mlimitecompra").fill_null(0) + pl.col("Visa_mlimitecompra").fill_null(0)).alias("tc_mlimitecompra"),
+        (pl.col("Master_madelantopesos").fill_null(0) + pl.col("Visa_madelantopesos").fill_null(0)).alias("tc_madelantopesos"),
+        (pl.col("Master_madelantodolares").fill_null(0) + pl.col("Visa_madelantodolares").fill_null(0)).alias(
+            "Visa_madelantodolares"),
+        (pl.col("Master_mpagado").fill_null(0) + pl.col("Visa_mpagado").fill_null(0)).alias(
+            "tc_mpagado"),
+        (pl.col("Master_mpagospesos").fill_null(0) + pl.col("Visa_mpagospesos").fill_null(0)).alias(
+            "tc_mpagospesos"),
+        (pl.col("Master_mpagosdolares").fill_null(0) + pl.col("Visa_mpagosdolares").fill_null(0)).alias(
+            "tc_mpagosdolares"),
+        (pl.col("Master_mconsumototal").fill_null(0) + pl.col("Visa_mconsumototal").fill_null(0)).alias(
+            "tc_mconsumototal"),
+        (pl.col("Master_cconsumos").fill_null(0) + pl.col("Visa_cconsumos").fill_null(0)).alias(
+            "tc_cconsumos"),
+        (pl.col("Master_cadelantosefectivo").fill_null(0) + pl.col("Visa_cadelantosefectivo").fill_null(0)).alias(
+            "tc_cadelantosefectivo"),
+        (pl.col("Master_mpagominimo").fill_null(0) + pl.col("Visa_mpagominimo").fill_null(0)).alias(
+            "tc_mpagominimo"),
+    ])
+    .with_columns([
+        (pl.col("tc_mpagado") / pl.col("tc_saldopesos")).alias("tc_porc_pagos_saldo"), # agregar tratamientos de division por cero
+        (pl.col("tc_msaldototal") / pl.col("tc_mlimitecompra")).alias("tc_porc_utilizacion"),
+        (pl.col("tc_mpagado") / pl.col("tc_mpagominimo")).alias("tc_porc_pago_pagominimo"),
+        (pl.col("tc_mpagominimo") / pl.col("tc_mlimitecompra")).alias("tc_porc_pagominimo_saldo"),
+        (pl.when(pl.col("tc_mpagado") < pl.col("tc_mpagominimo"))
+        .then(1)
+        .otherwise(0)
+        .alias("tc_flag_pago_pagominimo")),
+    ]))

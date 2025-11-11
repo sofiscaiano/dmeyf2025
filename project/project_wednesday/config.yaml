@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia131'
+STUDY_NAME : 'lgb_optimization_competencia133'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -21,7 +21,7 @@ competencia02:
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
   ENVIOS:
-  DESCRIPCION: ''
+  DESCRIPCION: 'Pruebo FE de Data Quality -> pasar a NA los valores de los atributos con DE=0'
 
 parametros_lgb:
   n_trail: 50
