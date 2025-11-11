@@ -110,7 +110,7 @@ def main():
         # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
 
         # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-        df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
+       # df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
         gc.collect()
         df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
         gc.collect()
@@ -130,7 +130,6 @@ def main():
     gc.collect()
 
     if FLAG_ZLIGHTGBM == 0:
-        df = create_canaritos(df, qcanaritos=100)
 
         ## Ejecutar optimizacion de hiperparametros
         study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
@@ -145,6 +144,9 @@ def main():
                 logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
         logger.info(f'Mejores Hiperparametros: {study.best_params}')
         logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+
+    if FLAG_ZLIGHTGBM == 1:
+        df = create_canaritos(df, qcanaritos=100)
 
     mejores_params = cargar_mejores_hiperparametros()
 
