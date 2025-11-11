@@ -129,19 +129,20 @@ def main():
     df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
     gc.collect()
 
-    ## Ejecutar optimizacion de hiperparametros
-    study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+    if FLAG_ZLIGHTGBM == 0:
+        ## Ejecutar optimizacion de hiperparametros
+        study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 
-    ## 5. Análisis adicional
-    logger.info("=== ANÁLISIS DE RESULTADOS ===")
-    trials_df = study.trials_dataframe()
-    if len(trials_df) > 0:
-        top_5 = trials_df.nlargest(5, 'value')
-        logger.info("Top 5 mejores trials:")
-        for idx, trial in top_5.iterrows():
-            logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
-    logger.info(f'Mejores Hiperparametros: {study.best_params}')
-    logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+        ## 5. Análisis adicional
+        logger.info("=== ANÁLISIS DE RESULTADOS ===")
+        trials_df = study.trials_dataframe()
+        if len(trials_df) > 0:
+            top_5 = trials_df.nlargest(5, 'value')
+            logger.info("Top 5 mejores trials:")
+            for idx, trial in top_5.iterrows():
+                logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
+        logger.info(f'Mejores Hiperparametros: {study.best_params}')
+        logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
     mejores_params = cargar_mejores_hiperparametros()
 

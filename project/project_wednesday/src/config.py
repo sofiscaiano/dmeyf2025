@@ -8,12 +8,14 @@ PATH_CONFIG = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.y
 
 try:
     FLAG_GCP = int(os.getenv('GCP', 1))
+    FLAG_ZLIGHTGBM = int(os.getenv('Z', 0))
     with open(PATH_CONFIG, 'r') as f:
         _cfgGeneral = yaml.safe_load(f)
         _cfg = _cfgGeneral['competencia02']
 
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
+        PARAMETROS_ZLGB = _cfgGeneral['parametros_zlgb']
         STUDY_NAME = _cfgGeneral.get("STUDY_NAME", 'Default')
         DATA_PATH = _cfg.get('DATA_PATH', "../data/competencia.csv")
         SEMILLA = _cfg.get('SEMILLA', [42])

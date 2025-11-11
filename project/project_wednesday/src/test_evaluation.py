@@ -51,7 +51,6 @@ def evaluar_en_test(df, mejores_params) -> dict:
     y_test = df_test['target_test']
 
     train_data = lgb.Dataset(X_train.to_pandas(), label=y_train.to_pandas())
-    test_data = lgb.Dataset(X_test.to_pandas(), label=y_test.to_pandas(), reference=train_data)
 
     del X_train, y_train, df_train, df_test
     gc.collect()

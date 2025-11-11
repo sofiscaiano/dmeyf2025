@@ -598,3 +598,47 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
         .otherwise(0)
         .alias("tc_flag_pago_pagominimo")),
     ]))
+
+    return df
+
+def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
+    """
+    Añade un número específico de columnas "canarito" (features aleatorias)
+    a un DataFrame de Polars.
+
+    Estas nuevas columnas contendrán valores aleatorios uniformes (entre 0 y 1)
+    y se colocarán al principio del DataFrame, manteniendo el orden
+    original de las demás columnas.
+
+    Args:
+        df (pl.DataFrame): El DataFrame de Polars al que se le añadirán
+                           las columnas.
+        qcanaritos (int): El número de columnas "canarito" que se
+                            desea crear (ej: 100).
+
+    Returns:
+        pl.DataFrame: Un nuevo DataFrame con las columnas "canarito" añadidas
+                      al principio.
+    """
+
+    # 1. Guardar los nombres de las columnas originales
+    original_cols = df.columns
+
+    # 2. Generar la lista de nombres para las nuevas columnas "canarito"
+    canary_cols = [f"canarito_{i}" for i in range(1, qcanaritos + 1)]
+
+    # 3. Crear las expresiones Polars para generar los números aleatorios
+    #    pl.rand_uniform(0, 1) es el equivalente a runif()
+    canary_expressions = [
+        pl.rand_uniform(0, 1).alias(name) for name in canary_cols
+    ]
+
+    # 4. Añadir las nuevas columnas y reordenar todo en un solo paso
+    #    Usamos .select() para el reordenamiento final
+    df = df.with_columns(
+        canary_expressions
+    ).select(
+        canary_cols + original_cols  # Concatena listas para el nuevo orden
+    )
+
+    return df
