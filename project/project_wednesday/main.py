@@ -7,7 +7,7 @@ import numpy as np
 import gc
 import polars as pl
 
-from src.features import feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd
+from src.features import feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -110,7 +110,7 @@ def main():
         # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
 
         # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
-        # df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
+        df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
         gc.collect()
         df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
         gc.collect()
@@ -130,6 +130,8 @@ def main():
     gc.collect()
 
     if FLAG_ZLIGHTGBM == 0:
+        df = create_canaritos(df, qcanaritos=100)
+
         ## Ejecutar optimizacion de hiperparametros
         study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 

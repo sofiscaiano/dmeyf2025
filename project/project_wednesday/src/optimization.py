@@ -8,7 +8,6 @@ import logging
 import json
 import os
 from datetime import datetime
-from sympy import primerange
 import random
 from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
