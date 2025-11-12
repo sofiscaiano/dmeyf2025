@@ -195,12 +195,14 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
     # Datos del resultado en test
     test_data = {
         'descripcion_experimento': DESCRIPCION,
+        'ksemillerio': KSEMILLERIO,
         'ganancia': resultados_test['ganancia_test'],
         'auc': resultados_test['auc_test'],
         'auc_BAJA+2': resultados_test['auc_test_BAJA+2'],
         'total_predicciones': resultados_test['total_predicciones'],
         'predicciones_positivas': resultados_test['predicciones_positivas'],
         'porcentaje_positivas': resultados_test['porcentaje_positivas'],
+        'params_study': STUDY_HP,
         'params': resultados_test['params'],
         'datetime': datetime.now().isoformat(),
         'state': 'COMPLETE',

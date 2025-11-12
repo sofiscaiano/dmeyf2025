@@ -136,20 +136,20 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
 
     return df
 
-def feature_engineering_trend(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
+def feature_engineering_trend(df: pl.DataFrame, columnas: list[str]) -> pl.DataFrame:
     """
     Genera variables de tendencia para los atributos especificados utilizando SQL.
 
     Parameters:
     -----------
-    df : pd.DataFrame
+    df : pl.DataFrame
         DataFrame con los datos
     columnas : list
         Lista de atributos para los cuales generar tendencias. Si es None, no se generan tendencias.
 
     Returns:
     --------
-    pd.DataFrame
+    pl.DataFrame
         DataFrame con las variables de tendencia agregadas
     """
 
@@ -160,32 +160,30 @@ def feature_engineering_trend(df: pd.DataFrame, columnas: list[str]) -> pd.DataF
         return df
 
     # Construir la consulta SQL
-    sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE(foto_mes)"
+    sql = "SELECT *"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            sql += f", regr_slope({attr}, cliente_antiguedad) over ventana as {attr}_trend_3m"
+            sql += f", regr_slope({attr}, cliente_antiguedad) over ventana as {attr}_trend_6m"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
     # Completar la consulta
     sql += " FROM df"
-    sql += " window ventana as (partition by numero_de_cliente order by foto_mes rows between 3 preceding and current row)"
+    sql += " window ventana as (partition by numero_de_cliente order by foto_mes rows between 6 preceding and current row)"
     sql += " ORDER BY numero_de_cliente, foto_mes"
-
-    # logger.debug(f"Consulta SQL: {sql}")
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
     con.register("df", df)
-    df = con.execute(sql).df()
+    df = con.execute(sql).pl()
     con.close()
 
-    print(df.head())
+    logging.info(df.head())
 
     logger.info(f"Feature engineering [trends] completado")
-    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+    logger.info(df.shape)
 
     return df
 

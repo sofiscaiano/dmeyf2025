@@ -1,0 +1,72 @@
+[
+  {
+    "trial_number": 0,
+    "params": {
+      "boosting_type": "gbdt",
+      "class_weight": null,
+      "feature_fraction": 0.5393339924944204,
+      "importance_type": "split",
+      "learning_rate": 0.009033979476164342,
+      "max_depth": -1,
+      "min_data_in_leaf": 3,
+      "min_child_weight": 0.001,
+      "min_split_gain": 0.0,
+      "num_iterations": 31204,
+      "num_threads": -1,
+      "num_leaves": 4,
+      "objective": "binary",
+      "seed": 131213,
+      "reg_alpha": 15.800090067239827,
+      "reg_lambda": 34.82471227276953,
+      "bagging_fraction": 1.0,
+      "subsample_for_bin": 200000,
+      "subsample_freq": 0,
+      "max_bin": 1023,
+      "verbose": -1,
+      "metric": "None",
+      "verbosity": -1
+    },
+    "value": 400560000.0,
+    "datetime": "2025-11-12T11:31:57.563217",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": [
+        131213,
+        275677,
+        633767,
+        997057,
+        450223
+      ],
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012,
+        202101,
+        202102,
+        202103,
+        202104
+      ]
+    }
+  }
+]

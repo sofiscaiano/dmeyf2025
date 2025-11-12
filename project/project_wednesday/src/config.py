@@ -17,6 +17,8 @@ try:
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
         PARAMETROS_ZLGB = _cfgGeneral['parametros_zlgb']
         STUDY_NAME = _cfgGeneral.get("STUDY_NAME", 'Default')
+        STUDY_HP = _cfg.get("STUDY_HP", None)
+        ZEROSHOT = _cfg.get("ZEROSHOT", False)
         DATA_PATH = _cfg.get('DATA_PATH', "../data/competencia.csv")
         SEMILLA = _cfg.get('SEMILLA', [42])
         MES_TRAIN = _cfg.get('MES_TRAIN', [202102])
@@ -43,4 +45,45 @@ try:
 
 except Exception as e:
     logger.error(f'Error al cargar el archivo de configuracion: {e}')
+    raise
+
+# =============================================================================
+# Configuración de MLflow
+# =============================================================================
+try:
+    # Cargar configuración de MLflow desde config.yaml
+    MLFLOW_CFG = _cfgGeneral.get("mlflow", {})
+
+    _bucket_root = BUCKET_NAME or os.path.dirname(os.path.dirname(__file__))
+    _default_artifact_dir = os.path.abspath(
+        MLFLOW_CFG.get("ARTIFACT_PATH", os.path.join(_bucket_root, "mlruns"))
+    )
+
+    # Configuración básica
+    MLFLOW_TRACKING_URI = MLFLOW_CFG.get("TRACKING_URI")
+    if not MLFLOW_TRACKING_URI:
+        MLFLOW_TRACKING_URI = f"file://{_default_artifact_dir}"
+
+    # Configuración directa sin plantillas
+    #MLFLOW_EXPERIMENT_NAME = f"DMEyF-{STUDY_NAME}"
+    MLFLOW_EXPERIMENT_NAME = "DMEyF-Scaiano"
+    MLFLOW_ARTIFACT_PATH = _default_artifact_dir
+    MLFLOW_REGISTERED_MODEL_NAME = f"dmeyf-{STUDY_NAME}"
+
+    # Tags fijos
+    MLFLOW_TAGS = {
+        "proyecto": "DMEyF-Competencia02",
+        "equipo": "python",
+        "user_name": "sscaiano",
+        "comision": "Jueves",
+        "version_dataset": "1.0"
+    }
+
+    # Crear directorio de artefactos si no existe
+    os.makedirs(MLFLOW_ARTIFACT_PATH, exist_ok=True)
+
+    logger.info(f"Configuración de MLflow cargada - URI: {MLFLOW_TRACKING_URI}")
+
+except Exception as e:
+    logger.error(f"Error al cargar configuración de MLflow: {e}")
     raise

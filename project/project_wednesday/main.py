@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 import gc
 import polars as pl
+# import mlflow
 
 from src.features import feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
@@ -16,6 +17,7 @@ from src.best_params import cargar_mejores_hiperparametros, cargar_mejores_envio
 from src.final_training import generar_predicciones_finales, entrenar_modelo_final
 from src.output_manager import guardar_predicciones_finales
 from src.create_target import create_target
+from src.zeroshot import optimizar_zero_shot
 
 # config basico logging
 path_logs = os.path.join(BUCKET_NAME, "log")
@@ -98,7 +100,7 @@ def main():
 
         ## Feature Engineering
         atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
-        atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'visa_m', 'master_m'])]
+        atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m'])]
         cant_lag = 2
         ## Fix aguinaldo
         # df = fix_aguinaldo(df)
@@ -109,12 +111,11 @@ def main():
         df = fix_zero_sd(df, columnas=atributos)
         # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
 
-        # df = feature_engineering_trend(df, columnas=['ctrx_quarter', 'mpayroll', 'mcaja_ahorro', 'mcuenta_corriente', 'mcuentas_saldo'])
         df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
+        df = feature_engineering_trend(df, columnas=atributos)
         gc.collect()
         df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
         gc.collect()
-        # Delta features
         df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
         gc.collect()
 
@@ -129,9 +130,7 @@ def main():
     df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
     gc.collect()
 
-    if FLAG_ZLIGHTGBM == 0:
-        df = create_canaritos(df, qcanaritos=100)
-
+    if FLAG_ZLIGHTGBM == 0 and STUDY_HP is None and ZEROSHOT == False:
         ## Ejecutar optimizacion de hiperparametros
         study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 
@@ -146,7 +145,33 @@ def main():
         logger.info(f'Mejores Hiperparametros: {study.best_params}')
         logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
-    mejores_params = cargar_mejores_hiperparametros()
+    elif FLAG_ZLIGHTGBM == 1:
+        df = create_canaritos(df, qcanaritos=100)
+
+    if ZEROSHOT:
+        logger.info("=== ANÁLISIS ZEROSHOT ===")
+        resultado_zs = optimizar_zero_shot(df)
+
+        # Desempacar resultados del diccionario
+        ganancia_val = resultado_zs["ganancia_validacion"]
+        umbral_sugerido = resultado_zs["umbral_sugerido"]
+        params_lightgbm = resultado_zs["best_params_lightgbm"]
+        hyperparams = resultado_zs["best_params_flaml"]
+        paths = resultado_zs["paths"]
+
+        logger.info("=== ANÁLISIS DE RESULTADOS ZEROSHOT ===")
+        logger.info(f"✅ Ganancia en validación: {ganancia_val:,.0f}")
+        logger.info(f"✅ Umbral sugerido: {umbral_sugerido:.4f}")
+        logger.info(f"✅ Parámetros FLAML guardados: {len(hyperparams)} parámetros")
+        logger.info(f"✅ Parámetros LightGBM guardados: {len(params_lightgbm)} parámetros")
+        logger.info(f"✅ Archivos generados:")
+        logger.info(f"   - Iteraciones: {paths['iteraciones']}")
+        logger.info(f"   - Best params: {paths['best_params']}")
+
+    elif STUDY_HP is None:
+        mejores_params = cargar_mejores_hiperparametros()
+    else:
+        mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
     resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
     guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
