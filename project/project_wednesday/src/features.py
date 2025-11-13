@@ -9,7 +9,7 @@ import gc
 import plotly.express as px
 from io import StringIO
 import warnings
-import mlflow
+# import mlflow
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -80,7 +80,7 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
     logger.info(f"Feature engineering [ranks] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
-    mlflow.log_param("flag_rankings", True)
+    # mlflow.log_param("flag_rankings", True)
 
     return df
 
@@ -136,8 +136,8 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
 
     logger.info(f"Feature engineering [lags] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
-    mlflow.log_param("flag_lags", True)
-    mlflow.log_param("q_lags", cant_lag)
+    # mlflow.log_param("flag_lags", True)
+    # mlflow.log_param("q_lags", cant_lag)
 
     return df
 
@@ -190,8 +190,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
     logger.info(f"Feature engineering [trends] completado")
     logger.info(df.shape)
 
-    mlflow.log_param("flag_trend", True)
-    mlflow.log_param("q_trend", q)
+    # mlflow.log_param("flag_trend", True)
 
     return df
 
@@ -226,13 +225,13 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
     logger.info(f"Feature engineering [deltas] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
-    mlflow.log_param("flag_deltas", True)
-    mlflow.log_param("q_deltas", cant_lag)
+    # mlflow.log_param("flag_deltas", True)
+    # mlflow.log_param("q_deltas", cant_lag)
 
     return df
 
 
-def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
+def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
     """
     Corrige las columnas asociadas al pago de aguinaldo para el mes de junio 2021
     :param df: dataframe con los datos
@@ -285,7 +284,7 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df[columns]
 
-    mlflow.log_param("flag_aguinaldo", True)
+    # mlflow.log_param("flag_aguinaldo", True)
 
     return df
 
@@ -359,7 +358,7 @@ def fix_zero_sd(df: pl.DataFrame, columnas: list) -> pl.DataFrame:
 
         expresiones.append(expr)
 
-    mlflow.log_param("flag_data_quality", True)
+    # mlflow.log_param("flag_data_quality", True)
 
     return df.with_columns(expresiones)
 
@@ -654,7 +653,7 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
         canary_cols + original_cols  # Concatena listas para el nuevo orden
     )
 
-    mlflow.log_param("flag_canaritos", True)
-    mlflow.log_param("qcanaritos", qcanaritos)
+    # mlflow.log_param("flag_canaritos", True)
+    # mlflow.log_param("qcanaritos", qcanaritos)
 
     return df
