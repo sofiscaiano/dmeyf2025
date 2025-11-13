@@ -41,7 +41,7 @@ try:
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))
         else:
-            BUCKET_NAME = '/Users/sofi/Documents/dmeyf2025/project/project_wednesday/'
+            BUCKET_NAME = os.path.dirname(os.path.dirname(__file__))#'/Users/sofi/Documents/dmeyf2025/project/project_wednesday/'
 
 except Exception as e:
     logger.error(f'Error al cargar el archivo de configuracion: {e}')
@@ -54,7 +54,7 @@ try:
     # Cargar configuración de MLflow desde config.yaml
     MLFLOW_CFG = _cfgGeneral.get("mlflow", {})
 
-    _bucket_root = BUCKET_NAME or os.path.dirname(os.path.dirname(__file__))
+    _bucket_root = BUCKET_NAME #or os.path.dirname(os.path.dirname(__file__))
     _default_artifact_dir = os.path.abspath(
         MLFLOW_CFG.get("ARTIFACT_PATH", os.path.join(_bucket_root, "mlruns"))
     )

@@ -9,6 +9,7 @@ import json
 import os
 from datetime import datetime
 import random
+import mlflow
 from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
 from .features import undersample
@@ -189,6 +190,7 @@ def objetivo_ganancia(trial, df) -> float:
     )
 
     max_ganancia = ganancias_meseta.max(skipna=True)
+    mlflow.log_metric("ganancia_best", max_ganancia, step=trial.number)  # loggear la ganancia en mlflow
 
     # Guardar cada iteración en JSON
     guardar_iteracion(trial, max_ganancia)

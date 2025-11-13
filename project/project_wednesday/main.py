@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 import gc
 import polars as pl
-# import mlflow
+import mlflow
 
 from src.features import feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
@@ -85,118 +85,138 @@ def main():
     # df = cargar_datos_csv(crudo_path)
     # df = create_target(df=df)
 
-    if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
-        logger.info("✅ df_fe encontrado")
-        data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
-        months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
-        df = cargar_datos(data_path, lazy=True, months=months_filter)
+    # Configurar MLflow y ejecutar pipeline completo
+    try:
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+        mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+        logger.info(f"MLflow configurado con servidor remoto: {MLFLOW_TRACKING_URI}")
 
-    else:
-        ## Carga de Datos
-        logger.info("❌ df_fe no encontrado")
-        os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
-        data_path = os.path.join(BUCKET_NAME, DATA_PATH)
-        df = cargar_datos(data_path, lazy=False)
+    except Exception as e:
+        logger.error(f"Error al configurar MLflow: {e}")
+        raise
 
-        ## Feature Engineering
-        atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
-        atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m'])]
-        cant_lag = 2
-        ## Fix aguinaldo
-        # df = fix_aguinaldo(df)
-        # gc.collect()
+    with mlflow.start_run(run_name=f"experimento-{STUDY_NAME}"):
+        mlflow.set_tags(MLFLOW_TAGS)
 
-        # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
+        if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
+            logger.info("✅ df_fe encontrado")
+            data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
+            months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
+            df = cargar_datos(data_path, lazy=True, months=months_filter)
 
-        df = fix_zero_sd(df, columnas=atributos)
-        # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
+        else:
+            ## Carga de Datos
+            logger.info("❌ df_fe no encontrado")
+            os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
+            data_path = os.path.join(BUCKET_NAME, DATA_PATH)
+            df = cargar_datos(data_path, lazy=False)
 
-        df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
-        df = feature_engineering_trend(df, columnas=atributos)
+            ## Feature Engineering
+            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
+            atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m'])]
+            cant_lag = 2
+            ## Fix aguinaldo
+            # df = fix_aguinaldo(df)
+            # gc.collect()
+
+            # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
+
+            df = fix_zero_sd(df, columnas=atributos)
+            # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
+
+            df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
+            df = feature_engineering_trend(df, columnas=atributos)
+            gc.collect()
+            df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
+            gc.collect()
+            df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
+            gc.collect()
+
+            ## Convertir clase ternaria a target binaria
+            df = convertir_clase_ternaria_a_target(df)
+            data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
+            df.write_parquet(data_path, compression="gzip")
+
+        # df = df.to_pandas()
+        # df = reduce_mem_usage(df)
+        # Si defini atributos para descartar los elimino ahora
+        df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
         gc.collect()
-        df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
-        gc.collect()
-        df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
-        gc.collect()
+        mlflow.log_param("df_shape", df.shape)
 
-        ## Convertir clase ternaria a target binaria
-        df = convertir_clase_ternaria_a_target(df)
-        data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
-        df.write_parquet(data_path, compression="gzip")
+        if FLAG_ZLIGHTGBM == 0 and STUDY_HP is None and ZEROSHOT == False:
+            ## Ejecutar optimizacion de hiperparametros
+            mlflow.log_param("undersampling_ratio_BO", UNDERSAMPLING_FRACTION)
+            mlflow.log_param("n_trials_BO", args.n_trials)
+            mlflow.log_param("ksemillerio_BO", KSEMILLERIO_BO)
 
-    # df = df.to_pandas()
-    # df = reduce_mem_usage(df)
-    # Si defini atributos para descartar los elimino ahora
-    df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
-    gc.collect()
+            study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 
-    if FLAG_ZLIGHTGBM == 0 and STUDY_HP is None and ZEROSHOT == False:
-        ## Ejecutar optimizacion de hiperparametros
-        study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+            mlflow.log_params({f"best_{k}": v for k, v in study.best_params.items()})
 
-        ## 5. Análisis adicional
-        logger.info("=== ANÁLISIS DE RESULTADOS ===")
-        trials_df = study.trials_dataframe()
-        if len(trials_df) > 0:
-            top_5 = trials_df.nlargest(5, 'value')
-            logger.info("Top 5 mejores trials:")
-            for idx, trial in top_5.iterrows():
-                logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
-        logger.info(f'Mejores Hiperparametros: {study.best_params}')
-        logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+            ## 5. Análisis adicional
+            logger.info("=== ANÁLISIS DE RESULTADOS ===")
+            trials_df = study.trials_dataframe()
+            if len(trials_df) > 0:
+                top_5 = trials_df.nlargest(5, 'value')
+                logger.info("Top 5 mejores trials:")
+                for idx, trial in top_5.iterrows():
+                    logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
+            logger.info(f'Mejores Hiperparametros: {study.best_params}')
+            logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
-    elif FLAG_ZLIGHTGBM == 1:
-        df = create_canaritos(df, qcanaritos=100)
+        elif FLAG_ZLIGHTGBM == 1:
+            df = create_canaritos(df, qcanaritos=100)
 
-    if ZEROSHOT:
-        logger.info("=== ANÁLISIS ZEROSHOT ===")
-        resultado_zs = optimizar_zero_shot(df)
+        if ZEROSHOT:
+            logger.info("=== ANÁLISIS ZEROSHOT ===")
+            resultado_zs = optimizar_zero_shot(df)
 
-        # Desempacar resultados del diccionario
-        ganancia_val = resultado_zs["ganancia_validacion"]
-        umbral_sugerido = resultado_zs["umbral_sugerido"]
-        params_lightgbm = resultado_zs["best_params_lightgbm"]
-        hyperparams = resultado_zs["best_params_flaml"]
-        paths = resultado_zs["paths"]
+            # Desempacar resultados del diccionario
+            ganancia_val = resultado_zs["ganancia_validacion"]
+            umbral_sugerido = resultado_zs["umbral_sugerido"]
+            params_lightgbm = resultado_zs["best_params_lightgbm"]
+            hyperparams = resultado_zs["best_params_flaml"]
+            paths = resultado_zs["paths"]
 
-        logger.info("=== ANÁLISIS DE RESULTADOS ZEROSHOT ===")
-        logger.info(f"✅ Ganancia en validación: {ganancia_val:,.0f}")
-        logger.info(f"✅ Umbral sugerido: {umbral_sugerido:.4f}")
-        logger.info(f"✅ Parámetros FLAML guardados: {len(hyperparams)} parámetros")
-        logger.info(f"✅ Parámetros LightGBM guardados: {len(params_lightgbm)} parámetros")
-        logger.info(f"✅ Archivos generados:")
-        logger.info(f"   - Iteraciones: {paths['iteraciones']}")
-        logger.info(f"   - Best params: {paths['best_params']}")
+            logger.info("=== ANÁLISIS DE RESULTADOS ZEROSHOT ===")
+            logger.info(f"✅ Ganancia en validación: {ganancia_val:,.0f}")
+            logger.info(f"✅ Umbral sugerido: {umbral_sugerido:.4f}")
+            logger.info(f"✅ Parámetros FLAML guardados: {len(hyperparams)} parámetros")
+            logger.info(f"✅ Parámetros LightGBM guardados: {len(params_lightgbm)} parámetros")
+            logger.info(f"✅ Archivos generados:")
+            logger.info(f"   - Iteraciones: {paths['iteraciones']}")
+            logger.info(f"   - Best params: {paths['best_params']}")
 
-    elif STUDY_HP is None:
-        mejores_params = cargar_mejores_hiperparametros()
-    else:
-        mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
+        elif STUDY_HP is None:
+            mejores_params = cargar_mejores_hiperparametros()
+        else:
+            mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
-    resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
-    guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-    entrenar_modelo_final(df, mejores_params)
+        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
+        guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
+        entrenar_modelo_final(df, mejores_params)
 
-    ## Generar predicciones
-    if ENVIOS is not None:
-        envios = ENVIOS
-        logger.info(f"Envios: {envios}")
-    else:
-        envios = cargar_mejores_envios()
+        ## Generar predicciones
+        if ENVIOS is not None:
+            envios = ENVIOS
+            logger.info(f"Envios: {envios}")
+        else:
+            envios = cargar_mejores_envios()
 
-    predicciones = generar_predicciones_finales(df, envios)
-    salida_kaggle = guardar_predicciones_finales(predicciones)
+        predicciones = generar_predicciones_finales(df, envios)
+        salida_kaggle = guardar_predicciones_finales(predicciones)
 
-    ## Resumen final
-    logger.info("=== RESUMEN FINAL ===")
-    logger.info(f"✅ Entrenamiento final completado exitosamente")
-    logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
-    logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
-    logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
-    logger.info(f"📁 Archivo de salida: {salida_kaggle}")
-    logger.info(f"📝 Log detallado: log/{nombre_log}")
+        ## Resumen final
+        logger.info("=== RESUMEN FINAL ===")
+        logger.info(f"✅ Entrenamiento final completado exitosamente")
+        logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
+        logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
+        logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
+        logger.info(f"📁 Archivo de salida: {salida_kaggle}")
+        logger.info(f"📝 Log detallado: log/{nombre_log}")
 
-    logger.info(f'Ejecucion finalizada. Revisar log para mas detalles. {nombre_log}')
+        logger.info(f'Ejecucion finalizada. Revisar log para mas detalles. {nombre_log}')
 
 if __name__ == '__main__':
     main()

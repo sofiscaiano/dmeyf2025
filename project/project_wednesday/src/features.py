@@ -9,6 +9,7 @@ import gc
 import plotly.express as px
 from io import StringIO
 import warnings
+import mlflow
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -79,6 +80,8 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
     logger.info(f"Feature engineering [ranks] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
+    mlflow.log_param("flag_rankings", True)
+
     return df
 
 
@@ -133,10 +136,12 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
 
     logger.info(f"Feature engineering [lags] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+    mlflow.log_param("flag_lags", True)
+    mlflow.log_param("q_lags", cant_lag)
 
     return df
 
-def feature_engineering_trend(df: pl.DataFrame, columnas: list[str]) -> pl.DataFrame:
+def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.DataFrame:
     """
     Genera variables de tendencia para los atributos especificados utilizando SQL.
 
@@ -153,7 +158,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str]) -> pl.DataF
         DataFrame con las variables de tendencia agregadas
     """
 
-    logger.info(f"Realizando feature engineering de tendencia para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"Realizando feature engineering de tendencia de {q} meses para {len(columnas) if columnas else 0} atributos")
 
     if columnas is None or len(columnas) == 0:
         logger.warning("No se especificaron atributos para generar lags")
@@ -165,13 +170,13 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str]) -> pl.DataF
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            sql += f", regr_slope({attr}, cliente_antiguedad) over ventana as {attr}_trend_6m"
+            sql += f", regr_slope({attr}, cliente_antiguedad) over ventana as {attr}_trend_{q}m"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
     # Completar la consulta
     sql += " FROM df"
-    sql += " window ventana as (partition by numero_de_cliente order by foto_mes rows between 6 preceding and current row)"
+    sql += f" window ventana as (partition by numero_de_cliente order by foto_mes rows between {q} preceding and current row)"
     sql += " ORDER BY numero_de_cliente, foto_mes"
 
     # Ejecutar la consulta SQL
@@ -184,6 +189,9 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str]) -> pl.DataF
 
     logger.info(f"Feature engineering [trends] completado")
     logger.info(df.shape)
+
+    mlflow.log_param("flag_trend", True)
+    mlflow.log_param("q_trend", q)
 
     return df
 
@@ -217,6 +225,9 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
 
     logger.info(f"Feature engineering [deltas] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
+    mlflow.log_param("flag_deltas", True)
+    mlflow.log_param("q_deltas", cant_lag)
 
     return df
 
@@ -273,6 +284,8 @@ def fix_aguinaldo(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Finaliza fix de variables por aguinaldo")
 
     df = df[columns]
+
+    mlflow.log_param("flag_aguinaldo", True)
 
     return df
 
@@ -345,6 +358,8 @@ def fix_zero_sd(df: pl.DataFrame, columnas: list) -> pl.DataFrame:
         )
 
         expresiones.append(expr)
+
+    mlflow.log_param("flag_data_quality", True)
 
     return df.with_columns(expresiones)
 
@@ -638,5 +653,8 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
     ).select(
         canary_cols + original_cols  # Concatena listas para el nuevo orden
     )
+
+    mlflow.log_param("flag_canaritos", True)
+    mlflow.log_param("qcanaritos", qcanaritos)
 
     return df

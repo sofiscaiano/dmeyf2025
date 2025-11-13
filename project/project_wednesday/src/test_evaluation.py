@@ -10,6 +10,7 @@ import logging
 import json
 import os
 from datetime import datetime
+import mlflow
 from .config import *
 from matplotlib import pyplot as plt
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
@@ -167,6 +168,7 @@ def evaluar_en_test(df, mejores_params) -> dict:
     logger.info("=== INICIANDO GENERACION DE GRAFICO DE TEST")
     ruta_grafico = crear_grafico_ganancia(y_pred, ganancia_ensamble)
     ruta_grafico_multiple = crear_grafico_multiple_ganancia(ganancias_acumuladas)
+    mlflow.log_artifact(ruta_grafico_multiple)
     logger.info("=== GRAFICO DE TEST COMPLETADO")
 
     ## Resumen de evaluación en test
@@ -212,6 +214,10 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
             'mes_test': MES_TEST
         }
     }
+
+    mlflow.log_metric("ganancia_test", resultados_test['ganancia_test'])
+    mlflow.log_metric("auc_test", resultados_test['auc_test_BAJA+2'])
+    mlflow.log_metric("envios_test", resultados_test['predicciones_positivas'])
 
     # Cargar datos existentes si el archivo ya existe
     if os.path.exists(archivo):
