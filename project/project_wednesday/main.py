@@ -116,8 +116,8 @@ def main():
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m'])]
             cant_lag = 2
             ## Fix aguinaldo
-            # df = fix_aguinaldo(df)
-            # gc.collect()
+            df = fix_aguinaldo(df)
+            gc.collect()
 
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
 
@@ -125,7 +125,10 @@ def main():
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
 
             df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
-            df = feature_engineering_trend(df, columnas=atributos)
+            df = feature_engineering_trend(df, columnas=atributos, q=3)
+            df = feature_engineering_trend(df, columnas=atributos, q=6)
+            # mlflow.log_param("q_trend", '3 y 6m')
+
             gc.collect()
             df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
             gc.collect()
@@ -153,6 +156,7 @@ def main():
             study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 
             mlflow.log_params({f"best_{k}": v for k, v in study.best_params.items()})
+            mlflow.log_metric("ganancia_best_BO", study.best_value)
 
             ## 5. Análisis adicional
             logger.info("=== ANÁLISIS DE RESULTADOS ===")
