@@ -227,6 +227,14 @@ def main():
                 if isinstance(obj, pl.DataFrame):
                     print("STACK:", name, sys.getrefcount(obj))
 
+        import psutil
+        proc = psutil.Process(os.getpid())
+        print("RSS MB:", proc.memory_info().rss / 1024 ** 2)
+        print("PL df_train size est (MB):", df_train.estimated_size() / 1024 ** 2)
+        print("PL df_test  size est (MB):", df_test.estimated_size() / 1024 ** 2)
+        gc.collect()
+        print("After GC - RSS MB:", proc.memory_info().rss / 1024 ** 2)
+
         resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df_train, df_test, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
         # entrenar_modelo_final(df, mejores_params)
