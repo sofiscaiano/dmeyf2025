@@ -34,9 +34,6 @@ def cargar_datos(path: str, lazy: bool, months: List[int] = None) -> pl.DataFram
         try:
             df = pl.read_parquet(path)
 
-            # 🔥 También conviene clonar para evitar mapeo de memoria
-            df = df.clone()
-
             logging.info(f"Filas: {df.height}, Columnas: {df.width}")
             return df
 

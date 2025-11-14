@@ -114,6 +114,8 @@ def main():
             logger.info("❌ df_fe no encontrado")
             os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
             data_path = os.path.join(BUCKET_NAME, DATA_PATH)
+            if FLAG_GCP == 1:
+                data_path = '~/datasets/competencia_02.parquet'
             df = cargar_datos(data_path, lazy=False)
 
             ## Feature Engineering
