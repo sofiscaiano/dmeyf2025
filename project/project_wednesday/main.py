@@ -150,7 +150,7 @@ def main():
         # df = reduce_mem_usage(df)
         # Si defini atributos para descartar los elimino ahora
         logging.info("Elimino atributos:")
-        df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
+        df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)]).clone()
         gc.collect()
         mlflow.log_param("df_shape", df.shape)
 

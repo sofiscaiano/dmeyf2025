@@ -624,8 +624,5 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
     # 👉 Reordenamos: canarios primero, luego las originales
     df = df.select([f"canarito_{i+1}" for i in range(qcanaritos)] + original_cols)
 
-    # 👉 Forzamos copia nueva para liberar los buffers previos
-    df = df.clone()
-
     logging.info(f"==== Se crearon {qcanaritos} canaritos.")
-    return df
+    return df.clone()
