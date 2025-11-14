@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 
-def evaluar_en_test(df, mejores_params) -> tuple:
+def evaluar_en_test(df_train, df_test, mejores_params) -> tuple:
     """
     Evalúa el modelo con los mejores hiperparámetros en el conjunto de test.
     Solo calcula la ganancia
@@ -38,15 +38,6 @@ def evaluar_en_test(df, mejores_params) -> tuple:
     logger.info("=== EVALUACIÓN EN CONJUNTO DE TEST ===")
     logger.info(f"Período de test: {MES_TEST}")
 
-    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
-    df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST))
-
-    del df
-    gc.collect()
-
-    # Aplicar undersampling al df train unicamente
-    df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
-    gc.collect()
 
     X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
     y_train = df_train["target"].to_numpy().astype("float32")

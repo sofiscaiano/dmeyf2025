@@ -8,7 +8,7 @@ import gc
 import polars as pl
 import mlflow
 
-from src.features import feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
+from src.features import undersample, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -205,7 +205,15 @@ def main():
         else:
             mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
-        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
+        df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
+        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+
+        df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST))
+
+        del df
+        gc.collect()
+
+        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df_train, df_test, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
         # entrenar_modelo_final(df, mejores_params)
 
