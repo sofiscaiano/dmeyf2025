@@ -213,6 +213,20 @@ def main():
         del df
         gc.collect()
 
+        import sys
+        import inspect
+
+        print("=== VARIABLES QUE QUEDAN REFERENCIANDO DATAFRAMES ===")
+        for name, obj in globals().items():
+            if isinstance(obj, pl.DataFrame):
+                print("GLOBAL:", name, sys.getrefcount(obj))
+
+        for frame_info in inspect.stack():
+            frame = frame_info.frame
+            for name, obj in frame.f_locals.items():
+                if isinstance(obj, pl.DataFrame):
+                    print("STACK:", name, sys.getrefcount(obj))
+
         resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df_train, df_test, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
         # entrenar_modelo_final(df, mejores_params)
