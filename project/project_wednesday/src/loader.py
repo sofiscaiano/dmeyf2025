@@ -9,38 +9,40 @@ logger = logging.getLogger(__name__)
 
 def cargar_datos(path: str, lazy: bool, months: List[int] = None) -> pl.DataFrame:
     """
-    Carga un archivo Parquet en un DataFrame de Polars. Tiene la opcion de cargar en modo lazy para filtrar meses.
-
-    Parámetros:
-        path (str): Ruta del archivo Parquet a cargar.
-        lazy (bool): Indica si la carga es lazy o no.
-        months (list): Indica la lista de meses a filtrar si es lazy
-
-    Retorna:
-        pl.DataFrame: DataFrame con los datos cargados.
+    Carga un archivo Parquet en un DataFrame de Polars.
     """
 
     if lazy:
         try:
             df_lazy = pl.scan_parquet(path)
-            df = df_lazy.filter(pl.col("foto_mes").is_in(months)).sort(['numero_de_cliente', 'foto_mes']).collect()
-            df = df.sort(["numero_de_cliente", "foto_mes"])
+
+            df = (
+                df_lazy
+                .filter(pl.col("foto_mes").is_in(months))
+                .sort(["numero_de_cliente", "foto_mes"])
+                .collect()
+            )
+
+            # 🔥 IMPORTANTE: romper Copy-On-Write
+            df = df.clone()
+
             logging.info(f"✅ Archivo cargado correctamente: {path}")
             logging.info(f"Shape: {df.shape}")
             return df
 
-        except FileNotFoundError:
-            logging.info(f"❌ Error: no se encontró el archivo '{path}'.")
         except Exception as e:
             logging.info(f"⚠️ Error al cargar el archivo Parquet: {e}")
+
     else:
         try:
             df = pl.read_parquet(path)
-            logging.info(f"✅ Archivo cargado correctamente: {path}")
+
+            # 🔥 También conviene clonar para evitar mapeo de memoria
+            df = df.clone()
+
             logging.info(f"Filas: {df.height}, Columnas: {df.width}")
             return df
-        except FileNotFoundError:
-            logging.info(f"❌ Error: no se encontró el archivo '{path}'.")
+
         except Exception as e:
             logging.info(f"⚠️ Error al cargar el archivo Parquet: {e}")
 

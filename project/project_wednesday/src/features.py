@@ -388,7 +388,7 @@ def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     # Mezclar
     df_out = df_out.sample(fraction=1.0, seed=SEMILLA[1])
 
-    return df_out
+    return df_out.clone()
 
 
 import polars as pl
@@ -600,42 +600,32 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
 
 def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
     """
-    Añade un número específico de columnas "canarito" (features aleatorias)
-    a un DataFrame de Polars.
-
-    Estas nuevas columnas contendrán valores aleatorios uniformes (entre 0 y 1)
-    y se colocarán al principio del DataFrame, manteniendo el orden
-    original de las demás columnas.
-
-    Args:
-        df (pl.DataFrame): El DataFrame de Polars al que se le añadirán
-                           las columnas.
-        qcanaritos (int): El número de columnas "canarito" que se
-                            desea crear (ej: 100).
-
-    Returns:
-        pl.DataFrame: Un nuevo DataFrame con las columnas "canarito" añadidas
-                      al principio.
+    Igual que tu versión original, pero generando una sola matriz numpy
+    para evitar usar mucha memoria.
     """
-
     logging.info(f"==== Creando {qcanaritos} canaritos...")
-    # 1. Guardar los nombres de las columnas originales
+
     original_cols = df.columns
     num_filas = df.height
-    # 2. Generar la lista de nombres para las nuevas columnas "canarito"
-    canary_cols = [f"canarito_{i}" for i in range(1, qcanaritos + 1)]
 
-    # 3. Crear las expresiones Polars para generar los números aleatorios
-    #    pl.rand_uniform(0, 1) es el equivalente a runif()
-    canary_expressions = [pl.lit(np.random.rand(num_filas)).alias(name) for name in canary_cols]
+    # 👉 Generamos TODO en un solo array (mucho más eficiente)
+    canary_matrix = np.random.rand(num_filas, qcanaritos)
 
-    # 4. Añadir las nuevas columnas y reordenar todo en un solo paso
-    #    Usamos .select() para el reordenamiento final
-    df = df.with_columns(
-        canary_expressions
-    ).select(
-        canary_cols + original_cols  # Concatena listas para el nuevo orden
-    )
-    logging.info(f"==== Se crearon {qcanaritos} canaritos...")
+    # 👉 Convertimos cada columna numpy → Polars
+    canary_expressions = []
+    for i in range(qcanaritos):
+        name = f"canarito_{i+1}"
+        col = pl.Series(name, canary_matrix[:, i])
+        canary_expressions.append(col)
 
+    # 👉 Añadimos las nuevas columnas
+    df = df.hstack(canary_expressions)
+
+    # 👉 Reordenamos: canarios primero, luego las originales
+    df = df.select([f"canarito_{i+1}" for i in range(qcanaritos)] + original_cols)
+
+    # 👉 Forzamos copia nueva para liberar los buffers previos
+    df = df.clone()
+
+    logging.info(f"==== Se crearon {qcanaritos} canaritos.")
     return df

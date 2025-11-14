@@ -205,10 +205,10 @@ def main():
         else:
             mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
-        df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
+        df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN)).clone()
         df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
-        df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST))
+        df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST)).clone()
 
         del df
         gc.collect()
