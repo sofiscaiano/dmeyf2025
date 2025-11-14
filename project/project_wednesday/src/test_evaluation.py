@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 
-def evaluar_en_test(df_train, df_test, mejores_params) -> tuple:
+def evaluar_en_test(df, mejores_params) -> tuple:
     """
     Evalúa el modelo con los mejores hiperparámetros en el conjunto de test.
     Solo calcula la ganancia
@@ -38,26 +38,12 @@ def evaluar_en_test(df_train, df_test, mejores_params) -> tuple:
     logger.info("=== EVALUACIÓN EN CONJUNTO DE TEST ===")
     logger.info(f"Período de test: {MES_TEST}")
 
+    X_train, y_train, X_test, y_test = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN, mes_test=MES_TEST)
 
-    X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
-    y_train = df_train["target"].to_numpy().astype("float32")
-
-    X_test = df_test.drop(['target', 'target_test']).to_numpy().astype("float32")
-    y_test_check = df_test['target'].to_numpy().astype("float32")
-    y_test = df_test['target_test'].to_numpy().astype("float32")
-
-    logging.info(df_train.shape)
-    logging.info(df_test.shape)
-
-    # Liberar Polars
-    del df_train, df_test
-    gc.collect()
+    logging.info(X_train.shape)
+    logging.info(X_test.shape)
 
     train_data = lgb.Dataset(X_train, label=y_train)
-
-    # Ya no necesitamos X_train ni y_train
-    del X_train, y_train
-    gc.collect()
 
     flag_GPU = int(os.getenv('GPU', 0))
 
@@ -127,7 +113,6 @@ def evaluar_en_test(df_train, df_test, mejores_params) -> tuple:
     y_pred = np.mean(preds, axis=0)
 
     auc = roc_auc_score(y_test, y_pred)
-    auc_check = roc_auc_score(y_test_check, y_pred)
 
     logging.info('=== Inicio Grafico de Importancia ===')
     plot_mean_importance(all_importances, importance_type, type='test')
@@ -152,8 +137,7 @@ def evaluar_en_test(df_train, df_test, mejores_params) -> tuple:
 
     resultados = {
         'ganancia_test': float(ganancia_test),
-        'auc_test': float(auc_check),
-        'auc_test_BAJA+2': float(auc),
+        'auc_test': float(auc),
         'total_predicciones': int(total_predicciones),
         'predicciones_positivas': int(predicciones_positivas),
         'porcentaje_positivas': float(porcentaje_positivas),
@@ -195,8 +179,7 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
         'descripcion_experimento': DESCRIPCION,
         'ksemillerio': KSEMILLERIO,
         'ganancia': resultados_test['ganancia_test'],
-        'auc': resultados_test['auc_test'],
-        'auc_BAJA+2': resultados_test['auc_test_BAJA+2'],
+        'auc_BAJA+2': resultados_test['auc_test'],
         'total_predicciones': resultados_test['total_predicciones'],
         'predicciones_positivas': resultados_test['predicciones_positivas'],
         'porcentaje_positivas': resultados_test['porcentaje_positivas'],
@@ -212,8 +195,9 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
     }
 
     mlflow.log_metric("ganancia_test", resultados_test['ganancia_test'])
+    mlflow.log_metric("ganancia_test", MES_TEST)
     mlflow.log_metric("semillerio_test", KSEMILLERIO)
-    mlflow.log_metric("auc_test", resultados_test['auc_test_BAJA+2'])
+    mlflow.log_metric("auc_test", resultados_test['auc_test'])
     mlflow.log_metric("envios_test", resultados_test['predicciones_positivas'])
 
     # Cargar datos existentes si el archivo ya existe
@@ -376,3 +360,18 @@ def crear_grafico_ganancia(y_pred_proba: np.array, ganancias_acumuladas: np.arra
     return ruta_archivo
 
 
+def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes_test: list) -> tuple:
+
+    df_train = df.filter(pl.col("foto_mes").is_in(mes_train))
+    if undersampling:
+        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+
+    df_test = df.filter(pl.col("foto_mes").is_in(mes_test))
+
+    X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
+    y_train = df_train["target"].to_numpy().astype("float32")
+
+    X_test = df_test.drop(["target", "target_test"]).to_numpy().astype("float32")
+    y_test = df_test["target_test"].to_numpy().astype("float32")
+
+    return X_train, y_train, X_test, y_test

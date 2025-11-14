@@ -98,6 +98,8 @@ def main():
     with mlflow.start_run(run_name=f"experimento-{STUDY_NAME}"):
         mlflow.set_tags(MLFLOW_TAGS)
 
+        mlflow.log_param("zlightgbm", FLAG_ZLIGHTGBM)
+
         if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
             logger.info("✅ df_fe encontrado")
             data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
@@ -205,37 +207,7 @@ def main():
         else:
             mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
-        df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN)).clone()
-        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
-
-        df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST)).clone()
-
-        del df
-        gc.collect()
-
-        import sys
-        import inspect
-
-        print("=== VARIABLES QUE QUEDAN REFERENCIANDO DATAFRAMES ===")
-        for name, obj in globals().items():
-            if isinstance(obj, pl.DataFrame):
-                print("GLOBAL:", name, sys.getrefcount(obj))
-
-        for frame_info in inspect.stack():
-            frame = frame_info.frame
-            for name, obj in frame.f_locals.items():
-                if isinstance(obj, pl.DataFrame):
-                    print("STACK:", name, sys.getrefcount(obj))
-
-        import  psutil
-        proc = psutil.Process(os.getpid())
-        print("RSS MB:", proc.memory_info().rss / 1024 ** 2)
-        print("PL df_train size est (MB):", df_train.estimated_size() / 1024 ** 2)
-        print("PL df_test  size est (MB):", df_test.estimated_size() / 1024 ** 2)
-        gc.collect()
-        print("After GC - RSS MB:", proc.memory_info().rss / 1024 ** 2)
-
-        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df_train, df_test, mejores_params)
+        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
         # entrenar_modelo_final(df, mejores_params)
 

@@ -15,6 +15,7 @@ from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
 from .features import undersample
 from .basic_functions import generar_semillas
+from .test_evaluation import train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -283,28 +284,10 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     else:
         logger.info(f"🆕 Nueva optimización: {n_trials} trials")
 
-    # Filtrar períodos de entrenamiento y validación
-    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN_BO))
-    df_val = df.filter(pl.col("foto_mes").is_in(MES_VALIDACION))
-
-    df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
-
-    X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
-    y_train = df_train["target"].to_numpy().astype("float32")
-
-    X_val = df_val.drop(["target", "target_test"]).to_numpy().astype("float32")
-    y_val = df_val["target_test"].to_numpy().astype("float32")
-
-    # Liberar Polars
-    del df_train, df_val
-    gc.collect()
+    X_train, y_train, X_val, y_val = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN, mes_test=MES_VALIDACION)
 
     # Convertir a LightGBM Dataset
     train_data = lgb.Dataset(X_train, label=y_train)
-
-    # Ya no necesitamos X_train ni y_train ni val
-    del X_train, y_train
-    gc.collect()
 
     # Ejecutar optimización
     if trials_a_ejecutar > 0:
