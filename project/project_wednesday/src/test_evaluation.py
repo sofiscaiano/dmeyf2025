@@ -41,6 +41,9 @@ def evaluar_en_test(df, mejores_params) -> tuple:
     df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
     df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST))
 
+    del df
+    gc.collect()
+
     # Aplicar undersampling al df train unicamente
     df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
     gc.collect()
