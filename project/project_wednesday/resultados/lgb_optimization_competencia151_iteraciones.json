@@ -1,0 +1,2302 @@
+[
+  {
+    "trial_number": 1,
+    "params": {
+      "num_iterations": 786,
+      "learning_rate": 0.16417258346769856,
+      "feature_fraction": 0.6782681675111035,
+      "num_leaves": 17,
+      "min_data_in_leaf": 524
+    },
+    "user_attrs": {
+      "num_iterations": 114
+    },
+    "value": 248634862.56871563,
+    "datetime": "2025-11-14T09:12:30.861163",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 2,
+    "params": {
+      "num_iterations": 1551,
+      "learning_rate": 0.13237660443410307,
+      "feature_fraction": 0.21587540597709357,
+      "num_leaves": 9,
+      "min_data_in_leaf": 13484
+    },
+    "user_attrs": {
+      "num_iterations": 369
+    },
+    "value": 253856531.73413295,
+    "datetime": "2025-11-14T09:13:20.021339",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 3,
+    "params": {
+      "num_iterations": 237,
+      "learning_rate": 0.1416647660680151,
+      "feature_fraction": 0.492418966878683,
+      "num_leaves": 886,
+      "min_data_in_leaf": 10
+    },
+    "user_attrs": {
+      "num_iterations": 88
+    },
+    "value": 251096121.9390305,
+    "datetime": "2025-11-14T09:14:58.474373",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 4,
+    "params": {
+      "num_iterations": 727,
+      "learning_rate": 0.21735931382847468,
+      "feature_fraction": 0.46697884152397967,
+      "num_leaves": 840,
+      "min_data_in_leaf": 3
+    },
+    "user_attrs": {
+      "num_iterations": 197
+    },
+    "value": 253283588.20589706,
+    "datetime": "2025-11-14T09:16:58.529217",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 5,
+    "params": {
+      "num_iterations": 2,
+      "learning_rate": 0.13122858958707875,
+      "feature_fraction": 0.34452503627997355,
+      "num_leaves": 3,
+      "min_data_in_leaf": 7385
+    },
+    "user_attrs": {
+      "num_iterations": 2
+    },
+    "value": 171912863.5682159,
+    "datetime": "2025-11-14T09:17:33.488832",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 6,
+    "params": {
+      "num_iterations": 75,
+      "learning_rate": 0.02338520813170893,
+      "feature_fraction": 0.4088983176032072,
+      "num_leaves": 19,
+      "min_data_in_leaf": 2
+    },
+    "user_attrs": {
+      "num_iterations": 74
+    },
+    "value": 227150304.8475762,
+    "datetime": "2025-11-14T09:18:12.691325",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 7,
+    "params": {
+      "num_iterations": 1,
+      "learning_rate": 0.19346203458554231,
+      "feature_fraction": 0.5490443069345727,
+      "num_leaves": 2,
+      "min_data_in_leaf": 10
+    },
+    "user_attrs": {
+      "num_iterations": 1
+    },
+    "value": 31276691.654172912,
+    "datetime": "2025-11-14T09:18:47.830469",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 8,
+    "params": {
+      "num_iterations": 17,
+      "learning_rate": 0.022879925592568587,
+      "feature_fraction": 0.7251053832860697,
+      "num_leaves": 4,
+      "min_data_in_leaf": 3
+    },
+    "user_attrs": {
+      "num_iterations": 8
+    },
+    "value": 196128295.85207397,
+    "datetime": "2025-11-14T09:19:23.281822",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 9,
+    "params": {
+      "num_iterations": 254,
+      "learning_rate": 0.25952381033171057,
+      "feature_fraction": 0.15857615361125227,
+      "num_leaves": 3,
+      "min_data_in_leaf": 199
+    },
+    "user_attrs": {
+      "num_iterations": 175
+    },
+    "value": 242800339.83008495,
+    "datetime": "2025-11-14T09:20:05.481632",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 11,
+    "params": {
+      "num_iterations": 1721,
+      "learning_rate": 0.4554776126950544,
+      "feature_fraction": 0.06549038439248406,
+      "num_leaves": 599,
+      "min_data_in_leaf": 213
+    },
+    "user_attrs": {
+      "num_iterations": 308
+    },
+    "value": 242566666.66666666,
+    "datetime": "2025-11-14T09:22:18.314721",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 13,
+    "params": {
+      "num_iterations": 403,
+      "learning_rate": 0.058976860512875436,
+      "feature_fraction": 0.22375802948648504,
+      "num_leaves": 12,
+      "min_data_in_leaf": 17
+    },
+    "user_attrs": {
+      "num_iterations": 302
+    },
+    "value": 255047236.3818091,
+    "datetime": "2025-11-14T09:23:35.066004",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 14,
+    "params": {
+      "num_iterations": 154,
+      "learning_rate": 0.06807719787077918,
+      "feature_fraction": 0.20003076852748258,
+      "num_leaves": 11,
+      "min_data_in_leaf": 68
+    },
+    "user_attrs": {
+      "num_iterations": 154
+    },
+    "value": 243243718.14092955,
+    "datetime": "2025-11-14T09:24:14.927826",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 16,
+    "params": {
+      "num_iterations": 113,
+      "learning_rate": 0.07295593575422597,
+      "feature_fraction": 0.2991896850581135,
+      "num_leaves": 32,
+      "min_data_in_leaf": 25
+    },
+    "user_attrs": {
+      "num_iterations": 93
+    },
+    "value": 247098190.90454772,
+    "datetime": "2025-11-14T09:25:27.594532",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 17,
+    "params": {
+      "num_iterations": 406,
+      "learning_rate": 0.007572296119952522,
+      "feature_fraction": 0.19230367047361757,
+      "num_leaves": 7,
+      "min_data_in_leaf": 4987
+    },
+    "user_attrs": {
+      "num_iterations": 390
+    },
+    "value": 225717261.36931536,
+    "datetime": "2025-11-14T09:26:15.409061",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 18,
+    "params": {
+      "num_iterations": 13,
+      "learning_rate": 0.039088102006793406,
+      "feature_fraction": 0.6009013447221125,
+      "num_leaves": 32,
+      "min_data_in_leaf": 1191
+    },
+    "user_attrs": {
+      "num_iterations": 13
+    },
+    "value": 213242348.8255872,
+    "datetime": "2025-11-14T09:26:51.016719",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 19,
+    "params": {
+      "num_iterations": 1404,
+      "learning_rate": 0.4665969736817112,
+      "feature_fraction": 0.36766000536606314,
+      "num_leaves": 7,
+      "min_data_in_leaf": 56
+    },
+    "user_attrs": {
+      "num_iterations": 100
+    },
+    "value": 226290394.8025987,
+    "datetime": "2025-11-14T09:27:35.332958",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 20,
+    "params": {
+      "num_iterations": 53,
+      "learning_rate": 0.09108879229068287,
+      "feature_fraction": 0.8811849392807638,
+      "num_leaves": 74,
+      "min_data_in_leaf": 1
+    },
+    "user_attrs": {
+      "num_iterations": 16
+    },
+    "value": 235986496.7516242,
+    "datetime": "2025-11-14T09:28:12.303268",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 21,
+    "params": {
+      "num_iterations": 719,
+      "learning_rate": 0.2827760499724052,
+      "feature_fraction": 0.409673907549702,
+      "num_leaves": 279,
+      "min_data_in_leaf": 4
+    },
+    "user_attrs": {
+      "num_iterations": 374
+    },
+    "value": 240577191.40429786,
+    "datetime": "2025-11-14T09:29:51.171671",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 22,
+    "params": {
+      "num_iterations": 860,
+      "learning_rate": 0.037285708749124624,
+      "feature_fraction": 0.47631197690510085,
+      "num_leaves": 19,
+      "min_data_in_leaf": 16
+    },
+    "user_attrs": {
+      "num_iterations": 848
+    },
+    "value": 260609395.30234882,
+    "datetime": "2025-11-14T09:31:02.654985",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 23,
+    "params": {
+      "num_iterations": 323,
+      "learning_rate": 0.04149470051296465,
+      "feature_fraction": 0.26591504260149884,
+      "num_leaves": 14,
+      "min_data_in_leaf": 33
+    },
+    "user_attrs": {
+      "num_iterations": 304
+    },
+    "value": 251004217.89105448,
+    "datetime": "2025-11-14T09:31:47.802527",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 24,
+    "params": {
+      "num_iterations": 1063,
+      "learning_rate": 0.01450490332164642,
+      "feature_fraction": 0.14055038881484128,
+      "num_leaves": 32,
+      "min_data_in_leaf": 14
+    },
+    "user_attrs": {
+      "num_iterations": 588
+    },
+    "value": 254099590.20489755,
+    "datetime": "2025-11-14T09:32:48.756551",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 25,
+    "params": {
+      "num_iterations": 146,
+      "learning_rate": 0.012219809408047169,
+      "feature_fraction": 0.12547434062219542,
+      "num_leaves": 49,
+      "min_data_in_leaf": 11
+    },
+    "user_attrs": {
+      "num_iterations": 140
+    },
+    "value": 239240869.5652174,
+    "datetime": "2025-11-14T09:33:30.779003",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 26,
+    "params": {
+      "num_iterations": 884,
+      "learning_rate": 0.012995216756352889,
+      "feature_fraction": 0.05802426350870901,
+      "num_leaves": 21,
+      "min_data_in_leaf": 106
+    },
+    "user_attrs": {
+      "num_iterations": 882
+    },
+    "value": 254701279.36031985,
+    "datetime": "2025-11-14T09:34:28.366273",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 27,
+    "params": {
+      "num_iterations": 387,
+      "learning_rate": 0.03220203838944754,
+      "feature_fraction": 0.05636165018086764,
+      "num_leaves": 22,
+      "min_data_in_leaf": 101
+    },
+    "user_attrs": {
+      "num_iterations": 385
+    },
+    "value": 252784067.96601698,
+    "datetime": "2025-11-14T09:35:13.040441",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 28,
+    "params": {
+      "num_iterations": 28,
+      "learning_rate": 0.009032034977815729,
+      "feature_fraction": 0.6123471527125198,
+      "num_leaves": 120,
+      "min_data_in_leaf": 550
+    },
+    "user_attrs": {
+      "num_iterations": 15
+    },
+    "value": 223828715.64217892,
+    "datetime": "2025-11-14T09:35:47.319882",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 29,
+    "params": {
+      "num_iterations": 92,
+      "learning_rate": 0.005385071515020683,
+      "feature_fraction": 0.7831635540312483,
+      "num_leaves": 55,
+      "min_data_in_leaf": 1
+    },
+    "user_attrs": {
+      "num_iterations": 2
+    },
+    "value": 230348115.942029,
+    "datetime": "2025-11-14T09:36:25.668000",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 30,
+    "params": {
+      "num_iterations": 213,
+      "learning_rate": 0.018128641102058314,
+      "feature_fraction": 0.33236992734235166,
+      "num_leaves": 23,
+      "min_data_in_leaf": 126
+    },
+    "user_attrs": {
+      "num_iterations": 212
+    },
+    "value": 239851934.0329835,
+    "datetime": "2025-11-14T09:37:11.038111",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 31,
+    "params": {
+      "num_iterations": 798,
+      "learning_rate": 0.014985723915163217,
+      "feature_fraction": 0.16245583334240846,
+      "num_leaves": 33,
+      "min_data_in_leaf": 19
+    },
+    "user_attrs": {
+      "num_iterations": 615
+    },
+    "value": 265720519.74012995,
+    "datetime": "2025-11-14T09:38:15.392781",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 32,
+    "params": {
+      "num_iterations": 1074,
+      "learning_rate": 0.029784752504027664,
+      "feature_fraction": 0.23220320433665192,
+      "num_leaves": 14,
+      "min_data_in_leaf": 28
+    },
+    "user_attrs": {
+      "num_iterations": 572
+    },
+    "value": 249219330.33483258,
+    "datetime": "2025-11-14T09:39:12.482608",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 33,
+    "params": {
+      "num_iterations": 485,
+      "learning_rate": 0.0125999957976022,
+      "feature_fraction": 0.12884418852181667,
+      "num_leaves": 11,
+      "min_data_in_leaf": 441
+    },
+    "user_attrs": {
+      "num_iterations": 322
+    },
+    "value": 234687216.3918041,
+    "datetime": "2025-11-14T09:39:57.490019",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 34,
+    "params": {
+      "num_iterations": 976,
+      "learning_rate": 0.008893923462628331,
+      "feature_fraction": 0.28481116952894314,
+      "num_leaves": 43,
+      "min_data_in_leaf": 6
+    },
+    "user_attrs": {
+      "num_iterations": 545
+    },
+    "value": 249445837.08145928,
+    "datetime": "2025-11-14T09:41:03.653842",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 35,
+    "params": {
+      "num_iterations": 2119,
+      "learning_rate": 0.09259875947127423,
+      "feature_fraction": 0.4445536655135597,
+      "num_leaves": 5,
+      "min_data_in_leaf": 49
+    },
+    "user_attrs": {
+      "num_iterations": 301
+    },
+    "value": 244163328.3358321,
+    "datetime": "2025-11-14T09:41:54.364078",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 36,
+    "params": {
+      "num_iterations": 679,
+      "learning_rate": 0.0538801361174572,
+      "feature_fraction": 0.17136668680340755,
+      "num_leaves": 77,
+      "min_data_in_leaf": 24
+    },
+    "user_attrs": {
+      "num_iterations": 237
+    },
+    "value": 263982108.94552723,
+    "datetime": "2025-11-14T09:42:48.397082",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 37,
+    "params": {
+      "num_iterations": 626,
+      "learning_rate": 0.10820216112385489,
+      "feature_fraction": 0.5215020890587589,
+      "num_leaves": 96,
+      "min_data_in_leaf": 16
+    },
+    "user_attrs": {
+      "num_iterations": 149
+    },
+    "value": 251711654.17291355,
+    "datetime": "2025-11-14T09:43:40.347735",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 38,
+    "params": {
+      "num_iterations": 190,
+      "learning_rate": 0.052333350251195586,
+      "feature_fraction": 0.18239441243451002,
+      "num_leaves": 203,
+      "min_data_in_leaf": 7
+    },
+    "user_attrs": {
+      "num_iterations": 190
+    },
+    "value": 256723658.17091453,
+    "datetime": "2025-11-14T09:44:34.074120",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 39,
+    "params": {
+      "num_iterations": 194,
+      "learning_rate": 0.04810398393072006,
+      "feature_fraction": 0.17425880563191823,
+      "num_leaves": 174,
+      "min_data_in_leaf": 5
+    },
+    "user_attrs": {
+      "num_iterations": 138
+    },
+    "value": 254939650.17491254,
+    "datetime": "2025-11-14T09:45:24.033848",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 40,
+    "params": {
+      "num_iterations": 62,
+      "learning_rate": 0.031851881300651884,
+      "feature_fraction": 0.36434475119902643,
+      "num_leaves": 394,
+      "min_data_in_leaf": 7
+    },
+    "user_attrs": {
+      "num_iterations": 60
+    },
+    "value": 244154582.70864567,
+    "datetime": "2025-11-14T09:46:09.274316",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 41,
+    "params": {
+      "num_iterations": 442,
+      "learning_rate": 0.07437814656880536,
+      "feature_fraction": 0.21425128352209813,
+      "num_leaves": 144,
+      "min_data_in_leaf": 2
+    },
+    "user_attrs": {
+      "num_iterations": 151
+    },
+    "value": 242996981.50924537,
+    "datetime": "2025-11-14T09:47:05.712225",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 42,
+    "params": {
+      "num_iterations": 287,
+      "learning_rate": 0.057869451905032426,
+      "feature_fraction": 0.11098428374931335,
+      "num_leaves": 69,
+      "min_data_in_leaf": 18
+    },
+    "user_attrs": {
+      "num_iterations": 269
+    },
+    "value": 259225937.03148425,
+    "datetime": "2025-11-14T09:47:58.075025",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 43,
+    "params": {
+      "num_iterations": 245,
+      "learning_rate": 0.03883279061255511,
+      "feature_fraction": 0.12732499925697127,
+      "num_leaves": 78,
+      "min_data_in_leaf": 36
+    },
+    "user_attrs": {
+      "num_iterations": 245
+    },
+    "value": 255304937.53123438,
+    "datetime": "2025-11-14T09:48:46.508562",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 44,
+    "params": {
+      "num_iterations": 1318,
+      "learning_rate": 0.15631594691598646,
+      "feature_fraction": 0.3105389975194308,
+      "num_leaves": 236,
+      "min_data_in_leaf": 2
+    },
+    "user_attrs": {
+      "num_iterations": 255
+    },
+    "value": 253339230.3848076,
+    "datetime": "2025-11-14T09:50:04.533936",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 45,
+    "params": {
+      "num_iterations": 284,
+      "learning_rate": 0.0552342748365187,
+      "feature_fraction": 0.15729977785842636,
+      "num_leaves": 62,
+      "min_data_in_leaf": 9
+    },
+    "user_attrs": {
+      "num_iterations": 114
+    },
+    "value": 251165467.2663668,
+    "datetime": "2025-11-14T09:50:49.598402",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 46,
+    "params": {
+      "num_iterations": 3,
+      "learning_rate": 0.019150496339564827,
+      "feature_fraction": 0.09945694040987071,
+      "num_leaves": 87,
+      "min_data_in_leaf": 24
+    },
+    "user_attrs": {
+      "num_iterations": 3
+    },
+    "value": 214212663.66816592,
+    "datetime": "2025-11-14T09:51:26.759227",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 47,
+    "params": {
+      "num_iterations": 652,
+      "learning_rate": 0.11310704679247442,
+      "feature_fraction": 0.16675520448309514,
+      "num_leaves": 343,
+      "min_data_in_leaf": 3
+    },
+    "user_attrs": {
+      "num_iterations": 82
+    },
+    "value": 261890904.54772612,
+    "datetime": "2025-11-14T09:52:30.619662",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 48,
+    "params": {
+      "num_iterations": 730,
+      "learning_rate": 0.12302304193385458,
+      "feature_fraction": 0.2594102070821273,
+      "num_leaves": 454,
+      "min_data_in_leaf": 3
+    },
+    "user_attrs": {
+      "num_iterations": 172
+    },
+    "value": 254610444.7776112,
+    "datetime": "2025-11-14T09:53:58.215711",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  },
+  {
+    "trial_number": 49,
+    "params": {
+      "num_iterations": 1487,
+      "learning_rate": 0.19852936887522982,
+      "feature_fraction": 0.7044757376419472,
+      "num_leaves": 38,
+      "min_data_in_leaf": 1
+    },
+    "user_attrs": {
+      "num_iterations": 16
+    },
+    "value": 229546816.59170416,
+    "datetime": "2025-11-14T09:54:35.441214",
+    "state": "COMPLETE",
+    "configuracion": {
+      "semilla": 131213,
+      "mes_train": [
+        201901,
+        201902,
+        201903,
+        201904,
+        201905,
+        201906,
+        201907,
+        201908,
+        201909,
+        201910,
+        201911,
+        201912,
+        202001,
+        202002,
+        202003,
+        202004,
+        202005,
+        202006,
+        202007,
+        202008,
+        202009,
+        202010,
+        202011,
+        202012
+      ],
+      "mes_validacion": [
+        202102
+      ],
+      "undersampling": 0.05,
+      "metric": "ganancia"
+    }
+  }
+]

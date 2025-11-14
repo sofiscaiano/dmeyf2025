@@ -101,6 +101,8 @@ def main():
         if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
             logger.info("✅ df_fe encontrado")
             data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
+            if FLAG_GCP == 1:
+                data_path = '~/datasets/df_fe.parquet'
             months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
             df = cargar_datos(data_path, lazy=True, months=months_filter)
 
@@ -139,6 +141,8 @@ def main():
             df = convertir_clase_ternaria_a_target(df)
             logging.info("==== Exporto el df_fe.parquet ====")
             data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
+            if FLAG_GCP == 1:
+                data_path = '~/datasets/df_fe.parquet'
             df.write_parquet(data_path, compression="gzip")
 
         # df = df.to_pandas()
