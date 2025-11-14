@@ -23,9 +23,6 @@ def cargar_datos(path: str, lazy: bool, months: List[int] = None) -> pl.DataFram
                 .collect()
             )
 
-            # 🔥 IMPORTANTE: romper Copy-On-Write
-            df = df.clone()
-
             logging.info(f"✅ Archivo cargado correctamente: {path}")
             logging.info(f"Shape: {df.shape}")
             return df

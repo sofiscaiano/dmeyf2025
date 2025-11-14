@@ -388,7 +388,7 @@ def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     # Mezclar
     df_out = df_out.sample(fraction=1.0, seed=SEMILLA[1])
 
-    return df_out.clone()
+    return df_out
 
 
 import polars as pl
