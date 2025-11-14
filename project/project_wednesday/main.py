@@ -170,7 +170,7 @@ def main():
             logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
         elif FLAG_ZLIGHTGBM == 1:
-            df = create_canaritos(df, qcanaritos=100)
+            df = create_canaritos(df, qcanaritos=qcanaritos)
 
         if ZEROSHOT:
             logger.info("=== ANÁLISIS ZEROSHOT ===")
