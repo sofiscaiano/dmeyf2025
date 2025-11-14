@@ -636,15 +636,13 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
 
     # 1. Guardar los nombres de las columnas originales
     original_cols = df.columns
-
+    num_filas = df.height
     # 2. Generar la lista de nombres para las nuevas columnas "canarito"
     canary_cols = [f"canarito_{i}" for i in range(1, qcanaritos + 1)]
 
     # 3. Crear las expresiones Polars para generar los números aleatorios
     #    pl.rand_uniform(0, 1) es el equivalente a runif()
-    canary_expressions = [
-        pl.rand_uniform(0, 1).alias(name) for name in canary_cols
-    ]
+    canary_expressions = [pl.lit(np.random.rand(num_filas)).alias(name) for name in canary_cols]
 
     # 4. Añadir las nuevas columnas y reordenar todo en un solo paso
     #    Usamos .select() para el reordenamiento final
@@ -653,8 +651,5 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
     ).select(
         canary_cols + original_cols  # Concatena listas para el nuevo orden
     )
-
-    # mlflow.log_param("flag_canaritos", True)
-    # mlflow.log_param("qcanaritos", qcanaritos)
 
     return df
