@@ -95,20 +95,36 @@ def main():
         logger.error(f"Error al configurar MLflow: {e}")
         raise
 
-    def cargar_y_procesar_df():
+    def cargar_y_procesar_df() -> tuple[pl.DataFrame, pl.DataFrame]:
+        """
+        Carga df_fe completo, filtra por meses y genera df_train y df_test.
+        Libera la memoria del df original lo antes posible.
 
+        Retorna:
+            df_train, df_test: DataFrames ya listos para entrenamiento y test.
+        """
         months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
-        logging.info("Cargo df:")
+        logging.info("Cargo df_fe completo (lazy scan y collect)...")
         df = cargar_datos('~/datasets/df_fe.parquet', lazy=True, months=months_filter)
-        logging.info("Elimino atributos:")
+
+        logging.info("Elimino columnas a descartar...")
         df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
-        logging.info("Creo canaritos:")
+
+        logging.info("Creo canaritos...")
         df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
 
-        df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))
+        logging.info("Genero df_train y df_test...")
+        # Filtramos y clonamos inmediatamente para romper referencias a df
+        df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN)).clone()
         df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
-        df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST))
 
+        df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST)).clone()
+
+        logging.info("Elimino df original para liberar memoria...")
+        del df
+        gc.collect()
+
+        logging.info("df_train y df_test listos y memoria liberada del df completo")
         return df_train, df_test
 
 
