@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia148'
+STUDY_NAME : 'lgb_optimization_competencia152'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -23,7 +23,7 @@ competencia02:
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
   ENVIOS:
-  DESCRIPCION: 'Con fix aguinaldo pero mido test en 202104'
+  DESCRIPCION: 'Sin fix aguinaldo pero mido test en 202104 para comparar con la 148'
 
 parametros_lgb:
   n_trail: 50

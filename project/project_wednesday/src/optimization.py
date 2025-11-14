@@ -10,6 +10,7 @@ import os
 from datetime import datetime
 import random
 import mlflow
+import gc
 from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
 from .features import undersample
@@ -72,7 +73,7 @@ def guardar_iteracion(trial, metrica, archivo_base=None):
     logger.info(f"Iteración {trial.number} guardada en {archivo}")
     logger.info(f"Ganancia/auc: {metrica:,.4f}" + "---" + f"Parámetros: {trial.params}")
 
-def objetivo_ganancia(trial, df) -> float:
+def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
     """
     Parameters:
     trial: trial de optuna
@@ -100,26 +101,10 @@ def objetivo_ganancia(trial, df) -> float:
         'gpu_platform_id': 0,
         'gpu_device_id': 0}
 
-
-    # Filtrar períodos de entrenamiento y validación
-    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN_BO))
-    df_val = df.filter(pl.col("foto_mes").is_in(MES_VALIDACION))
-
-    # Aplicar undersampling al df train unicamente
-    df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
-
-    X_train = df_train.drop(["target", "target_test"])
-    y_train = df_train["target"]
-
-    X_val = df_val.drop(["target", "target_test"])
-    y_val = df_val["target_test"]
-
-    # Convertir a LightGBM Dataset
-    train_data = lgb.Dataset(X_train.to_pandas(), label=y_train.to_pandas())
-    val_data = lgb.Dataset(X_val.to_pandas(), label=y_val.to_pandas())
+    val_data = lgb.Dataset(X_val, label=y_val)
 
     # Número de filas de entrenamiento
-    n_rows = df_train.height
+    n_rows = len(train_data.get_label())
 
     # Hiperparámetros a optimizar
     params = {
@@ -298,9 +283,33 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     else:
         logger.info(f"🆕 Nueva optimización: {n_trials} trials")
 
+    # Filtrar períodos de entrenamiento y validación
+    df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN_BO))
+    df_val = df.filter(pl.col("foto_mes").is_in(MES_VALIDACION))
+
+    # Aplicar undersampling al df train unicamente
+    df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+
+    X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
+    y_train = df_train["target"].to_numpy().astype("float32")
+
+    X_val = df_val.drop(["target", "target_test"]).to_numpy().astype("float32")
+    y_val = df_val["target_test"].to_numpy().astype("float32")
+
+    # Liberar Polars
+    del df_train, df_val
+    gc.collect()
+
+    # Convertir a LightGBM Dataset
+    train_data = lgb.Dataset(X_train, label=y_train)
+
+    # Ya no necesitamos X_train ni y_train ni val
+    del X_train, y_train
+    gc.collect()
+
     # Ejecutar optimización
     if trials_a_ejecutar > 0:
-        study.optimize(lambda t: objetivo_ganancia(t, df), n_trials=trials_a_ejecutar, show_progress_bar=True, n_jobs=n_jobs, gc_after_trial=True)
+        study.optimize(lambda t: objetivo_ganancia(t, train_data, X_val, y_val), n_trials=trials_a_ejecutar, show_progress_bar=True, n_jobs=n_jobs, gc_after_trial=True)
 
         # Generar el gráfico
         fig_importancia = optuna.visualization.plot_param_importances(study)

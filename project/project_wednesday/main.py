@@ -116,7 +116,7 @@ def main():
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m'])]
             cant_lag = 2
             ## Fix aguinaldo
-            df = fix_aguinaldo(df)
+            # df = fix_aguinaldo(df)
             gc.collect()
 
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
@@ -137,6 +137,7 @@ def main():
 
             ## Convertir clase ternaria a target binaria
             df = convertir_clase_ternaria_a_target(df)
+            logging.info("==== Exporto el df_fe.parquet ====")
             data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
             df.write_parquet(data_path, compression="gzip")
 
@@ -170,7 +171,8 @@ def main():
             logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
         elif FLAG_ZLIGHTGBM == 1:
-            df = create_canaritos(df, qcanaritos=qcanaritos)
+            df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
+            gc.collect()
 
         if ZEROSHOT:
             logger.info("=== ANÁLISIS ZEROSHOT ===")

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 
-def evaluar_en_test(df, mejores_params) -> dict:
+def evaluar_en_test(df, mejores_params) -> tuple:
     """
     Evalúa el modelo con los mejores hiperparámetros en el conjunto de test.
     Solo calcula la ganancia
@@ -44,31 +44,31 @@ def evaluar_en_test(df, mejores_params) -> dict:
     # Aplicar undersampling al df train unicamente
     df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
-    X_train = df_train.drop(["target", "target_test"])
-    y_train = df_train["target"]
+    X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
+    y_train = df_train["target"].to_numpy().astype("float32")
 
-    X_test = df_test.drop(['target', 'target_test'])
-    y_test_check = df_test['target']
-    y_test = df_test['target_test']
+    X_test = df_test.drop(['target', 'target_test']).to_numpy().astype("float32")
+    y_test_check = df_test['target'].to_numpy().astype("float32")
+    y_test = df_test['target_test'].to_numpy().astype("float32")
 
-    train_data = lgb.Dataset(X_train.to_pandas(), label=y_train.to_pandas())
+    # Liberar Polars
+    del df_train, df_test
+    gc.collect()
 
-    del X_train, y_train, df_train, df_test
+    train_data = lgb.Dataset(X_train, label=y_train)
+
+    # Ya no necesitamos X_train ni y_train
+    del X_train, y_train
     gc.collect()
 
     flag_GPU = int(os.getenv('GPU', 0))
 
-    if flag_GPU == 0:
-        gpu_dict = {'device': 'cpu'}
-    else:
-        gpu_dict = {'device': 'gpu',
-        'gpu_platform_id': 0,
-        'gpu_device_id': 0}
+    gpu_dict = {'device': 'gpu'} if flag_GPU else {'device': 'cpu'}
 
     # Hiperparámetros fijos
     params = {
         'objective': 'binary',
-        'metric': 'None',  # Usamos nuestra métrica personalizada
+        'metric': 'None',
         'verbose': -1,
         'verbosity': -1,
         'silent': 1,
@@ -82,7 +82,6 @@ def evaluar_en_test(df, mejores_params) -> dict:
     }
 
     final_params = {**params, **mejores_params}
-
     logger.info(f"Parámetros del modelo: {final_params}")
 
     logging.info(f'=== Inicio Entrenamiento del Modelo con {KSEMILLERIO} semillas ===')
@@ -108,6 +107,11 @@ def evaluar_en_test(df, mejores_params) -> dict:
             num_boost_round=mejores_params.get('num_iterations', 1000)
         )
 
+        logging.info(f'Fin de entrenamiento del modelo con seed = {seed} ({i + 1}/{len(semillas)})')
+
+        modelos.append(modelo)
+        preds.append(modelo.predict(X_test))
+
         # Generamos un DataFrame temporal con la importancia de este modelo
         feature_imp = pd.DataFrame({
             'feature': modelo.feature_name(),
@@ -115,23 +119,17 @@ def evaluar_en_test(df, mejores_params) -> dict:
         })
         all_importances.append(feature_imp)
 
-        modelos.append(modelo)
-        preds.append(modelo.predict(X_test.to_pandas()))
-
         # Memory cleanup after each model
         del feature_imp, params_seed
         gc.collect()
 
-    logging.info('=== Finaliza Entrenamiento de los 5 Modelos ===')
+    logging.info('=== Finaliza Entrenamiento de los modelos ===')
 
     # Ensemble: promedio de predicciones
     y_pred = np.mean(preds, axis=0)
 
-    logging.info('=== Inicio Calculos de AUC ===')
-    # Calculo AUC para poder comparar si optimice con esa metrica
-    auc = roc_auc_score(y_test.to_pandas(), y_pred)
-    auc_check = roc_auc_score(y_test_check.to_pandas(), y_pred)
-    logging.debug(f'AUC (BAJA+2): {auc:.4f} | AUC (BAJA+1, BAJA+2): {auc_check:.4f}')
+    auc = roc_auc_score(y_test, y_pred)
+    auc_check = roc_auc_score(y_test_check, y_pred)
 
     logging.info('=== Inicio Grafico de Importancia ===')
     plot_mean_importance(all_importances, importance_type, type='test')
@@ -141,11 +139,11 @@ def evaluar_en_test(df, mejores_params) -> dict:
     # Calcular la ganancia de cada modelo individual
     ganancias_acumuladas = []
     for i, pred_semilla in enumerate(preds):
-        ganancia = calcular_ganancias_acumuladas(y_test.to_pandas(), pred_semilla)
+        ganancia = calcular_ganancias_acumuladas(y_test, pred_semilla)
         ganancias_acumuladas.append(ganancia)
 
     # Calculo la ganancia del ensamble
-    ganancia_ensamble = calcular_ganancias_acumuladas(y_test.to_pandas(), y_pred)
+    ganancia_ensamble = calcular_ganancias_acumuladas(y_test, y_pred)
     ganancias_acumuladas.append(ganancia_ensamble)
 
     # Estadísticas básicas del ensamble
