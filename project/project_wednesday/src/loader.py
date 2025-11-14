@@ -23,12 +23,11 @@ def cargar_datos(path: str, lazy: bool, months: List[int] = None) -> pl.DataFram
     if lazy:
         try:
             df_lazy = pl.scan_parquet(path)
-            df_lazy = df_lazy.filter(pl.col("foto_mes").is_in(months)).sort(['numero_de_cliente', 'foto_mes'])
+            df = df_lazy.filter(pl.col("foto_mes").is_in(months)).sort(['numero_de_cliente', 'foto_mes']).collect()
+            df = df.sort(["numero_de_cliente", "foto_mes"])
             logging.info(f"✅ Archivo cargado correctamente: {path}")
-            num_columnas = len(df_lazy.columns)
-            num_filas = df_lazy.select(pl.count()).collect().item()
-            logging.info(f"Columnas: {num_columnas}, Filas: {num_filas}")
-            return df_lazy.collect()
+            logging.info(f"Shape: {df.shape}")
+            return df
 
         except FileNotFoundError:
             logging.info(f"❌ Error: no se encontró el archivo '{path}'.")

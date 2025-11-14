@@ -105,6 +105,7 @@ def main():
                 data_path = '~/datasets/df_fe.parquet'
             months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
             df = cargar_datos(data_path, lazy=True, months=months_filter)
+            gc.collect()
 
         else:
             ## Carga de Datos
