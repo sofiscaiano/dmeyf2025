@@ -97,11 +97,12 @@ def main():
 
     def cargar_y_procesar_df():
 
-        data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
         months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
-        df = cargar_datos(data_path, lazy=True, months=months_filter)
+        logging.info("Cargo df:")
+        df = cargar_datos('~/datasets/df_fe.parquet', lazy=True, months=months_filter)
         logging.info("Elimino atributos:")
         df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
+        logging.info("Creo canaritos:")
         df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
 
         df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN))

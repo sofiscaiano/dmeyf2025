@@ -227,7 +227,7 @@ def main():
                 if isinstance(obj, pl.DataFrame):
                     print("STACK:", name, sys.getrefcount(obj))
 
-        import psutil
+        import  psutil
         proc = psutil.Process(os.getpid())
         print("RSS MB:", proc.memory_info().rss / 1024 ** 2)
         print("PL df_train size est (MB):", df_train.estimated_size() / 1024 ** 2)
