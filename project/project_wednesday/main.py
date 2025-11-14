@@ -149,6 +149,7 @@ def main():
         # df = df.to_pandas()
         # df = reduce_mem_usage(df)
         # Si defini atributos para descartar los elimino ahora
+        logging.info("Elimino atributos:")
         df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
         gc.collect()
         mlflow.log_param("df_shape", df.shape)
@@ -206,25 +207,25 @@ def main():
 
         resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-        entrenar_modelo_final(df, mejores_params)
+        # entrenar_modelo_final(df, mejores_params)
 
-        ## Generar predicciones
-        if ENVIOS is not None:
-            envios = ENVIOS
-            logger.info(f"Envios: {envios}")
-        else:
-            envios = cargar_mejores_envios()
-
-        predicciones = generar_predicciones_finales(df, envios)
-        salida_kaggle = guardar_predicciones_finales(predicciones)
+        # ## Generar predicciones
+        # if ENVIOS is not None:
+        #     envios = ENVIOS
+        #     logger.info(f"Envios: {envios}")
+        # else:
+        #     envios = cargar_mejores_envios()
+        #
+        # predicciones = generar_predicciones_finales(df, envios)
+        # salida_kaggle = guardar_predicciones_finales(predicciones)
 
         ## Resumen final
         logger.info("=== RESUMEN FINAL ===")
         logger.info(f"✅ Entrenamiento final completado exitosamente")
         logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
-        logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
-        logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
-        logger.info(f"📁 Archivo de salida: {salida_kaggle}")
+        # logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
+        # logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
+        # logger.info(f"📁 Archivo de salida: {salida_kaggle}")
         logger.info(f"📝 Log detallado: log/{nombre_log}")
 
         logger.info(f'Ejecucion finalizada. Revisar log para mas detalles. {nombre_log}')

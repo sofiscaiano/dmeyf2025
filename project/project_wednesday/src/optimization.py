@@ -287,7 +287,6 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN_BO))
     df_val = df.filter(pl.col("foto_mes").is_in(MES_VALIDACION))
 
-    # Aplicar undersampling al df train unicamente
     df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
     X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")

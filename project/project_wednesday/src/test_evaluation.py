@@ -43,6 +43,7 @@ def evaluar_en_test(df, mejores_params) -> tuple:
 
     # Aplicar undersampling al df train unicamente
     df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+    gc.collect()
 
     X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
     y_train = df_train["target"].to_numpy().astype("float32")
@@ -50,6 +51,9 @@ def evaluar_en_test(df, mejores_params) -> tuple:
     X_test = df_test.drop(['target', 'target_test']).to_numpy().astype("float32")
     y_test_check = df_test['target'].to_numpy().astype("float32")
     y_test = df_test['target_test'].to_numpy().astype("float32")
+
+    logging.info(df_train.shape)
+    logging.info(df_test.shape)
 
     # Liberar Polars
     del df_train, df_test
