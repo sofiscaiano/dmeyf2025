@@ -37,6 +37,12 @@ try:
         ADHOC = _cfg.get('ADHOC', False)
         ENVIOS = _cfg.get('ENVIOS', None)
         DESCRIPCION = _cfg.get('DESCRIPCION', '')
+        FLAG_AGUINALDO = _cfg.get('FLAG_AGUINALDO', False)
+        FLAG_RANKS = _cfg.get('FLAG_RANKS', False)
+        FLAG_TREND_3M = _cfg.get('FLAG_TREND_3M', False)
+        FLAG_TREND_6M = _cfg.get('FLAG_TREND_6M', False)
+        FLAG_ZEROSD = _cfg.get('FLAG_ZEROSD', False)
+        QLAGS = _cfg.get('QLAGS', 2)
 
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))

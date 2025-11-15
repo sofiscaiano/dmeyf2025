@@ -122,26 +122,22 @@ def main():
             ## Feature Engineering
             atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m'])]
-            cant_lag = 2
-            ## Fix aguinaldo
-            # df = fix_aguinaldo(df)
-            gc.collect()
 
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
-
-            df = fix_zero_sd(df, columnas=atributos)
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
+            if FLAG_AGUINALDO:
+                df = fix_aguinaldo(df)
+            if FLAG_ZEROSD:
+                df = fix_zero_sd(df, columnas=atributos)
+            if FLAG_RANKS:
+                df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
+            if FLAG_TREND_3M
+                df = feature_engineering_trend(df, columnas=atributos, q=3)
+            if FLAG_TREND_6M:
+                df = feature_engineering_trend(df, columnas=atributos, q=6)
 
-            df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
-            df = feature_engineering_trend(df, columnas=atributos, q=3)
-            df = feature_engineering_trend(df, columnas=atributos, q=6)
-            # mlflow.log_param("q_trend", '3 y 6m')
-
-            gc.collect()
-            df = feature_engineering_lag(df, columnas=atributos, cant_lag=cant_lag) # duckdb
-            gc.collect()
-            df = feature_engineering_delta(df, columnas=atributos, cant_lag=cant_lag) # polars
-            gc.collect()
+            df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb
+            df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
 
             ## Convertir clase ternaria a target binaria
             df = convertir_clase_ternaria_a_target(df)
@@ -151,8 +147,7 @@ def main():
                 data_path = '~/datasets/df_fe.parquet'
             df.write_parquet(data_path, compression="gzip")
 
-        # df = df.to_pandas()
-        # df = reduce_mem_usage(df)
+
         # Si defini atributos para descartar los elimino ahora
         logging.info("Elimino atributos:")
         df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)]).clone()
