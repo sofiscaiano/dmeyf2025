@@ -587,7 +587,7 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
             "tc_mpagominimo"),
     ])
     .with_columns([
-        (pl.col("tc_mpagado") / pl.col("tc_saldopesos")).alias("tc_porc_pagos_saldo"), # agregar tratamientos de division por cero
+        (pl.col("tc_mpagado") / pl.col("tc_msaldopesos")).alias("tc_porc_pagos_saldo"), # agregar tratamientos de division por cero
         (pl.col("tc_msaldototal") / pl.col("tc_mlimitecompra")).alias("tc_porc_utilizacion"),
         (pl.col("tc_mpagado") / pl.col("tc_mpagominimo")).alias("tc_porc_pago_pagominimo"),
         (pl.col("tc_mpagominimo") / pl.col("tc_mlimitecompra")).alias("tc_porc_pagominimo_saldo"),
