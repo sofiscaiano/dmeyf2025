@@ -1,4 +1,4 @@
-STUDY_NAME : 'lgb_optimization_competencia156'
+STUDY_NAME : 'lgb_optimization_competencia163'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -15,15 +15,15 @@ competencia02:
   MES_TEST: [202106]
   FINAL_TRAIN: [201901, 201902, 201903, 201904, 201905, 201906, 201907, 201908, 201909, 201910, 201911, 201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104]
   FINAL_PREDICT: [202106]
-  KSEMILLERIO: 3
+  KSEMILLERIO: 20
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
-  UNDERSAMPLING_FRACTION: 0.05
+  UNDERSAMPLING_FRACTION: 0.1
   UNDERSAMPLING_FINAL_TRAINING: True
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
   ENVIOS:
-  DESCRIPCION: 'prueba'
+  DESCRIPCION: ''
 
 parametros_lgb:
   n_trail: 50
@@ -38,13 +38,13 @@ parametros_lgb:
   metric: 'ganancia'
 
 parametros_zlgb:
-  gradient_bound: 0.1
+  gradient_bound: 0.4
   qcanaritos: 5
-  min_data_in_leaf: 20
+  min_data_in_leaf: 200
   learning_rate: 1
   feature_fraction: 0.5
   num_leaves: 999
-  num_iterations: 9999
+  num_iterations: 64
 
 parametros_adhoc:
   num_iterations: 244 #156
