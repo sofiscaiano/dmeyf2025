@@ -137,7 +137,7 @@ def main():
                 df = fix_zero_sd(df, columnas=atributos)
             if FLAG_RANKS:
                 df = feature_engineering_rank(df, columnas=atributos) # pandas
-            if FLAG_TREND_3M
+            if FLAG_TREND_3M:
                 df = feature_engineering_trend(df, columnas=atributos, q=3)
             if FLAG_TREND_6M:
                 df = feature_engineering_trend(df, columnas=atributos, q=6)
