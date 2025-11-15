@@ -80,11 +80,6 @@ def main():
 
     print(">>> Inicio de ejecucion")
 
-    ## Creacion de target
-    # crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
-    # df = cargar_datos_csv(crudo_path)
-    # df = create_target(df=df)
-
     # Configurar MLflow y ejecutar pipeline completo
     try:
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
@@ -95,7 +90,7 @@ def main():
         logger.error(f"Error al configurar MLflow: {e}")
         raise
 
-    def cargar_y_procesar_df() -> tuple[pl.DataFrame, pl.DataFrame]:
+    def cargar_y_procesar_df() -> pl.DataFrame:
         """
         Carga df_fe completo, filtra por meses y genera df_train y df_test.
         Libera la memoria del df original lo antes posible.
@@ -105,36 +100,24 @@ def main():
         """
         months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
         logging.info("Cargo df_fe completo (lazy scan y collect)...")
-        df = cargar_datos('~/datasets/df_fe.parquet', lazy=True, months=months_filter)
+        df_fe = cargar_datos('~/datasets/df_fe_sample.parquet', lazy=False)
 
         logging.info("Elimino columnas a descartar...")
-        df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
+        df_fe = df_fe.drop([c for c in df_fe.columns if any(c.startswith(p) for p in DROP)])
 
         logging.info("Creo canaritos...")
-        df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
+        df_fe = create_canaritos(df_fe, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
 
-        logging.info("Genero df_train y df_test...")
-        # Filtramos y clonamos inmediatamente para romper referencias a df
-        df_train = df.filter(pl.col("foto_mes").is_in(MES_TRAIN)).clone()
-        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
-
-        df_test = df.filter(pl.col("foto_mes").is_in(MES_TEST)).clone()
-
-        logging.info("Elimino df original para liberar memoria...")
-        del df
-        gc.collect()
-
-        logging.info("df_train y df_test listos y memoria liberada del df completo")
-        return df_train, df_test
+        return df_fe
 
 
     with mlflow.start_run(run_name=f"experimento-{STUDY_NAME}"):
         mlflow.set_tags(MLFLOW_TAGS)
 
-        df_train, df_test = cargar_y_procesar_df()
+        df = cargar_y_procesar_df()
         mejores_params = cargar_mejores_hiperparametros()
 
-        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df_train, df_test, mejores_params)
+        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
         # entrenar_modelo_final(df, mejores_params)
 

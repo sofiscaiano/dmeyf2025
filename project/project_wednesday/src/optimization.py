@@ -284,7 +284,7 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     else:
         logger.info(f"🆕 Nueva optimización: {n_trials} trials")
 
-    X_train, y_train, X_val, y_val = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN, mes_test=MES_VALIDACION)
+    X_train, y_train, X_val, y_val = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN_BO, mes_test=MES_VALIDACION)
 
     # Convertir a LightGBM Dataset
     train_data = lgb.Dataset(X_train, label=y_train)

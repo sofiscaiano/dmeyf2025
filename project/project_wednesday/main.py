@@ -9,7 +9,7 @@ import polars as pl
 import mlflow
 
 from src.features import undersample, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
-from src.loader import cargar_datos, convertir_clase_ternaria_a_target
+from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *

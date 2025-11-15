@@ -196,6 +196,7 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
 
     mlflow.log_metric("ganancia_test", resultados_test['ganancia_test'])
     mlflow.log_metric("mes_test", MES_TEST[0])
+    mlflow.log_metric("undersampling", UNDERSAMPLING_FRACTION)
     mlflow.log_metric("semillerio_test", KSEMILLERIO)
     mlflow.log_metric("auc_test", resultados_test['auc_test'])
     mlflow.log_metric("envios_test", resultados_test['predicciones_positivas'])
