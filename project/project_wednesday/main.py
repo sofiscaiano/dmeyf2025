@@ -99,6 +99,12 @@ def main():
         mlflow.set_tags(MLFLOW_TAGS)
 
         mlflow.log_param("zlightgbm", FLAG_ZLIGHTGBM)
+        mlflow.log_param("fix_aguinaldo", FLAG_AGUINALDO)
+        mlflow.log_param("rankings", FLAG_RANKS)
+        mlflow.log_param("q_lags", QLAGS)
+        mlflow.log_param("trend_3m", FLAG_TREND_3M)
+        mlflow.log_param("trend_6m", FLAG_TREND_6M)
+        mlflow.log_param("zero_sd", FLAG_ZEROSD)
         mlflow.log_artifact("config.yaml")
 
         if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
