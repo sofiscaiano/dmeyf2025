@@ -556,8 +556,9 @@ def generar_reporte_mensual_html(
 
 def create_features(df: pl.DataFrame) -> pl.DataFrame:
 
+    logging.info("==== Creando nuevas features")
     df = (df.with_columns([
-        (pl.col("foto_mes") % 100).alias("kmes"),
+        (pl.col("foto_mes").cast(pl.Int64) % 100).alias("kmes"),
         (pl.col("Master_delinquency").fill_null(0) + pl.col("Visa_delinquency").fill_null(0)).alias("tc_delinquency"),
         (pl.col("Master_status").fill_null(0) + pl.col("Visa_status").fill_null(0)).alias("tc_status"),
         (pl.col("Master_mfinanciacion_limite").fill_null(0) + pl.col("Visa_mfinanciacion_limite").fill_null(0)).alias("tc_mfinanciacion_limite"),
