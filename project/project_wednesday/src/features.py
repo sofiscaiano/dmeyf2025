@@ -593,7 +593,7 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
         (pl.when(pl.col("tc_mpagado") < pl.col("tc_mpagominimo"))
         .then(1)
         .otherwise(0)
-        .alias("tc_flag_pago_pagominimo")),
+        .alias("tc_flag_pago_pagominimo"))
     ]))
 
     return df
