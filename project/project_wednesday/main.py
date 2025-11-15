@@ -99,6 +99,7 @@ def main():
         mlflow.set_tags(MLFLOW_TAGS)
 
         mlflow.log_param("zlightgbm", FLAG_ZLIGHTGBM)
+        mlflow.log_artifact("config.yaml")
 
         if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
             logger.info("✅ df_fe encontrado")
