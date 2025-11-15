@@ -127,7 +127,7 @@ def main():
 
             ## Feature Engineering
             atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
-            atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m'])]
+
 
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
@@ -136,6 +136,9 @@ def main():
             if FLAG_ZEROSD:
                 df = fix_zero_sd(df, columnas=atributos)
             df = create_features(df)
+            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
+            atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
+
             if FLAG_RANKS:
                 df = feature_engineering_rank(df, columnas=atributos) # pandas
             if FLAG_TREND_3M:
