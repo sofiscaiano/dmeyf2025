@@ -4,7 +4,6 @@ import polars as pl
 from sympy import primerange
 import random
 from .config import *
-from .features import undersample
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +63,29 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
     y_test = df_test["target_test"].to_numpy().astype("float32")
 
     return X_train, y_train, X_test, y_test
+
+def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
+    logging.info(f"=== Undersampling al {sample_fraction}")
+
+    # Obtener clientes 0-sampleados
+    clientes_sampled = (
+        df.filter(pl.col("target") == 0)
+          .select("numero_de_cliente")
+          .unique()
+          .sample(
+              fraction=sample_fraction,
+              with_replacement=False,
+              seed=SEMILLA[1]
+          )
+    )
+
+    # Filtrar en una única pasada sin copiar todo
+    df_out = df.filter(
+        (pl.col("target") == 1) |
+        (pl.col("numero_de_cliente").is_in(clientes_sampled["numero_de_cliente"]))
+    )
+
+    # Mezclar
+    df_out = df_out.sample(fraction=1.0, seed=SEMILLA[1])
+
+    return df_out

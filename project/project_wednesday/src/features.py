@@ -367,31 +367,6 @@ def fix_zero_sd(df: pl.DataFrame, columnas: list) -> pl.DataFrame:
     return df.with_columns(expresiones)
 
 
-def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
-    logging.info(f"=== Undersampling al {sample_fraction}")
-
-    # Obtener clientes 0-sampleados
-    clientes_sampled = (
-        df.filter(pl.col("target") == 0)
-          .select("numero_de_cliente")
-          .unique()
-          .sample(
-              fraction=sample_fraction,
-              with_replacement=False,
-              seed=SEMILLA[1]
-          )
-    )
-
-    # Filtrar en una única pasada sin copiar todo
-    df_out = df.filter(
-        (pl.col("target") == 1) |
-        (pl.col("numero_de_cliente").is_in(clientes_sampled["numero_de_cliente"]))
-    )
-
-    # Mezclar
-    df_out = df_out.sample(fraction=1.0, seed=SEMILLA[1])
-
-    return df_out
 
 
 import polars as pl
