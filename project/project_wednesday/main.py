@@ -156,11 +156,11 @@ def main():
             if FLAG_EMBEDDING:
                 df = create_embedding_lgbm_rf(df)
 
-            logging.info("==== Exporto el df_fe.parquet ====")
-            data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
-            if FLAG_GCP == 1:
-                data_path = '~/datasets/df_fe.parquet'
-            df.write_parquet(data_path, compression="gzip")
+            # logging.info("==== Exporto el df_fe.parquet ====")
+            # data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
+            # if FLAG_GCP == 1:
+            #     data_path = '~/datasets/df_fe.parquet'
+            # df.write_parquet(data_path, compression="gzip")
 
 
         # Si defini atributos para descartar los elimino ahora
