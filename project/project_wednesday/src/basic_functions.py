@@ -4,6 +4,7 @@ import polars as pl
 from sympy import primerange
 import random
 from .config import *
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -64,30 +65,22 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
 
     return X_train, y_train, X_test, y_test
 
-def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
-    logging.info(f"=== Undersampling al {sample_fraction}")
-
-    df = df.sort(["numero_de_cliente", "foto_mes"])
-    # Obtener clientes 0-sampleados
-    clientes_sampled = (
-        df.filter(pl.col("target") == 0)
+def undersample(df, fraction):
+    clientes = (
+        df.filter(pl.col("target")==0)
           .select("numero_de_cliente")
           .unique()
-          .sort("numero_de_cliente")
-          .sample(
-              fraction=sample_fraction,
-              with_replacement=False,
-              seed=SEMILLA[1]
-          )
+          .to_numpy()
+          .ravel()
     )
 
-    # Filtrar en una única pasada sin copiar todo
+    rng = np.random.default_rng(SEMILLA[1])
+    k = int(len(clientes) * fraction)
+    sampled = rng.choice(clientes, k, replace=False)
+
     df_out = df.filter(
-        (pl.col("target") == 1) |
-        (pl.col("numero_de_cliente").is_in(clientes_sampled["numero_de_cliente"]))
+        (pl.col("target")==1) |
+        (pl.col("numero_de_cliente").is_in(sampled))
     )
 
-    # Mezclar
-    df_out = df_out.sample(fraction=1.0, seed=SEMILLA[1])
-
-    return df_out
+    return df_out.sample(fraction=1.0, seed=SEMILLA[1])
