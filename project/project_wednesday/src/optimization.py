@@ -13,8 +13,7 @@ import mlflow
 import gc
 from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
-from .features import undersample
-from .basic_functions import generar_semillas
+from .basic_functions import generar_semillas, undersample
 from .test_evaluation import train_test_split
 
 logger = logging.getLogger(__name__)

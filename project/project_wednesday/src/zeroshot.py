@@ -9,7 +9,7 @@ import pandas as pd
 from flaml.default import preprocess_and_suggest_hyperparams
 from .config import *
 from .gain_function import calcular_ganancias_acumuladas
-from .features import undersample
+from .basic_functions import undersample
 
 logger = logging.getLogger(__name__)
 

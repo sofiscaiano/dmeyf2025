@@ -5,8 +5,7 @@ import polars as pl
 import logging
 import os
 from .plots import plot_mean_importance
-from .basic_functions import generar_semillas
-from .features import undersample
+from .basic_functions import generar_semillas, undersample
 from .config import *
 import glob
 import gc
