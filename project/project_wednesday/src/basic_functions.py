@@ -67,11 +67,13 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
 def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     logging.info(f"=== Undersampling al {sample_fraction}")
 
+    df = df.sort(["numero_de_cliente", "foto_mes"])
     # Obtener clientes 0-sampleados
     clientes_sampled = (
         df.filter(pl.col("target") == 0)
           .select("numero_de_cliente")
           .unique()
+          .sort("numero_de_cliente")
           .sample(
               fraction=sample_fraction,
               with_replacement=False,
