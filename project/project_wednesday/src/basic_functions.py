@@ -65,22 +65,42 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
 
     return X_train, y_train, X_test, y_test
 
-def undersample(df, sample_fraction):
-    clientes = (
-        df.filter(pl.col("target")==0)
-          .select("numero_de_cliente")
-          .unique()
-          .to_numpy()
-          .ravel()
+def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
+    """
+    Realiza un undersampling de la clase mayoritaria (target == 0) en Polars.
+
+    Args:
+        df (pl.DataFrame): DataFrame de entrada (con columnas 'target' y 'numero_de_cliente').
+        sample_fraction (float): Fracción de la clase mayoritaria a conservar (0 < frac ≤ 1).
+        semilla (int): Semilla aleatoria para reproducibilidad.
+
+    Returns:
+        pl.DataFrame: DataFrame resultante submuestreado y mezclado.
+    """
+
+    # Separar clases
+    df_mayoritaria = df.filter(pl.col("target") == 0)
+    df_minoritaria = df.filter(pl.col("target") == 1)
+
+    # Obtener clientes únicos de la clase mayoritaria
+    clientes_unicos = df_mayoritaria.select("numero_de_cliente").unique().sort(pl.col("numero_de_cliente"))
+    clientes_unicos = clientes_unicos.rechunk()
+
+    # Muestrear fracción de clientes únicos
+    clientes_sampled = clientes_unicos.sample(
+        fraction=sample_fraction,
+        with_replacement=False,
+        seed=SEMILLA[1]
     )
 
-    rng = np.random.default_rng(SEMILLA[1])
-    k = int(len(clientes) * sample_fraction)
-    sampled = rng.choice(clientes, k, replace=False)
-
-    df_out = df.filter(
-        (pl.col("target")==1) |
-        (pl.col("numero_de_cliente").is_in(sampled))
+    # Filtrar los registros de esos clientes
+    df_mayoritaria_sampled = df_mayoritaria.join(
+        clientes_sampled,
+        on="numero_de_cliente",
+        how="inner"
     )
 
-    return df_out.sample(fraction=1.0, seed=SEMILLA[1])
+    # Concatenar ambas clases
+    df_undersampled = pl.concat([df_mayoritaria_sampled, df_minoritaria])
+
+    return df_undersampled

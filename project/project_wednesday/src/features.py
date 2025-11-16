@@ -695,7 +695,7 @@ def create_embedding_lgbm_rf(df: pl.DataFrame):
     model = lgb.train(
         params,
         train_data,
-        num_boost_round=params["num_trees"]
+        num_boost_round=params["num_iterations"]
     )
 
     leaf_matrix = model.predict(X_all, pred_leaf=True)
@@ -709,12 +709,7 @@ def create_embedding_lgbm_rf(df: pl.DataFrame):
 
     columnas_nuevas = [f"rf_{i:06d}" for i in range(leaf_sparse.shape[1])]
 
-    df_embedding_pd = pd.DataFrame.sparse.from_spmatrix(
-        leaf_sparse,
-        columns=columnas_nuevas
-    )
-
-    df_embedding = pl.from_pandas(df_embedding_pd)
+    df_embedding = sparse_to_polars(leaf_sparse, chunk_size=300)
     df_final = pl.concat([df, df_embedding], how="horizontal")
 
     logging.info(f"Feature engineering [embedding_rf] completado")
@@ -722,3 +717,22 @@ def create_embedding_lgbm_rf(df: pl.DataFrame):
     logging.info(df_final.head())
 
     return df_final
+
+def sparse_to_polars(df_sparse, chunk_size=500):
+    """
+    Convierte una matriz sparse CSR (scipy) a un DataFrame de Polars
+    sin pasar por pandas. Usa bloques para no romper la RAM.
+    """
+    n_rows, n_cols = df_sparse.shape
+    columns = []
+
+    for start in range(0, n_cols, chunk_size):
+        end = min(start + chunk_size, n_cols)
+
+        block = df_sparse[:, start:end].toarray().astype(np.uint8)
+        # crear columnas polars para este chunk
+        for j in range(block.shape[1]):
+            col_name = f"rf_{start+j:06d}"
+            columns.append(pl.Series(col_name, block[:, j]))
+
+    return pl.DataFrame(columns)
