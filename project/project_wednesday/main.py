@@ -8,7 +8,7 @@ import gc
 import polars as pl
 import mlflow
 
-from src.features import create_embedding_lgbm_rf, create_features, undersample, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
+from src.features import create_embedding_lgbm_rf, create_features, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -150,11 +150,12 @@ def main():
             df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb
             df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
 
+            ## Convertir clase ternaria a target binaria
+            df = convertir_clase_ternaria_a_target(df)
+
             if FLAG_EMBEDDING:
                 df = create_embedding_lgbm_rf(df)
 
-            ## Convertir clase ternaria a target binaria
-            df = convertir_clase_ternaria_a_target(df)
             logging.info("==== Exporto el df_fe.parquet ====")
             data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
             if FLAG_GCP == 1:
