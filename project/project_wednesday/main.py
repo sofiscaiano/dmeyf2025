@@ -150,6 +150,8 @@ def main():
             if FLAG_TREND_6M:
                 df = feature_engineering_trend(df, columnas=atributos, q=6)
 
+            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
+
             df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb
             df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
 
