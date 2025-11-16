@@ -1,8 +1,10 @@
 
 import logging
+import polars as pl
 from sympy import primerange
 import random
 from .config import *
+from .features import undersample
 
 logger = logging.getLogger(__name__)
 
@@ -46,3 +48,19 @@ def generar_semillas(semilla_primigenia: int, cantidad: int,
 
     # Seleccionar los primos al azar
     return random.sample(primos, cantidad)
+
+def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes_test: list) -> tuple:
+
+    df_train = df.filter(pl.col("foto_mes").is_in(mes_train))
+    if undersampling:
+        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+
+    df_test = df.filter(pl.col("foto_mes").is_in(mes_test))
+
+    X_train = df_train.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
+    y_train = df_train["target"].to_numpy().astype("float32")
+
+    X_test = df_test.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
+    y_test = df_test["target_test"].to_numpy().astype("float32")
+
+    return X_train, y_train, X_test, y_test

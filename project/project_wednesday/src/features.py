@@ -3,7 +3,10 @@ import polars as pl
 import numpy as np
 import duckdb
 import logging
+import lightgbm as lgb
+from sklearn.preprocessing import OneHotEncoder
 from .config import SEMILLA
+from .basic_functions import train_test_split
 import os
 import gc
 import plotly.express as px
@@ -395,9 +398,6 @@ import polars as pl
 import plotly.express as px
 from datetime import date
 
-# Asegúrate de tener polars y plotly instalados:
-# pip install polars plotly
-
 def generar_reporte_mensual_html(
     df: pl.DataFrame,
     columna_fecha: str = 'foto_mes',
@@ -597,6 +597,9 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
         .alias("tc_flag_pago_pagominimo"))
     ]))
 
+    logger.info(f"Feature engineering [create_features] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
     return df
 
 def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
@@ -625,5 +628,122 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
     # 👉 Reordenamos: canarios primero, luego las originales
     df = df.select([f"canarito_{i+1}" for i in range(qcanaritos)] + original_cols)
 
-    logging.info(f"==== Se crearon {qcanaritos} canaritos.")
+    logger.info(f"Feature engineering [create_canaritos] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
     return df.clone()
+
+from sklearn.ensemble import RandomTreesEmbedding
+def create_embedding_rf(df: pl.DataFrame) -> pl.DataFrame:
+
+    X_train, y_train, X_test, y_test = train_test_split(df=df, undersampling=False, mes_train=[202101, 202102, 202103], mes_test=[202104])
+    X = df.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
+
+    embedding_model = RandomTreesEmbedding(
+        n_estimators=20,
+        max_leaf_nodes=16,
+        min_samples_leaf=100,
+        random_state=SEMILLA[1]
+    )
+
+    embedding_model.fit(X_train)
+
+    X_embedded_sparse = embedding_model.transform(X)
+
+    n_cols = X_embedded_sparse.shape[1]
+    columnas_nuevas = [f"rf_{i:06d}" for i in range(n_cols)]
+
+    df_embedding = pd.DataFrame.sparse.from_spmatrix(
+        X_embedded_sparse,
+        columns=columnas_nuevas
+    )
+
+    df_embedding = pl.from_pandas(df_embedding)
+    df_embedding = df_embedding.with_columns(
+        [pl.col(col).cast(pl.Int8) for col in df_embedding.columns]
+    )
+    df = pl.concat([df, df_embedding], how="horizontal")
+
+    return df, embedding_model
+
+
+def create_embedding_lgbm_rf(df: pl.DataFrame):
+
+    X_train, y_train, X_test, y_test = train_test_split(
+        df=df,
+        undersampling=False,
+        mes_train=[202101, 202102, 202103],
+        mes_test=[202104]
+    )
+
+    X_all = df.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
+
+    # --- Random Forest supervisado en LightGBM
+    params = {
+        "objective": "binary",
+        "num_leaves": 16,
+        "max_depth": -1,
+        "feature_fraction": 1,
+        "feature_fraction_bynode": 0.2,
+        "bagging_fraction": ( 1.0 - 1.0/np.exp(1.0)),
+        "bagging_freq": 1,
+        "num_iterations": 20,
+        "boosting": "rf",
+
+        # genericos de LightGBM
+        "max_bin": 31,
+        "first_metric_only": True,
+        "boost_from_average": True,
+        "feature_pre_filter": False,
+        "force_row_wise": True,
+        "verbosity": -100,
+        "max_depth": -1,
+        "min_gain_to_split": 0.0,
+        "min_sum_hessian_in_leaf": 0.001,
+        "lambda_l1": 0.0,
+        "lambda_l2": 0.0,
+
+        "pos_bagging_fraction": 1.0,
+        "neg_bagging_fraction": 1.0,
+        "is_unbalance": False,
+        "scale_pos_weight": 1.0,
+
+        "drop_rate": 0.1,
+        "max_drop": 50,
+        "skip_drop": 0.5,
+
+        "extra_trees": False
+    }
+
+    train_data = lgb.Dataset(X_train, label=y_train)
+
+    model = lgb.train(
+        params,
+        train_data,
+        num_boost_round=params["num_trees"]
+    )
+
+    leaf_matrix = model.predict(X_all, pred_leaf=True)
+    encoder = OneHotEncoder(
+        sparse_output=True,
+        handle_unknown="ignore",
+        dtype=np.int8
+    )
+
+    leaf_sparse = encoder.fit_transform(leaf_matrix)
+
+    columnas_nuevas = [f"rf_{i:06d}" for i in range(leaf_sparse.shape[1])]
+
+    df_embedding_pd = pd.DataFrame.sparse.from_spmatrix(
+        leaf_sparse,
+        columns=columnas_nuevas
+    )
+
+    df_embedding = pl.from_pandas(df_embedding_pd)
+    df_final = pl.concat([df, df_embedding], how="horizontal")
+
+    logging.info(f"Feature engineering [embedding_rf] completado")
+    logging.info(f"Filas: {df_final.height}, Columnas: {df_final.width}")
+    logging.info(df_final.head())
+
+    return df_final

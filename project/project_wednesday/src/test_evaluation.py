@@ -1,8 +1,6 @@
 import lightgbm as lgb
 from sklearn.metrics import roc_auc_score
-import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
-from datetime import datetime
 import pandas as pd
 import numpy as np
 import polars as pl
@@ -13,8 +11,8 @@ from datetime import datetime
 import mlflow
 from .config import *
 from matplotlib import pyplot as plt
-from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
-from .features import undersample
+from .gain_function import calcular_ganancias_acumuladas
+from .basic_functions import train_test_split
 from .plots import plot_mean_importance
 from .basic_functions import generar_semillas
 import gc
@@ -361,18 +359,3 @@ def crear_grafico_ganancia(y_pred_proba: np.array, ganancias_acumuladas: np.arra
     return ruta_archivo
 
 
-def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes_test: list) -> tuple:
-
-    df_train = df.filter(pl.col("foto_mes").is_in(mes_train))
-    if undersampling:
-        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
-
-    df_test = df.filter(pl.col("foto_mes").is_in(mes_test))
-
-    X_train = df_train.drop(["target", "target_test"]).to_numpy().astype("float32")
-    y_train = df_train["target"].to_numpy().astype("float32")
-
-    X_test = df_test.drop(["target", "target_test"]).to_numpy().astype("float32")
-    y_test = df_test["target_test"].to_numpy().astype("float32")
-
-    return X_train, y_train, X_test, y_test
