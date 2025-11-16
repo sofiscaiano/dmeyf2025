@@ -5,10 +5,11 @@ import polars as pl
 import logging
 import os
 from .plots import plot_mean_importance
-from .basic_functions import generar_semillas, undersample
+from .basic_functions import generar_semillas, undersample, train_test_split
 from .config import *
 import glob
 import gc
+import mlflow
 
 logger = logging.getLogger(__name__)
 
@@ -26,23 +27,13 @@ def preparar_datos_entrenamiento_final(df: pl.DataFrame) -> tuple:
     logger.info(f"Preparando datos para entrenamiento final")
     logger.info(f"Períodos de entrenamiento: {FINAL_TRAIN}")
 
-    # Datos de entrenamiento: todos los períodos en FINAL_TRAIN
-    df_train = df.filter(pl.col("foto_mes").is_in(FINAL_TRAIN))
-
-    # Aplicar undersampling al df train
     if UNDERSAMPLING_FINAL_TRAINING:
-        df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+        X_train, y_train, X_test, y_test = train_test_split(df=df, undersampling=True, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
+    else:
+        X_train, y_train, X_test, y_test = train_test_split(df=df, undersampling=False, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
 
-    logger.info(f"Registros de entrenamiento: {df_train.height:,}")
-
-    # Preparar features y target para entrenamiento
-    X_train = df_train.drop(["target", "target_test"]).to_pandas()
-    y_train = df_train['target'].to_pandas()
-
-    del df, df_train
-    gc.collect()
-
-    logger.info(f"Distribución del target - 0: {(y_train == 0).sum():,}, 1: {(y_train == 1).sum():,}")
+    logger.info(f"Registros de entrenamiento final: {X_train.shape:,}")
+    mlflow.log_param("X_train_final_shape", X_train.shape)
 
     return X_train, y_train
 
@@ -92,9 +83,6 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     # Crear dataset de LightGBM
     train_data = lgb.Dataset(X_train, label=y_train)
 
-    del X_train, y_train
-    gc.collect()
-
     logging.info(f'=== Inicio Entrenamiento del Modelo Final con {KSEMILLERIO} semillas ===')
 
     modelos = []
@@ -142,7 +130,7 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     logging.info('=== Inicio Grafico de Importancia ===')
     plot_mean_importance(all_importances, importance_type, type='train')
 
-    logging.info('=== Finaliza Entrenamiento de los 5 Modelos ===')
+    logging.info('=== Finaliza Entrenamiento de los modelos ===')
 
     return modelos
 

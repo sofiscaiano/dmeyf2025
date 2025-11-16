@@ -15,7 +15,7 @@ from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *
 from src.best_params import cargar_mejores_hiperparametros, cargar_mejores_envios
 from src.final_training import generar_predicciones_finales, entrenar_modelo_final
-from src.output_manager import guardar_predicciones_finales
+from src.output_manager import exportar_envios_bot
 from src.create_target import create_target
 from src.zeroshot import optimizar_zero_shot
 
@@ -142,6 +142,9 @@ def main():
 
             if FLAG_RANKS:
                 df = feature_engineering_rank(df, columnas=atributos) # pandas
+
+            generar_reporte_mensual_html(df, columna_target='target', nombre_archivo='reporte_atributos_final.html')
+
             if FLAG_TREND_3M:
                 df = feature_engineering_trend(df, columnas=atributos, q=3)
             if FLAG_TREND_6M:
@@ -222,25 +225,25 @@ def main():
 
         resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-        # entrenar_modelo_final(df, mejores_params)
+        entrenar_modelo_final(df, mejores_params)
 
-        # ## Generar predicciones
-        # if ENVIOS is not None:
-        #     envios = ENVIOS
-        #     logger.info(f"Envios: {envios}")
-        # else:
-        #     envios = cargar_mejores_envios()
-        #
-        # predicciones = generar_predicciones_finales(df, envios)
-        # salida_kaggle = guardar_predicciones_finales(predicciones)
+        ## Generar predicciones
+        if ENVIOS is not None:
+            envios = ENVIOS
+            logger.info(f"Envios: {envios}")
+        else:
+            envios = cargar_mejores_envios()
+
+        predicciones = generar_predicciones_finales(df, envios)
+        salida_kaggle = exportar_envios_bot(predicciones)
 
         ## Resumen final
         logger.info("=== RESUMEN FINAL ===")
         logger.info(f"✅ Entrenamiento final completado exitosamente")
         logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
-        # logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
-        # logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
-        # logger.info(f"📁 Archivo de salida: {salida_kaggle}")
+        logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
+        logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
+        logger.info(f"📁 Archivo de salida: {salida_kaggle}")
         logger.info(f"📝 Log detallado: log/{nombre_log}")
 
         logger.info(f'Ejecucion finalizada. Revisar log para mas detalles. {nombre_log}')

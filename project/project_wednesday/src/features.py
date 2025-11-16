@@ -382,27 +382,27 @@ def generar_reporte_mensual_html(
     """
     Genera un archivo HTML con gráficos de líneas interactivos de Plotly,
     mostrando la evolución mensual del promedio de cada feature, usando Polars.
-
-    Args:
-        df (pl.DataFrame): DataFrame de Polars de entrada.
-        columna_fecha (str): Nombre de la columna que contiene la fecha mensual (ej: 'foto_mes').
-        columna_target (str, optional): Nombre de la columna para usar como 'hue' (color)
-                                        en un segundo gráfico.
-        nombre_archivo (str): Nombre del archivo HTML de salida.
     """
 
     print(f"Iniciando generación de reporte (con Polars) para {len(df.columns) - 1} features...")
 
-    # --- 1. Preparación de datos: Calcular el promedio mensual para cada feature ---
+    # -------------------------------------------------------------------------
+    # 0. Convertir foto_mes (YYYYMM) a fecha real YYYY-MM-01
+    # -------------------------------------------------------------------------
+    df = df.with_columns([
+        pl.col(columna_fecha)
+        .cast(pl.Utf8)                          # convertir a string
+        .str.concat("01")                       # agregar día artificial
+        .str.strptime(pl.Date, "%Y%m%d")        # parsear como fecha
+        .alias(columna_fecha)
+    ])
 
-    # Excluir la columna de fecha y la columna target (si existe) de las features
+    # --- 1. Preparación de datos ------------------------------------------------
+
     exclusion_cols = [columna_fecha]
     if columna_target:
         exclusion_cols.append(columna_target)
 
-    # En Polars, usamos selectores para encontrar las columnas numéricas.
-    # pl.selectors.numeric() selecciona todas las columnas de tipo numérico.
-    # .exclude() nos permite quitar las columnas de agrupación.
     features_numericas = df.select(
         pl.selectors.numeric().exclude(exclusion_cols)
     ).columns
@@ -411,38 +411,23 @@ def generar_reporte_mensual_html(
         print("Error: No se encontraron features numéricas para graficar.")
         return
 
-    # La sintaxis de Polars para group_by y agregación:
-    # 1. .group_by() especifica la columna de agrupación.
-    # 2. .agg() define las agregaciones.
-    #    pl.col(features_numericas).mean() aplica la media a todas las columnas
-    #    en la lista 'features_numericas'.
     df_agrupado = df.group_by(columna_fecha).agg(
         pl.col(features_numericas).mean()
-    )
+    ).sort(columna_fecha)
 
-    # Asegurarse de que la columna de fecha esté ordenada
-    # En Polars se usa .sort()
-    df_agrupado = df_agrupado.sort(columna_fecha)
-
-    # --- 1b. Preparación de datos CON TARGET (si se proporciona) ---
+    # Preparación con target
     df_agrupado_con_target = None
-    if columna_target:
-        if columna_target not in df.columns:
-            print(f"Advertencia: La columna target '{columna_target}' no se encontró. Se omitirán los gráficos con 'hue'.")
-        else:
-            grouping_keys = [columna_fecha, columna_target]
-            df_agrupado_con_target = df.group_by(grouping_keys).agg(
-                pl.col(features_numericas).mean()
-            ).sort(columna_fecha, columna_target)
-            print(f"Datos para gráficos con 'hue' por '{columna_target}' preparados.")
+    if columna_target and columna_target in df.columns:
+        df_agrupado_con_target = df.group_by([columna_fecha, columna_target]).agg(
+            pl.col(features_numericas).mean()
+        ).sort(columna_fecha, columna_target)
 
-
-    # --- 2. Generar el contenido HTML de cada gráfico ---
+    # --- 2. Generación de gráficos ------------------------------------------------
 
     graficos_html = []
 
     for feature in features_numericas:
-        # --- Gráfico 1: Promedio General ---
+
         fig_general = px.line(
             df_agrupado,
             x=columna_fecha,
@@ -450,15 +435,13 @@ def generar_reporte_mensual_html(
             title=f'Evolución Mensual de {feature} (Promedio General)'
         )
 
-        # Mejorar el layout y el formato de los ejes
         fig_general.update_traces(mode='lines+markers')
         fig_general.update_layout(
-            xaxis_title="Período Mensual",
+            xaxis_title="Fecha",
             yaxis_title=f"Promedio de {feature}",
-            title_x=0.5  # Centrar el título
+            title_x=0.5
         )
 
-        # Exportar el gráfico como una cadena HTML
         html_string_general = fig_general.to_html(full_html=False, include_plotlyjs='cdn')
         graficos_html.append(f"""
             <div style="width: 80%; margin: 40px auto; border: 1px solid #ddd; padding: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
@@ -466,23 +449,21 @@ def generar_reporte_mensual_html(
             </div>
         """)
 
-        # --- Gráfico 2: Promedio por Target (NUEVO) ---
         if df_agrupado_con_target is not None:
             fig_target = px.line(
                 df_agrupado_con_target,
                 x=columna_fecha,
                 y=feature,
-                color=columna_target, # <-- AQUI USAMOS EL 'HUE'
+                color=columna_target,
                 title=f'Evolución Mensual de {feature} (Promedio por {columna_target})'
             )
             fig_target.update_traces(mode='lines+markers')
             fig_target.update_layout(
-                xaxis_title="Período Mensual",
+                xaxis_title="Fecha",
                 yaxis_title=f"Promedio de {feature}",
                 title_x=0.5
             )
 
-            # Exportar el gráfico como una cadena HTML
             html_string_target = fig_target.to_html(full_html=False, include_plotlyjs='cdn')
             graficos_html.append(f"""
                 <div style="width: 80%; margin: 40px auto; border: 1px solid #ddd; padding: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
@@ -490,18 +471,13 @@ def generar_reporte_mensual_html(
                 </div>
             """)
 
-        # Separador entre features
         graficos_html.append("<hr style='border: 1px solid #ccc; margin-top: 20px;'>")
 
+    # --- 3. Template HTML final ---------------------------------------------------
 
-    # --- 3. Unir los gráficos en un solo archivo HTML ---
-
-    # Obtener min/max de la columna fecha de Polars
-    # .min() y .max() en una Polars Series devuelven un escalar
     fecha_min = df_agrupado[columna_fecha].min()
     fecha_max = df_agrupado[columna_fecha].max()
 
-    # Plantilla HTML básica
     html_template = f"""
     <!DOCTYPE html>
     <html>
@@ -515,19 +491,15 @@ def generar_reporte_mensual_html(
     </head>
     <body>
         <h1>Reporte de Evolución Mensual de Features ({fecha_min} a {fecha_max})</h1>
-
         {''.join(graficos_html)}
-
     </body>
     </html>
     """
 
-    # Escribir el contenido en el archivo
     with open(nombre_archivo, 'w', encoding='utf-8') as f:
         f.write(html_template)
 
-    print(f"\n✅ Reporte HTML (Polars) generado exitosamente: {nombre_archivo}")
-    print("Abre el archivo en tu navegador web para ver los gráficos interactivos.")
+    print(f"\n✅ Reporte HTML generado exitosamente: {nombre_archivo}")
 
 def create_features(df: pl.DataFrame) -> pl.DataFrame:
 
