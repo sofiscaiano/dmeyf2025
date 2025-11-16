@@ -65,7 +65,7 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
 
     return X_train, y_train, X_test, y_test
 
-def undersample(df, fraction):
+def undersample(df, sample_fraction):
     clientes = (
         df.filter(pl.col("target")==0)
           .select("numero_de_cliente")
@@ -75,7 +75,7 @@ def undersample(df, fraction):
     )
 
     rng = np.random.default_rng(SEMILLA[1])
-    k = int(len(clientes) * fraction)
+    k = int(len(clientes) * sample_fraction)
     sampled = rng.choice(clientes, k, replace=False)
 
     df_out = df.filter(
