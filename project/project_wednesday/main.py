@@ -8,7 +8,7 @@ import gc
 import polars as pl
 import mlflow
 
-from src.features import create_features, undersample, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
+from src.features import create_embedding_lgbm_rf, create_features, undersample, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -135,6 +135,7 @@ def main():
                 df = fix_aguinaldo(df)
             if FLAG_ZEROSD:
                 df = fix_zero_sd(df, columnas=atributos)
+
             df = create_features(df)
             atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
@@ -148,6 +149,9 @@ def main():
 
             df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb
             df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
+
+            if FLAG_EMBEDDING:
+                df = create_embedding_lgbm_rf(df)
 
             ## Convertir clase ternaria a target binaria
             df = convertir_clase_ternaria_a_target(df)

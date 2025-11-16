@@ -42,6 +42,7 @@ try:
         FLAG_TREND_3M = _cfg.get('FLAG_TREND_3M', False)
         FLAG_TREND_6M = _cfg.get('FLAG_TREND_6M', False)
         FLAG_ZEROSD = _cfg.get('FLAG_ZEROSD', False)
+        FLAG_EMBEDDING = _cfg.get('FLAG_EMBEDDING', False)
         QLAGS = _cfg.get('QLAGS', 2)
 
         if FLAG_GCP == 1:
