@@ -32,7 +32,7 @@ def preparar_datos_entrenamiento_final(df: pl.DataFrame) -> tuple:
     else:
         X_train, y_train, X_test, y_test = train_test_split(df=df, undersampling=False, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
 
-    logger.info(f"Registros de entrenamiento final: {X_train.shape:,}")
+    logger.info(f"Registros de entrenamiento final: {X_train.shape}")
     mlflow.log_param("X_train_final_shape", X_train.shape)
 
     return X_train, y_train
