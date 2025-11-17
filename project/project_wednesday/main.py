@@ -81,9 +81,9 @@ def main():
     print(">>> Inicio de ejecucion")
 
     ## Creacion de target
-    # crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
-    # df = cargar_datos_csv(crudo_path)
-    # df = create_target(df=df)
+    crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
+    df = cargar_datos_csv(crudo_path)
+    df = create_target(df=df)
 
     # Configurar MLflow y ejecutar pipeline completo
     try:
