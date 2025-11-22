@@ -101,7 +101,7 @@ def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
         'gpu_platform_id': 0,
         'gpu_device_id': 0}
 
-    val_data = lgb.Dataset(X_val, label=y_val)
+    val_data = lgb.Dataset(X_val, label=y_val, free_raw_data=True)
 
     # Número de filas de entrenamiento
     n_rows = len(train_data.get_label())
@@ -147,9 +147,21 @@ def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
 
     semillas = generar_semillas(SEMILLA[0], KSEMILLERIO_BO)
 
-    preds = []
+    # Configuración de Soft Pruning
+    CUTOFF_THRESHOLD = 0.80  # Si rinde menos del 80% del mejor, cortamos.
 
-    for seed in semillas:
+    try:
+        # Intentamos obtener el mejor valor hasta ahora.
+        best_global_score = trial.study.best_value
+    except (ValueError, RuntimeError):
+        best_global_score = None
+
+    # Inicializamos acumulador de predicciones para calcular promedio parcial
+    pred_acumulada = np.zeros(len(y_val))
+
+    # preds = []
+
+    for i, seed in enumerate(semillas):
         params['seed'] = seed
 
         modelo = lgb.train(
@@ -163,9 +175,39 @@ def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
 
         trial.set_user_attr('num_iterations', modelo.best_iteration)
 
-        preds.append(modelo.predict(X_val))
+        y_pred_actual = modelo.predict(X_val)
+        # preds.append(y_pred_actual)
 
-    y_pred = np.mean(preds, axis=0)
+        # 1. Actualizar el acumulado y calcular el promedio hasta esta semilla
+        pred_acumulada += y_pred_actual
+        y_pred_promedio_parcial = pred_acumulada / (i + 1)
+
+        # 2. Calcular ganancia del ensamble parcial
+        ganancias_parcial = calcular_ganancias_acumuladas(y_val, y_pred_promedio_parcial)
+
+        ganancias_meseta_parcial = (
+            pd.Series(ganancias_parcial)
+            .rolling(window=2001, center=True, min_periods=1)
+            .mean()
+        )
+        score_parcial = ganancias_meseta_parcial.max(skipna=True)
+
+        # 3. Verificar condición de corte
+        if best_global_score is not None and i >= 1:
+            umbral_corte = best_global_score * CUTOFF_THRESHOLD
+
+            if score_parcial < umbral_corte:
+                logger.info(
+                    f"✂️ Trial {trial.number} podado en semilla {i + 1}/{len(semillas)}. Score: {score_parcial:,.0f} < Umbral: {umbral_corte:,.0f}")
+
+                # Opcional: Loggear a MLflow que fue podado
+                mlflow.log_metric("pruned_at_seed", i + 1, step=trial.number)
+
+                # Lanzamos la excepción que Optuna entiende para marcar como PRUNED
+                raise optuna.TrialPruned(f"Score parcial {score_parcial} por debajo del umbral {umbral_corte}")
+
+    # y_pred = np.mean(preds, axis=0)
+    y_pred = pred_acumulada / len(semillas)
     ganancias = calcular_ganancias_acumuladas(y_val, y_pred)
 
     ganancias_meseta = (
@@ -289,7 +331,7 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     logging.info(X_val.shape)
 
     # Convertir a LightGBM Dataset
-    train_data = lgb.Dataset(X_train, label=y_train)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True)
 
     # Ejecutar optimización
     if trials_a_ejecutar > 0:

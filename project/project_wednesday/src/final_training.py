@@ -81,7 +81,7 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     logger.info(f"Parámetros del modelo: {params}")
 
     # Crear dataset de LightGBM
-    train_data = lgb.Dataset(X_train, label=y_train)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True)
 
     logging.info(f'=== Inicio Entrenamiento del Modelo Final con {KSEMILLERIO} semillas ===')
 

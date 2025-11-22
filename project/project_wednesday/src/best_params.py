@@ -29,18 +29,33 @@ def cargar_mejores_hiperparametros(archivo_base: str = None) -> dict:
         return mejores_params
 
     if FLAG_ZLIGHTGBM == 1:
-        mejores_params = {
-            'gradient_bound': PARAMETROS_ZLGB['gradient_bound'],
-            'qcanaritos': PARAMETROS_ZLGB['qcanaritos'],
-            'min_data_in_leaf': PARAMETROS_ZLGB['min_data_in_leaf'],
-            'feature_fraction': PARAMETROS_ZLGB['feature_fraction'],
-            'learning_rate': PARAMETROS_ZLGB['learning_rate'],
-            'num_leaves': PARAMETROS_ZLGB['num_leaves'],
-            'num_iterations': PARAMETROS_ZLGB['num_iterations']
-        }
+        if ZLGBM_WEAKLEARNER:
+            mejores_params = {
+                'gradient_bound': PARAMETROS_ZLGB_WL['gradient_bound'],
+                'qcanaritos': PARAMETROS_ZLGB_WL['qcanaritos'],
+                'min_data_in_leaf': PARAMETROS_ZLGB_WL['min_data_in_leaf'],
+                'feature_fraction': PARAMETROS_ZLGB_WL['feature_fraction'],
+                'learning_rate': PARAMETROS_ZLGB_WL['learning_rate'],
+                'num_leaves': PARAMETROS_ZLGB_WL['num_leaves'],
+                'num_iterations': PARAMETROS_ZLGB_WL['num_iterations']
+            }
 
-        logger.info(f"Mejores hiperparámetros cargados desde config.yaml para ZLightGBM")
-        logger.info(f"Parámetros: {mejores_params}")
+            logger.info(f"Mejores hiperparámetros cargados desde config.yaml para ZLightGBM WeakLearners")
+            logger.info(f"Parámetros: {mejores_params}")
+
+        else:
+            mejores_params = {
+                'gradient_bound': PARAMETROS_ZLGB['gradient_bound'],
+                'qcanaritos': PARAMETROS_ZLGB['qcanaritos'],
+                'min_data_in_leaf': PARAMETROS_ZLGB['min_data_in_leaf'],
+                'feature_fraction': PARAMETROS_ZLGB['feature_fraction'],
+                'learning_rate': PARAMETROS_ZLGB['learning_rate'],
+                'num_leaves': PARAMETROS_ZLGB['num_leaves'],
+                'num_iterations': PARAMETROS_ZLGB['num_iterations']
+            }
+
+            logger.info(f"Mejores hiperparámetros cargados desde config.yaml para ZLightGBM")
+            logger.info(f"Parámetros: {mejores_params}")
 
         return mejores_params
 

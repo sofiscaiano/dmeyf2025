@@ -5,14 +5,15 @@ import duckdb
 import logging
 import lightgbm as lgb
 from sklearn.preprocessing import OneHotEncoder
-from .config import SEMILLA
+from .config import *
 from .basic_functions import train_test_split
+from .best_params import cargar_mejores_hiperparametros
+from datetime import datetime
 import os
 import gc
 import plotly.express as px
 from io import StringIO
 import warnings
-# import mlflow
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -87,6 +88,210 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
 
     return df
 
+def feature_engineering_percent_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
+    """
+    Genera variables de ranking con percentrank para los atributos especificados utilizando SQL.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame con los datos
+    columnas : list
+        Lista de atributos para los cuales generar rankings. Si es None, no se generan rankings.
+
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame con las variables de ranking agregadas
+    """
+
+    logger.info(f"Realizando feature engineering [percent_rank] para {len(columnas) if columnas else 0} atributos")
+
+    if columnas is None or len(columnas) == 0:
+        logger.warning("No se especificaron atributos para generar rankings")
+        return df
+
+    # Construir la consulta SQL
+    sql = "SELECT *"
+
+    # Agregar los lags para los atributos especificados
+    for attr in columnas:
+        if attr in df.columns:
+            sql += f'percent_rank() OVER (partition by foto_mes order by {attr} desc nulls last) as rankp_{attr}'
+        else:
+            logger.warning(f"El atributo {attr} no existe en el DataFrame")
+
+    # Completar la consulta
+    sql += " FROM df"
+    sql += " ORDER BY numero_de_cliente, foto_mes"
+
+    # Ejecutar la consulta SQL
+    con = duckdb.connect(database=":memory:")
+    con.register("df", df)
+    df = con.execute(sql).pl()
+    con.close()
+
+    logger.info(f"Feature engineering [percent_rank] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
+    return df
+
+def feature_engineering_ntile(df: pd.DataFrame, columnas: list[str], k: int) -> pd.DataFrame:
+    """
+    Genera variables de ranking con ntile para los atributos especificados utilizando SQL.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame con los datos
+    k :  cantidad de grupos que genera ntile
+    columnas : list
+        Lista de atributos para los cuales generar rankings. Si es None, no se generan rankings.
+
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame con las variables de ranking agregadas
+    """
+
+    logger.info(f"Realizando feature engineering [ntile] para {len(columnas) if columnas else 0} atributos")
+
+    if columnas is None or len(columnas) == 0:
+        logger.warning("No se especificaron atributos para generar rankings")
+        return df
+
+    # Construir la consulta SQL
+    sql = "SELECT *"
+
+    # Agregar los lags para los atributos especificados
+    for attr in columnas:
+        if attr in df.columns:
+            sql += f'pntile({k}) over (partition by foto_mes order by {attr} desc nulls last) as rankn_{attr}'
+        else:
+            logger.warning(f"El atributo {attr} no existe en el DataFrame")
+
+    # Completar la consulta
+    sql += " FROM df"
+    sql += " ORDER BY numero_de_cliente, foto_mes"
+
+    # Ejecutar la consulta SQL
+    con = duckdb.connect(database=":memory:")
+    con.register("df", df)
+    df = con.execute(sql).pl()
+    con.close()
+
+    logger.info(f"Feature engineering [ntile] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
+    return df
+
+def feature_engineering_min_max(df: pd.DataFrame, columnas: list[str], min: bool, max: bool, window: int) -> pd.DataFrame:
+    """
+    Genera variables de minimos y/o maximos temporales para los atributos especificados utilizando SQL.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame con los datos
+    min :  indicador para calcular el valor minimo
+    max :  indicador para calcular el valor maximo
+    window :  cantidad de meses a considerar para el calculo
+
+    columnas : list
+        Lista de atributos para los cuales generar minimos y maximos. Si es None, no se generan atributos.
+
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame con las variables de minimos y maximos agregadas
+    """
+
+    logger.info(f"Realizando feature engineering [min/max] en una ventana de {window} meses para {len(columnas) if columnas else 0} atributos")
+
+    if columnas is None or len(columnas) == 0:
+        logger.warning("No se especificaron atributos para generar atributos")
+        return df
+
+    # Construir la consulta SQL
+    sql = "SELECT *"
+
+    # Agregar los lags para los atributos especificados
+    for attr in columnas:
+        if attr in df.columns:
+            sql += f',MIN({attr}) over ventana as {attr}_min{window}'
+            sql += f',MAX({attr}) over ventana as {attr}_max{window}'
+
+        else:
+            logger.warning(f"El atributo {attr} no existe en el DataFrame")
+
+    # Completar la consulta
+    sql += " FROM df"
+    sql += f" window ventana as (partition by numero_de_cliente order by foto_mes rows between {window-1} preceding and current row)"
+    sql += " ORDER BY numero_de_cliente, foto_mes"
+
+    # Ejecutar la consulta SQL
+    con = duckdb.connect(database=":memory:")
+    con.register("df", df)
+    df = con.execute(sql).pl()
+    con.close()
+
+    logger.info(f"Feature engineering [min/max] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
+    return df
+
+def feature_engineering_ratioavg(df: pd.DataFrame, columnas: list[str], window: int) -> pd.DataFrame:
+    """
+    Genera variables ratioavg para los atributos especificados utilizando SQL.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame con los datos
+    window :  cantidad de meses a considerar para el calculo
+
+    columnas : list
+        Lista de atributos para los cuales generar ratioavg. Si es None, no se generan atributos.
+
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame con las variables ratioavg agregadas
+    """
+
+    logger.info(f"Realizando feature engineering [ratioavg] en una ventana de {window} meses para {len(columnas) if columnas else 0} atributos")
+
+    if columnas is None or len(columnas) == 0:
+        logger.warning("No se especificaron atributos para generar atributos")
+        return df
+
+    # Construir la consulta SQL
+    sql = "SELECT *"
+
+    # Agregar los lags para los atributos especificados
+    for attr in columnas:
+        if attr in df.columns:
+            # Usamos NULLIF(..., 0) para que si el promedio es 0, devuelva NULL en lugar de error
+            sql += f', {attr} / NULLIF(AVG({attr}) OVER ventana, 0) AS {attr}_ratioavg{window}'
+
+        else:
+            logger.warning(f"El atributo {attr} no existe en el DataFrame")
+
+    # Completar la consulta
+    sql += " FROM df"
+    sql += f" window ventana as (partition by numero_de_cliente order by foto_mes rows between {window-1} preceding and current row)"
+    sql += " ORDER BY numero_de_cliente, foto_mes"
+
+    # Ejecutar la consulta SQL
+    con = duckdb.connect(database=":memory:")
+    con.register("df", df)
+    df = con.execute(sql).pl()
+    con.close()
+
+    logger.info(f"Feature engineering [ratioavg] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
+    return df
 
 def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
     """
@@ -114,14 +319,13 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
         return df
 
     # Construir la consulta SQL
-    # sql = "SELECT *"
-    sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE(foto_mes)"
+    sql = "SELECT *"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
             for i in range(1, cant_lag + 1):
-                sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i}"
+                sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag{i}"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
@@ -179,7 +383,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
 
     # Completar la consulta
     sql += " FROM df"
-    sql += f" window ventana as (partition by numero_de_cliente order by foto_mes rows between {q} preceding and current row)"
+    sql += f" window ventana as (partition by numero_de_cliente order by foto_mes rows between {q-1} preceding and current row)"
     sql += " ORDER BY numero_de_cliente, foto_mes"
 
     # Ejecutar la consulta SQL
@@ -204,8 +408,6 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
     """
     logger.info(f"Comienzo feature delta. df shape: {df.shape}")
 
-    # df = pl.from_pandas(df)
-
     exprs = []
     for attr in columnas:
         if attr not in df.columns:
@@ -218,18 +420,13 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
                 logger.warning(f"No se encontró {lag_col}, se omite.")
                 continue
 
-            exprs.append((pl.col(attr) - pl.col(lag_col)).alias(f"{attr}_delta_{i}"))
+            exprs.append((pl.col(attr) - pl.col(lag_col)).alias(f"{attr}_delta{i}"))
 
     if exprs:
         df = df.with_columns(exprs)
 
-    # df = df.to_pandas()
-
     logger.info(f"Feature engineering [deltas] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
-
-    # mlflow.log_param("flag_deltas", True)
-    # mlflow.log_param("q_deltas", cant_lag)
 
     return df
 
@@ -257,7 +454,7 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
            lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_1,
            lag(mpayroll, 2) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
            mpayroll - mpayroll_lag_1 as mpayroll_delta_1,
-           case when foto_mes in ('2021-06-30', '2020-12-31', '2020-06-30', '2019-12-31', '2019-06-30')
+           case when foto_mes in (202106, 202012, 202006, 201912, 201906)
                 and mpayroll/mpayroll_lag_1  >= 1.3
                 and mpayroll/mpayroll_lag_2  >= 1.3
                     then 1
@@ -265,10 +462,10 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
            end as flag_aguinaldo,
            --case when flag_aguinaldo = 1 and cpayroll_trx > 1 then cpayroll_trx - 1 else cpayroll_trx end as cpayroll_trx
     FROM df) as a
-    WHERE foto_mes in ('2021-06-30', '2020-12-31', '2020-06-30', '2019-12-31', '2019-06-30'))
+    WHERE foto_mes in (202106, 202012, 202006, 201912, 201906))
 
     SELECT df.* REPLACE(
-                case when aguinaldo.mpayroll_delta_1 is null or aguinaldo.flag_aguinaldo = 0 then df.mpayroll when df.foto_mes in ('2021-06-30', '2020-12-31', '2020-06-30', '2019-12-31', '2019-06-30') then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll
+                case when aguinaldo.mpayroll_delta_1 is null or aguinaldo.flag_aguinaldo = 0 then df.mpayroll when df.foto_mes in (202106, 202012, 202006, 201912, 201906) then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll
                 --,case when aguinaldo.mpayroll_delta_1 is null then df.cpayroll_trx when df.foto_mes = '2021-06-30' then aguinaldo.cpayroll_trx else df.cpayroll_trx end as cpayroll_trx
                 ), mpayroll as mpayroll_original
     FROM df
@@ -276,9 +473,11 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
     ON df.numero_de_cliente = aguinaldo.numero_de_cliente
     AND aguinaldo.foto_mes =
     CASE
-        WHEN EXTRACT(MONTH FROM df.foto_mes) <= 6 -- Si el mes es de Enero a Junio
-        THEN MAKE_DATE(EXTRACT(YEAR FROM df.foto_mes), 6, 30) -- Construye la fecha de Junio de ese año
-        ELSE MAKE_DATE(EXTRACT(YEAR FROM df.foto_mes), 12, 31) -- Sino, construye la de Diciembre de ese año
+        -- El operador % (módulo) obtiene los últimos 2 dígitos (el mes)
+        WHEN foto_mes % 100 <= 6 
+        -- La división / 100 obtiene los primeros 4 dígitos (el año)
+        THEN make_date((foto_mes / 100)::INT, 6, 30)
+        ELSE make_date((foto_mes / 100)::INT, 12, 31)
     END
     ORDER BY df.numero_de_cliente, df.foto_mes
     """
@@ -532,6 +731,18 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
             "tc_cadelantosefectivo"),
         (pl.col("Master_mpagominimo").fill_null(0) + pl.col("Visa_mpagominimo").fill_null(0)).alias(
             "tc_mpagominimo"),
+        # ctrx_quarter_normalizado
+        pl.when(pl.col("cliente_antiguedad") == 1)
+        .then(pl.col("ctrx_quarter") * 5.0)
+        .when(pl.col("cliente_antiguedad") == 2)
+        .then(pl.col("ctrx_quarter") * 2.0)
+        .when(pl.col("cliente_antiguedad") == 3)
+        .then(pl.col("ctrx_quarter") * 1.2)
+        .otherwise(pl.col("ctrx_quarter"))
+        .alias("ctrx_quarter_normalizado"),
+
+        (pl.col("mpayroll").fill_null(0) / pl.col("cliente_edad")).alias(
+            "mpayroll_sobre_edad")
     ])
     .with_columns([
         (pl.col("tc_mpagado") / pl.col("tc_msaldopesos")).alias("tc_porc_pagos_saldo"), # agregar tratamientos de division por cero
@@ -551,67 +762,29 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
 
 def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
     """
-    Igual que tu versión original, pero generando una sola matriz numpy
-    para evitar usar mucha memoria.
+    Crea variables aleatorias para usar en zLightGBM o reduccion de dimensionalidad
     """
     logging.info(f"==== Creando {qcanaritos} canaritos...")
 
     original_cols = df.columns
     num_filas = df.height
 
-    # 👉 Generamos TODO en un solo array (mucho más eficiente)
     canary_matrix = np.random.rand(num_filas, qcanaritos)
 
-    # 👉 Convertimos cada columna numpy → Polars
     canary_expressions = []
     for i in range(qcanaritos):
         name = f"canarito_{i+1}"
         col = pl.Series(name, canary_matrix[:, i])
         canary_expressions.append(col)
 
-    # 👉 Añadimos las nuevas columnas
     df = df.hstack(canary_expressions)
 
-    # 👉 Reordenamos: canarios primero, luego las originales
     df = df.select([f"canarito_{i+1}" for i in range(qcanaritos)] + original_cols)
 
     logger.info(f"Feature engineering [create_canaritos] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
-    return df.clone()
-
-from sklearn.ensemble import RandomTreesEmbedding
-def create_embedding_rf(df: pl.DataFrame) -> pl.DataFrame:
-
-    X_train, y_train, X_test, y_test = train_test_split(df=df, undersampling=False, mes_train=[202101, 202102, 202103], mes_test=[202104])
-    X = df.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
-
-    embedding_model = RandomTreesEmbedding(
-        n_estimators=20,
-        max_leaf_nodes=16,
-        min_samples_leaf=100,
-        random_state=SEMILLA[1]
-    )
-
-    embedding_model.fit(X_train)
-
-    X_embedded_sparse = embedding_model.transform(X)
-
-    n_cols = X_embedded_sparse.shape[1]
-    columnas_nuevas = [f"rf_{i:06d}" for i in range(n_cols)]
-
-    df_embedding = pd.DataFrame.sparse.from_spmatrix(
-        X_embedded_sparse,
-        columns=columnas_nuevas
-    )
-
-    df_embedding = pl.from_pandas(df_embedding)
-    df_embedding = df_embedding.with_columns(
-        [pl.col(col).cast(pl.Int8) for col in df_embedding.columns]
-    )
-    df = pl.concat([df, df_embedding], how="horizontal")
-
-    return df, embedding_model
+    return df
 
 
 def create_embedding_lgbm_rf(df: pl.DataFrame):
@@ -662,7 +835,7 @@ def create_embedding_lgbm_rf(df: pl.DataFrame):
         "extra_trees": False
     }
 
-    train_data = lgb.Dataset(X_train, label=y_train)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True)
 
     model = lgb.train(
         params,
@@ -708,3 +881,80 @@ def sparse_to_polars(df_sparse, chunk_size=500):
             columns.append(pl.Series(col_name, block[:, j]))
 
     return pl.DataFrame(columns)
+
+def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None) -> :
+
+    logger.info("==== Iniciando Canaritos Asesinos ====")
+    df_with_canaritos = create_canaritos(df, qcanaritos)
+    # Crear dataset de LightGBM
+    X_train = df_with_canaritos.to_numpy()
+    y_train = df["target_train"].to_numpy()
+    w_train = df["w_train"].to_numpy()
+
+    train_data = lgb.Dataset(
+        X_train,
+        label=y_train,
+        weight=w_train,
+        free_raw_data=True
+    )
+
+    mejores_params = cargar_mejores_hiperparametros(archivo_base = params_path)
+
+    # Hiperparámetros fijos
+    params = {
+        'objective': 'binary',
+        'metric': 'None',
+        'verbose': -1,
+        'verbosity': -1,
+        'silent': 1,
+        'boosting': 'gbdt',
+        'n_threads': -1,
+        'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
+        'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
+        'max_bin': PARAMETROS_LGB['max_bin'],
+        'seed': SEMILLA[0]
+    }
+
+    final_params = {**params, **mejores_params}
+    logger.info(f"Parámetros del modelo: {final_params}")
+
+    model = lgb.train(final_params, train_data)
+
+    # Extraer feature importance
+    fi_gain = pd.Series(
+        model.feature_importance(importance_type="gain"),
+        index=model.feature_name(),
+        name="importance_gain"
+    ).sort_values(ascending=False)
+
+    fi_split = pd.Series(
+        model.feature_importance(importance_type="split"),
+        index=model.feature_name(),
+        name="importance_split"
+    ).sort_values(ascending=False)
+
+    # Estadísticas de canaritos
+    canaritos_in_top = []
+    for i, feat in enumerate(fi_gain.index):
+        if feat.startswith('canarito_'):
+            canaritos_in_top.append((feat, i + 1, fi_gain[feat]))
+
+    logger.info(f"=== ANÁLISIS DE CANARITOS ===")
+    logger.info(f"Total canaritos generados: {qcanaritos}")
+    logger.info(f"Canaritos en top features:")
+    for canarito, rank, importance in canaritos_in_top[:10]:
+        logger.info(f"  {canarito}: rank #{rank}, gain={importance:.2f}")
+
+    if canaritos_in_top:
+        best_canarito_rank = min([rank for _, rank, _ in canaritos_in_top])
+        logger.info(f"Mejor canarito en posición: #{best_canarito_rank}")
+        logger.info(f"Sugerencia: considerar eliminar features con rank >= {best_canarito_rank}")
+    else:
+        logger.info(f"Ningún canarito entre las top features - todas las variables reales son útiles")
+
+    # Guardar TXT con lista ordenada (solo nombres)
+    txt_path = os.path.join(os.path.join(BUCKET_NAME, "log"), f"features_ordered_by_gain_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.txt")
+    with open(txt_path, 'w') as f:
+        f.write(str(fi_gain.index.tolist()))
+
+    logger.info(f"==== Canaritos Asesinos completado ====")

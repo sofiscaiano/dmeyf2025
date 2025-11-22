@@ -110,60 +110,93 @@ def convertir_clase_ternaria_a_target(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
-def reduce_mem_usage(df, verbose=True):
+
+def load_dataset_undersampling_efficient(
+        path: str,
+        months: list[int],
+        seed: int,
+        fraction: float = 0.1
+) -> pl.DataFrame:
     """
-    Optimiza el uso de memoria del dataframe reduciendo los tipos de dato.
-    Versión optimizada con mejor manejo de float16 y procesamiento por tipo.
+    Versión más eficiente en RAM con undersampling
+    Lee el dataset, crea columnas objetivo y aplica undersampling sobre CONTINUA.
+
+    Esta versión evita el ranking completo de registros CONTINUA usando hash modulo,
+    lo que reduce significativamente el uso de RAM.
 
     Args:
-        df: DataFrame a optimizar
-        verbose: Si True, muestra información de progreso
+        path: Ruta al archivo parquet
+        months: Lista de meses o mes único a cargar
+        fraction: Fracción de CONTINUA a mantener (ej: 0.1 = 10%)
+        seed: Semilla para reproducibilidad
 
     Returns:
-        DataFrame optimizado
+        pl.DataFrame con undersampling aplicado
     """
-    start_mem = df.memory_usage(deep=True).sum() / 1024**2
+    if isinstance(months, str):
+        months = [months]
 
-    if verbose:
-        logger.info(f'Uso de memoria inicial del dataframe: {start_mem:.2f} MB')
+    if path.endswith('.parquet'):
+        scan_func = pl.scan_parquet(path, low_memory=True)
+    elif path.endswith('.csv.gz') or path.endswith('.csv'):
+        scan_func = pl.scan_csv(path, low_memory=True)
+    else:
+        raise ValueError(f"Tipo de archivo no soportado: {path}")
 
-    # Procesar columnas numéricas int
-    int_cols = df.select_dtypes(include=['int64', 'int32', 'int16']).columns
-    for col in int_cols:
-        c_min = df[col].min()
-        c_max = df[col].max()
+    logger.info(f"Cargando dataset desde {path} y creando variables target")
 
-        if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-            df[col] = df[col].astype(np.int8)
-        elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-            df[col] = df[col].astype(np.int16)
-        elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-            df[col] = df[col].astype(np.int32)
+    # Base lazy con columnas objetivo
+    df_lazy = (
+        scan_func
+        .filter(pl.col("foto_mes").is_in(months))
+        .with_columns([
+            pl.when(pl.col("target") == "CONTINUA").then(0).otherwise(1).alias("target_train"),
+            pl.when(pl.col("target") == "BAJA+2").then(1).otherwise(0).alias("target_test"),
+            pl.when(pl.col("target") == "CONTINUA").then(1)
+            .when(pl.col("target") == "BAJA+1").then(1.00001)
+            .when(pl.col("target") == "BAJA+2").then(1.00002)
+            .otherwise(None)
+            .alias("w_train")
+        ])
+    )
 
-    # Procesar columnas numéricas float (evitar float16 por pérdida de precisión en ML)
-    float_cols = df.select_dtypes(include=['float64']).columns
-    for col in float_cols:
-        c_min = df[col].min()
-        c_max = df[col].max()
+    logger.info("Aplicando undersampling...")
 
-        # Solo usar float32 para reducir memoria, evitar float16
-        if c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-            df[col] = df[col].astype(np.float32)
+    # 1. Separar lógica de filtros (esto sigue siendo una query plan, no data real)
+    df_mayoritaria = df_lazy.filter(
+        pl.col("target") == "CONTINUA")
+    df_minoritaria = df_lazy.filter(pl.col("target") != "CONTINUA")
 
-    # Convertir columnas object a category si tienen pocos valores únicos
-    object_cols = df.select_dtypes(include=['object']).columns
-    for col in object_cols:
-        num_unique = df[col].nunique()
-        num_total = len(df[col])
-        # Solo convertir a category si tiene menos del 50% de valores únicos
-        if num_unique / num_total < 0.5:
-            df[col] = df[col].astype('category')
+    # 2. Obtener clientes únicos de la mayoritaria y muestrear
+    clientes_sampled = (
+        df_mayoritaria
+        .select("numero_de_cliente")
+        .unique()
+        .sample(fraction=fraction, seed=seed)
+    )
 
-    end_mem = df.memory_usage(deep=True).sum() / 1024**2
-    reduction = 100 * (start_mem - end_mem) / start_mem
+    # 3. Filtrar la mayoritaria haciendo JOIN con los clientes seleccionados
+    df_mayoritaria_sampled = df_mayoritaria.join(
+        clientes_sampled,
+        on="numero_de_cliente",
+        how="inner"
+    )
 
-    if verbose:
-        logger.info(f'Uso de memoria después de la optimización: {end_mem:.2f} MB')
-        logger.info(f'Reducción de memoria: {reduction:.1f}%')
+    df_lazy = pl.concat([df_mayoritaria_sampled, df_minoritaria])
+
+    df = df_lazy.collect()
+
+    logger.info("Calculando conteos post-undersampling por mes y clase...")
+    counts_df = df.group_by("foto_mes", "target").agg(
+        pl.count().alias("registros")
+    ).sort("foto_mes", "target")
+    with pl.Config(tbl_rows=-1, tbl_width_chars=120):
+        counts_str = str(counts_df)
+    logger.info(
+        f"--- Conteos Finales Post-Undersampling ---\n{counts_str}\n--------------------------------------------")
+    num_cols = df.width
+    logger.info(f"Columnas del dataset muestreado: {num_cols}")
+    num_rows = df.height
+    logger.info(f"Filas del dataset muestreado: {num_rows}")
 
     return df

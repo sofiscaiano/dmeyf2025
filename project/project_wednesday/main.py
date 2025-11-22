@@ -99,6 +99,7 @@ def main():
         mlflow.set_tags(MLFLOW_TAGS)
 
         mlflow.log_param("zlightgbm", FLAG_ZLIGHTGBM)
+        mlflow.log_param("zlgbm_wl", ZLGBM_WEAKLEARNER)
         mlflow.log_param("fix_aguinaldo", FLAG_AGUINALDO)
         mlflow.log_param("rankings", FLAG_RANKS)
         mlflow.log_param("q_lags", QLAGS)
@@ -128,7 +129,6 @@ def main():
             ## Feature Engineering
             atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
 
-
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
             if FLAG_AGUINALDO:
@@ -137,7 +137,7 @@ def main():
                 df = fix_zero_sd(df, columnas=atributos)
 
             df = create_features(df)
-            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
+            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente', 'cliente_edad', 'cliente_antiguedad', 'cliente_vip', "Visa_fultimo_cierre", "Master_Finiciomora", "Visa_Finiciomora", "Master_delinquency", "Visa_delinquency", "Visa_fechaalta", "Master_fechaalta"]]
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
 
             if FLAG_RANKS:
@@ -156,7 +156,7 @@ def main():
             df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
 
             ## Convertir clase ternaria a target binaria
-            df = convertir_clase_ternaria_a_target(df)
+            # df = convertir_clase_ternaria_a_target(df)
 
             if FLAG_EMBEDDING:
                 df = create_embedding_lgbm_rf(df)

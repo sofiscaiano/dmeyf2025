@@ -57,20 +57,20 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
 
     df_test = df.filter(pl.col("foto_mes").is_in(mes_test))
 
-    X_train = df_train.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
-    y_train = df_train["target"].to_numpy().astype("float32")
+    X_train = df_train.select(pl.all().exclude(["target_train", "target_test"])).to_numpy().astype("float32")
+    y_train = df_train["target_train"].to_numpy().astype("float32")
 
-    X_test = df_test.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
+    X_test = df_test.select(pl.all().exclude(["target_train", "target_test"])).to_numpy().astype("float32")
     y_test = df_test["target_test"].to_numpy().astype("float32")
 
     return X_train, y_train, X_test, y_test
 
 def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     """
-    Realiza un undersampling de la clase mayoritaria (target == 0) en Polars.
+    Realiza un undersampling de la clase mayoritaria (target_train == 0) en Polars.
 
     Args:
-        df (pl.DataFrame): DataFrame de entrada (con columnas 'target' y 'numero_de_cliente').
+        df (pl.DataFrame): DataFrame de entrada (con columnas 'target_train' y 'numero_de_cliente').
         sample_fraction (float): Fracción de la clase mayoritaria a conservar (0 < frac ≤ 1).
         semilla (int): Semilla aleatoria para reproducibilidad.
 
@@ -79,8 +79,8 @@ def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     """
 
     # Separar clases
-    df_mayoritaria = df.filter(pl.col("target") == 0)
-    df_minoritaria = df.filter(pl.col("target") == 1)
+    df_mayoritaria = df.filter(pl.col("target_train") == 0)
+    df_minoritaria = df.filter(pl.col("target_train") == 1)
 
     # Obtener clientes únicos de la clase mayoritaria
     clientes_unicos = df_mayoritaria.select("numero_de_cliente").unique().sort(pl.col("numero_de_cliente"))

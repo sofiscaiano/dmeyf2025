@@ -15,6 +15,7 @@ competencia02:
   FLAG_ZEROSD: True
   FLAG_EMBEDDING: False
   QLAGS: 2
+  ZLGBM_WEAKLEARNER: True
   MES_TRAIN_BO: [201901, 201902, 201903, 201904, 201905, 201906, 201907, 201908, 201909, 201910, 201911, 201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104]
   MES_VALIDACION_BO: [202106]
   KSEMILLERIO_BO: 3
@@ -44,14 +45,22 @@ parametros_lgb:
   max_bin: 31
   metric: 'ganancia'
 
-parametros_zlgb:
+parametros_zlgb_wl:
   gradient_bound: 0.4
-  qcanaritos: 5
   min_data_in_leaf: 200
   learning_rate: 1
   feature_fraction: 0.5
   num_leaves: 999
   num_iterations: 64
+
+parametros_zlgb:
+  qcanaritos: 5
+  gradient_bound: 0.1
+  min_data_in_leaf: 20
+  learning_rate: 1
+  feature_fraction: 0.5
+  num_leaves: 999
+  num_iterations: 99999
 
 parametros_adhoc:
   num_iterations: 534

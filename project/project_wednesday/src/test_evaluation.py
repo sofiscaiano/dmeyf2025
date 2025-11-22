@@ -42,7 +42,7 @@ def evaluar_en_test(df, mejores_params) -> tuple:
     logging.info(X_train.shape)
     logging.info(X_test.shape)
 
-    train_data = lgb.Dataset(X_train, label=y_train)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True)
 
     flag_GPU = int(os.getenv('GPU', 0))
 

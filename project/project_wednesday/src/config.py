@@ -16,6 +16,7 @@ try:
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
         PARAMETROS_ZLGB = _cfgGeneral['parametros_zlgb']
+        PARAMETROS_ZLGB_WL = _cfgGeneral['parametros_zlgb_wl']
         STUDY_NAME = _cfgGeneral.get("STUDY_NAME", 'Default')
         STUDY_HP = _cfg.get("STUDY_HP", None)
         ZEROSHOT = _cfg.get("ZEROSHOT", False)
@@ -44,6 +45,7 @@ try:
         FLAG_ZEROSD = _cfg.get('FLAG_ZEROSD', False)
         FLAG_EMBEDDING = _cfg.get('FLAG_EMBEDDING', False)
         QLAGS = _cfg.get('QLAGS', 2)
+        ZLGBM_WEAKLEARNER = _cfg.get('ZLGBM_WEAKLEARNER', False)
 
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))
