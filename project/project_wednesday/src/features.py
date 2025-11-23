@@ -29,7 +29,7 @@ def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], gr
     - Nulls se mantienen como Null (None).
     """
 
-    logger.info(f"Realizando rankings para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"Realizando rankings con cero fijo para {len(columnas) if columnas else 0} atributos")
 
     if not columnas:
         logger.warning("No se especificaron atributos para generar rankings")
@@ -104,6 +104,8 @@ def feature_engineering_percent_rank(
         return df
 
     out = df
+
+    logger.info(f"Realizando percent_rank para {len(columnas) if columnas else 0} atributos")
 
     for col in columnas:
         if col not in df.columns:

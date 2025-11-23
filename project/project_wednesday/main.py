@@ -98,8 +98,7 @@ def main():
         mlflow.log_param("fix_aguinaldo", FLAG_AGUINALDO)
         mlflow.log_param("rankings", FLAG_RANKS)
         mlflow.log_param("q_lags", QLAGS)
-        mlflow.log_param("trend_3m", FLAG_TREND_3M)
-        mlflow.log_param("trend_6m", FLAG_TREND_6M)
+        mlflow.log_param("trends", FLAG_TRENDS)
         mlflow.log_param("zero_sd", FLAG_ZEROSD)
         mlflow.log_artifact("config.yaml")
 
