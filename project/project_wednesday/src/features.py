@@ -29,7 +29,7 @@ def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], gr
     - Nulls se mantienen como Null (None).
     """
 
-    logger.info(f"Realizando rankings con cero fijo para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"🔄 Feature engineering [ranking con cero fijo] en proceso")
 
     if not columnas:
         logger.warning("No se especificaron atributos para generar rankings")
@@ -81,7 +81,7 @@ def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], gr
 
     # mantener mismo orden de columnas original
     df = df.select(df.columns)
-    logger.info(f"Feature engineering [ranks con cero fijo] completado")
+    logger.info(f"✅ Feature engineering [ranking con cero fijo] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
@@ -105,7 +105,7 @@ def feature_engineering_percent_rank(
 
     out = df
 
-    logger.info(f"Realizando percent_rank para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"🔄 Feature engineering [percent rank] en proceso")
 
     for col in columnas:
         if col not in df.columns:
@@ -127,6 +127,9 @@ def feature_engineering_percent_rank(
         )
 
         out = out.with_columns(pr_expr)
+
+    logger.info(f"✅ Feature engineering [percent rank] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return out
 
@@ -159,9 +162,7 @@ def feature_engineering_ntile(
         logger.warning("No se especificaron columnas para ntile()")
         return df
 
-    logger.info(
-        f"Calculando NTILE para {len(columnas)} columnas, buckets={k}, agrupado en foto_mes"
-    )
+    logger.info(f"🔄 Feature engineering [ntiles] en proceso")
 
     out = df
 
@@ -187,6 +188,9 @@ def feature_engineering_ntile(
 
         out = out.with_columns(ntile_expr)
 
+    logger.info(f"✅ Feature engineering [ntiles] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
     return out
 
 def feature_engineering_percent_rank_dense(
@@ -202,6 +206,8 @@ def feature_engineering_percent_rank_dense(
 
     Nulls se mantienen como Null.
     """
+
+    logger.info(f"🔄 Feature engineering [dense rank] en proceso")
 
     if not columnas:
         logger.warning("No se especificaron columnas para percent_rank_dense()")
@@ -230,10 +236,13 @@ def feature_engineering_percent_rank_dense(
 
         out = out.with_columns(pr_expr)
 
+    logger.info(f"✅ Feature engineering [dense rank] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
     return out
 
 
-def feature_engineering_min_max(df: pl.DataFrame, columnas: list[str], min: bool, max: bool, window: int) -> pl.DataFrame:
+def feature_engineering_min_max(df: pl.DataFrame, columnas: list[str], window: int) -> pl.DataFrame:
     """
     Genera variables de minimos y/o maximos temporales para los atributos especificados utilizando SQL.
 
@@ -254,14 +263,14 @@ def feature_engineering_min_max(df: pl.DataFrame, columnas: list[str], min: bool
         DataFrame con las variables de minimos y maximos agregadas
     """
 
-    logger.info(f"Realizando feature engineering [min/max] en una ventana de {window} meses para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"🔄 Feature engineering [min/max/avg {window}m] en proceso")
 
     if columnas is None or len(columnas) == 0:
         logger.warning("No se especificaron atributos para generar atributos")
         return df
 
     # Construir la consulta SQL
-    sql = "SELECT *"
+    sql = "SELECT foto_mes, numero_de_cliente"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
@@ -280,11 +289,18 @@ def feature_engineering_min_max(df: pl.DataFrame, columnas: list[str], min: bool
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.register("df", df)
-    df = con.execute(sql).pl()
+    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas))
+    df_new = con.execute(sql).pl()
     con.close()
 
-    logger.info(f"Feature engineering [min/max] completado")
+    # Merge al dataframe original
+    df = df.join(
+        df_new,
+        on=["numero_de_cliente", "foto_mes"],
+        how="left"
+    )
+
+    logger.info(f"✅ Feature engineering [min/max/avg] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
@@ -308,19 +324,17 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
         DataFrame con las variables ratioavg agregadas
     """
 
-    logger.info(f"Realizando feature engineering [ratioavg] en una ventana de {window} meses para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"🔄 Feature engineering [ratioavg {window}m] en proceso")
 
     if columnas is None or len(columnas) == 0:
         logger.warning("No se especificaron atributos para generar atributos")
         return df
 
     # Construir la consulta SQL
-    sql = "SELECT *"
+    sql = "SELECT foto_mes, numero_de_cliente"
 
-    # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            # Usamos NULLIF(..., 0) para que si el promedio es 0, devuelva NULL en lugar de error
             sql += f', {attr} / NULLIF({attr}_avg{window}, 0) AS {attr}_ratioavg{window}'
 
         else:
@@ -332,11 +346,18 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.register("df", df)
-    df = con.execute(sql).pl()
+    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas))
+    df_new = con.execute(sql).pl()
     con.close()
 
-    logger.info(f"Feature engineering [ratioavg] completado")
+    # Merge al dataframe original
+    df = df.join(
+        df_new,
+        on=["numero_de_cliente", "foto_mes"],
+        how="left"
+    )
+
+    logger.info(f"✅ Feature engineering [ratioavg] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
@@ -360,14 +381,14 @@ def feature_engineering_lag(df: pl.DataFrame, columnas: list[str], cant_lag: int
         DataFrame con las variables de lag agregadas
     """
 
-    logger.info(f"Realizando feature engineering con {cant_lag} lags para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"🔄 Feature engineering [lags] en proceso")
 
     if columnas is None or len(columnas) == 0:
         logger.warning("No se especificaron atributos para generar lags")
         return df
 
     # Construir la consulta SQL
-    sql = "SELECT *"
+    sql = "SELECT foto_mes, numero_de_cliente"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
@@ -385,14 +406,20 @@ def feature_engineering_lag(df: pl.DataFrame, columnas: list[str], cant_lag: int
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.register("df", df)
-    df = con.execute(sql).pl()
+    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas))
+    df_new = con.execute(sql).pl()
     con.close()
 
-    logger.info(f"Feature engineering [lags] completado")
+    # Merge al dataframe original
+    df = df.join(
+        df_new,
+        on=["numero_de_cliente", "foto_mes"],
+        how="left"
+    )
+
+
+    logger.info(f"✅ Feature engineering [lags] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
-    # mlflow.log_param("flag_lags", True)
-    # mlflow.log_param("q_lags", cant_lag)
 
     return df
 
@@ -413,14 +440,14 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
         DataFrame con las variables de tendencia agregadas
     """
 
-    logger.info(f"Realizando feature engineering de tendencia de {q} meses para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"🔄 Feature engineering [trend {q}m] en proceso")
 
     if columnas is None or len(columnas) == 0:
         logger.warning("No se especificaron atributos para generar lags")
         return df
 
     # Construir la consulta SQL
-    sql = "SELECT *"
+    sql = "SELECT foto_mes, numero_de_cliente"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
@@ -436,16 +463,19 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.register("df", df)
-    df = con.execute(sql).pl()
+    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas))
+    df_new = con.execute(sql).pl()
     con.close()
 
-    logging.info(df.head())
+    # Merge al dataframe original
+    df = df.join(
+        df_new,
+        on=["numero_de_cliente", "foto_mes"],
+        how="left"
+    )
 
-    logger.info(f"Feature engineering [trends] completado")
-    logger.info(df.shape)
-
-    # mlflow.log_param("flag_trend", True)
+    logger.info(f"✅ Feature engineering [trend {q}m] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
 
@@ -454,7 +484,7 @@ def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], cant_lag: i
     """
     Genera variables delta (attr - attr_lag_i) usando Polars.
     """
-    logger.info(f"Comienzo feature delta. df shape: {df.shape}")
+    logger.info(f"🔄 Feature engineering [deltalags] en proceso")
 
     exprs = []
     for attr in columnas:
@@ -473,7 +503,7 @@ def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], cant_lag: i
     if exprs:
         df = df.with_columns(exprs)
 
-    logger.info(f"Feature engineering [deltas] completado")
+    logger.info(f"✅ Feature engineering [deltalags] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
@@ -609,7 +639,8 @@ def fix_zero_sd(df: pl.DataFrame, columnas: list) -> pl.DataFrame:
 
         expresiones.append(expr)
 
-    # mlflow.log_param("flag_data_quality", True)
+    logger.info(f"✅ Data Cleaning [zero_sd] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df.with_columns(expresiones)
 
@@ -750,7 +781,7 @@ def generar_reporte_mensual_html(
 
 def create_features(df: pl.DataFrame) -> pl.DataFrame:
 
-    logging.info("==== Creando nuevas features")
+    logger.info(f"🔄 Feature engineering [create_features] en proceso")
     df = (df.with_columns([
         (pl.col("foto_mes").cast(pl.Int64) % 100).alias("kmes"),
         (pl.col("Master_delinquency").fill_null(0) + pl.col("Visa_delinquency").fill_null(0)).alias("tc_delinquency"),
@@ -803,7 +834,7 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
         .alias("tc_flag_pago_pagominimo"))
     ]))
 
-    logger.info(f"Feature engineering [create_features] completado")
+    logger.info(f"✅ Feature engineering [create_features] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
