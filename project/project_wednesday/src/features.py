@@ -352,7 +352,6 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
     df_new = con.execute(sql).pl()
     con.close()
 
-    df_new = df_new.drop(columnas_avg)
     df = df.join(
         df_new,
         on=["numero_de_cliente", "foto_mes"],
