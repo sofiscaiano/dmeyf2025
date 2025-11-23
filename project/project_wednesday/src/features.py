@@ -8,6 +8,8 @@ from sklearn.preprocessing import OneHotEncoder
 from .config import *
 from .basic_functions import train_test_split
 from .best_params import cargar_mejores_hiperparametros
+from .test_evaluation import calcular_ganancias_acumuladas
+from .basic_functions import generar_semillas
 from datetime import datetime
 import os
 import gc
@@ -972,12 +974,12 @@ def sparse_to_polars(df_sparse, chunk_size=500):
 
     return pl.DataFrame(columns)
 
-def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None) -> pl.DataFrame:
+def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None, ksemillerio: int = 5, metric: float = 0.5) -> pl.DataFrame:
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     df_with_canaritos = create_canaritos(df, qcanaritos)
 
-    X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_VALIDACION)
+    X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
 
     train_data = lgb.Dataset(
         X_train,
@@ -1006,26 +1008,61 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
     final_params = {**params, **mejores_params}
     logger.info(f"Parámetros del modelo: {final_params}")
 
-    model = lgb.train(final_params, train_data)
+    semillas = generar_semillas(SEMILLA[0], ksemillerio)
+    all_importances = []
+    # Inicializamos acumulador de predicciones para calcular promedio parcial
+    pred_acumulada = np.zeros(len(y_test))
 
-    # Extraer feature importance
-    fi_gain = pd.Series(
-        model.feature_importance(importance_type="gain"),
-        index=model.feature_name(),
-        name="importance_gain"
-    ).sort_values(ascending=False)
+    for i, seed in enumerate(semillas):
+        logging.info(f'Entrenando modelo base con seed = {seed} ({i+1}/{len(semillas)})')
 
-    # fi_split = pd.Series(
-    #     model.feature_importance(importance_type="split"),
-    #     index=model.feature_name(),
-    #     name="importance_split"
-    # ).sort_values(ascending=False)
+        # Copia de parámetros con la semilla actual
+        params_seed = final_params.copy()
+        params_seed['seed'] = seed
 
-    # Estadísticas de canaritos
+        model = lgb.train(final_params, train_data)
+
+        logging.info(f'Fin de entrenamiento del modelo base con seed = {seed} ({i + 1}/{len(semillas)})')
+
+        y_pred_actual = model.predict(X_test)
+        pred_acumulada += y_pred_actual
+
+        # Importancia del modelo
+        feature_imp = pd.DataFrame({
+            'feature': model.feature_name(),
+            'importance': model.feature_importance(importance_type='gain')
+        })
+
+        all_importances.append(feature_imp)
+
+    y_pred = pred_acumulada / len(semillas)
+
+    # Calculo la ganancia del modelo
+    ganancias = calcular_ganancias_acumuladas(y_test, y_pred)
+    ganancias_meseta = (
+        pd.Series(ganancias)
+        .rolling(window=2001, center=True, min_periods=1)
+        .mean()
+    )
+    max_ganancia = ganancias_meseta.max(skipna=True)
+
+    logging.info(f"Ganancia base obtenida en test: {max_ganancia}")
+
+    # Calculo la importancia de las variables del modelo
+    df_importances = (
+        pd.concat(all_importances, axis=0)
+        .groupby("feature", as_index=False)
+        .mean()
+        .sort_values("importance", ascending=False)
+    )
+
     canaritos_in_top = []
-    for i, feat in enumerate(fi_gain.index):
-        if feat.startswith('canarito_'):
-            canaritos_in_top.append((feat, i + 1, fi_gain[feat]))
+    for i, row in df_importances.iterrows():
+        feat = row['feature']
+        imp = row['importance']
+
+        if feat.startswith("canarito_"):
+            canaritos_in_top.append((feat, i + 1, imp))
 
     logger.info(f"=== ANÁLISIS DE CANARITOS ===")
     logger.info(f"Total canaritos generados: {qcanaritos}")
@@ -1036,13 +1073,20 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
     if canaritos_in_top:
         best_canarito_rank = min([rank for _, rank, _ in canaritos_in_top])
         logger.info(f"Mejor canarito en posición: #{best_canarito_rank}")
-        logger.info(f"Sugerencia: considerar eliminar features con rank >= {best_canarito_rank}")
+
+        # Obtengo las posiciones de los canaritos y calculo metricas
+        ranks = [x[1] for x in canaritos_in_top]
+        p50 = np.median(ranks)
+        p25 = np.percentile(ranks, 25)
+        p75 = np.percentile(ranks, 75)
+
+        logger.info(f"Posiciones de los canaritos en el feature importance: P25: {p25} | Mediana: {p50} | P75: {p75}")
     else:
         logger.info(f"Ningún canarito entre las top features - todas las variables reales son útiles")
 
     # Guardar TXT con lista ordenada (solo nombres)
     txt_path = os.path.join(os.path.join(BUCKET_NAME, "log"), f"features_ordered_by_gain_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.txt")
     with open(txt_path, 'w') as f:
-        f.write(str(fi_gain.index.tolist()))
+        f.write(str(df_importances['feature'].tolist()))
 
     logger.info(f"==== Canaritos Asesinos completado ====")

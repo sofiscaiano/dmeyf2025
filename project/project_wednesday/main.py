@@ -111,7 +111,7 @@ def main():
             months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
 
             # Cargar df con undersampling
-            df = load_dataset_undersampling_efficient(path= data_path, months= months_filter, seed= SEMILLA[0],fraction= UNDERSAMPLING_FRACTION)
+            df = load_dataset_undersampling_efficient(path= data_path, months= months_filter, seed= SEMILLA[0], fraction= UNDERSAMPLING_FRACTION)
             gc.collect()
 
             if FLAG_CANARITOS_ASESINOS:
