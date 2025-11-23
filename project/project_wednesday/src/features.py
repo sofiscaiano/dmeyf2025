@@ -117,7 +117,7 @@ def feature_engineering_percent_rank(df: pd.DataFrame, columnas: list[str]) -> p
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            sql += f'percent_rank() OVER (partition by foto_mes order by {attr} desc nulls last) as rankp_{attr}'
+            sql += f', percent_rank() OVER (partition by foto_mes order by {attr} desc nulls last) as rankp_{attr}'
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
@@ -166,7 +166,7 @@ def feature_engineering_ntile(df: pd.DataFrame, columnas: list[str], k: int) -> 
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            sql += f'pntile({k}) over (partition by foto_mes order by {attr} desc nulls last) as rankn_{attr}'
+            sql += f', ntile({k}) over (partition by foto_mes order by {attr} desc nulls last) as rankn_{attr}'
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
@@ -218,8 +218,8 @@ def feature_engineering_min_max(df: pd.DataFrame, columnas: list[str], min: bool
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            sql += f',MIN({attr}) over ventana as {attr}_min{window}'
-            sql += f',MAX({attr}) over ventana as {attr}_max{window}'
+            sql += f', MIN({attr}) over ventana as {attr}_min{window}'
+            sql += f', MAX({attr}) over ventana as {attr}_max{window}'
 
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
