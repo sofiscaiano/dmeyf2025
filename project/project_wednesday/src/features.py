@@ -879,7 +879,7 @@ def create_embedding_lgbm_rf(df: pl.DataFrame):
             .alias("w_train")
         ])
 
-    X_train, y_train, X_test, y_test = train_test_split(
+    X_train, y_train, X_test, y_test, w_train = train_test_split(
         df=df,
         undersampling=False,
         mes_train=[202101, 202102, 202103, 202104],
@@ -976,9 +976,8 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     df_with_canaritos = create_canaritos(df, qcanaritos)
-    X_train = df_with_canaritos.to_numpy()
-    y_train = df["target_train"].to_numpy()
-    w_train = df["w_train"].to_numpy()
+
+    X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_VALIDACION)
 
     train_data = lgb.Dataset(
         X_train,

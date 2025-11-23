@@ -169,9 +169,15 @@ def load_dataset_undersampling_efficient(
     # 2. Obtener clientes únicos de la mayoritaria y muestrear
     clientes_sampled = (
         df_mayoritaria
+        .select([
+            pl.col("numero_de_cliente"),
+            (pl.col("numero_de_cliente")
+             .hash(seed)
+             .mod(int(1 / fraction))
+             ).alias("bucket")
+        ])
+        .filter(pl.col("bucket") == 0)
         .select("numero_de_cliente")
-        .unique(maintain_order=True)
-        .sample(fraction=fraction, seed=seed)
     )
 
     # 3. Filtrar la mayoritaria haciendo JOIN con los clientes seleccionados
