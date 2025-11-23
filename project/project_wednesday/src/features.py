@@ -320,14 +320,13 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
     for attr in columnas:
         if attr in df.columns:
             # Usamos NULLIF(..., 0) para que si el promedio es 0, devuelva NULL en lugar de error
-            sql += f', {attr} / NULLIF(AVG({attr}) OVER ventana, 0) AS {attr}_ratioavg{window}'
+            sql += f', {attr} / NULLIF(AVG({attr}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes ROWS BETWEEN {window-1} PRECEDING AND CURRENT ROW), 0) AS {attr}_ratioavg{window}'
 
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
 
     # Completar la consulta
     sql += " FROM df"
-    sql += f" window ventana as (partition by numero_de_cliente order by foto_mes rows between {window-1} preceding and current row)"
     sql += " ORDER BY numero_de_cliente, foto_mes"
 
     # Ejecutar la consulta SQL
