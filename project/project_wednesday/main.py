@@ -8,8 +8,8 @@ import gc
 import polars as pl
 import mlflow
 
-from src.features import create_embedding_lgbm_rf, create_features, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
-from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
+from src.features import *
+from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target, load_dataset_undersampling_efficient
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *
@@ -80,11 +80,6 @@ def main():
 
     print(">>> Inicio de ejecucion")
 
-    ## Creacion de target
-    crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
-    df = cargar_datos_csv(crudo_path)
-    df = create_target(df=df)
-
     # Configurar MLflow y ejecutar pipeline completo
     try:
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
@@ -108,6 +103,7 @@ def main():
         mlflow.log_param("zero_sd", FLAG_ZEROSD)
         mlflow.log_artifact("config.yaml")
 
+        # Importo el df_fe si existe
         if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
             logger.info("✅ df_fe encontrado")
             data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
@@ -117,17 +113,31 @@ def main():
             df = cargar_datos(data_path, lazy=True, months=months_filter)
             gc.collect()
 
+        # Si no existe el df_fe lo genero
         else:
-            ## Carga de Datos
             logger.info("❌ df_fe no encontrado")
             os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
-            data_path = os.path.join(BUCKET_NAME, DATA_PATH)
-            if FLAG_GCP == 1:
-                data_path = '~/datasets/competencia_02.parquet'
-            df = cargar_datos(data_path, lazy=False)
+            # Me fijo si existe el df con la clase_ternaria (target) y lo cargo
+            if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"competencia_03.parquet")):
+                data_path = os.path.join(BUCKET_NAME, "datasets", f"competencia_03.parquet")
+                df = cargar_datos(data_path, lazy=False)
+            # Si no existe, lo creo
+            else:
+                # Me fijo si existe el df crudo de la competencia 03
+                if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"competencia_02_03_crudo.parquet")):
+                    df = cargar_datos(os.path.join(BUCKET_NAME, "datasets", f"competencia_02_03_crudo.parquet"), lazy=False)
+                # Si no existe, cargo los dos df y los concateno
+                else:
+                    df_2 = cargar_datos_csv(os.path.join(BUCKET_NAME, "datasets", f"competencia_02_crudo.csv.gz"))
+                    df_3 = cargar_datos_csv(os.path.join(BUCKET_NAME, "datasets", f"competencia_03_crudo.csv.gz"))
+                    df = pl.concat([df_2, df_3])
+                    data_path = os.path.join(BUCKET_NAME, "datasets", f"competencia_02_03_crudo.parquet")
+                    df.write_parquet(data_path, compression="gzip")
 
-            ## Feature Engineering
-            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
+                df = create_target(df, export=True)
+
+            ## Inicio de Feature Engineering
+            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'target_train', 'target_test', 'numero_de_cliente', 'w_train']]
 
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
@@ -137,26 +147,32 @@ def main():
                 df = fix_zero_sd(df, columnas=atributos)
 
             df = create_features(df)
-            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente', 'cliente_edad', 'cliente_antiguedad', 'cliente_vip', "Visa_fultimo_cierre", "Master_Finiciomora", "Visa_Finiciomora", "Master_delinquency", "Visa_delinquency", "Visa_fechaalta", "Master_fechaalta"]]
+            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'target_train', 'target_test', 'numero_de_cliente', 'w_train', 'cliente_edad', 'cliente_antiguedad', 'cliente_vip', "Visa_fultimo_cierre", "Master_Finiciomora", "Visa_Finiciomora", "Master_delinquency", "Visa_delinquency", "Visa_fechaalta", "Master_fechaalta"]]
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
 
+            # RANKINGS
             if FLAG_RANKS:
-                df = feature_engineering_rank(df, columnas=atributos) # pandas
+                df = feature_engineering_rank(df, columnas=atributos)
+            if FLAG_PERCENTRANK:
+                df = feature_engineering_percent_rank(df, columnas=atributos)
+            if FLAG_NTILE:
+                df = feature_engineering_ntile(df, columnas=atributos, k=10)
+
+            if FLAG_MIN_6M or FLAG_MAX_6M:
+                df = feature_engineering_min_max(df, columnas=atributos, min=FLAG_MIN_6M, max=FLAG_MAX_6M, window=6)
+            if FLAG_RATIOAVG_6M:
+                df = feature_engineering_ratioavg(df, columnas=atributos, window=6)
 
             # generar_reporte_mensual_html(df, columna_target='target', nombre_archivo='reporte_atributos_final.html')
 
+            # TENDENCIAS
             if FLAG_TREND_3M:
                 df = feature_engineering_trend(df, columnas=atributos, q=3)
             if FLAG_TREND_6M:
                 df = feature_engineering_trend(df, columnas=atributos, q=6)
 
-            # atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
-
-            df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb
-            df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
-
-            ## Convertir clase ternaria a target binaria
-            # df = convertir_clase_ternaria_a_target(df)
+            df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS)
+            df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS)
 
             if FLAG_EMBEDDING:
                 df = create_embedding_lgbm_rf(df)
@@ -166,7 +182,6 @@ def main():
             if FLAG_GCP == 1:
                 data_path = '~/datasets/df_fe.parquet'
             df.write_parquet(data_path, compression="gzip")
-
 
         # Si defini atributos para descartar los elimino ahora
         logging.info("Elimino atributos:")

@@ -882,7 +882,7 @@ def sparse_to_polars(df_sparse, chunk_size=500):
 
     return pl.DataFrame(columns)
 
-def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None) -> :
+def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None) -> pl.DataFrame:
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     df_with_canaritos = create_canaritos(df, qcanaritos)
@@ -927,11 +927,11 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
         name="importance_gain"
     ).sort_values(ascending=False)
 
-    fi_split = pd.Series(
-        model.feature_importance(importance_type="split"),
-        index=model.feature_name(),
-        name="importance_split"
-    ).sort_values(ascending=False)
+    # fi_split = pd.Series(
+    #     model.feature_importance(importance_type="split"),
+    #     index=model.feature_name(),
+    #     name="importance_split"
+    # ).sort_values(ascending=False)
 
     # Estadísticas de canaritos
     canaritos_in_top = []

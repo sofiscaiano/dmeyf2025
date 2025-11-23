@@ -49,13 +49,8 @@ def create_target(df: pl.DataFrame, export=True) -> pl.DataFrame:
 
     df = con.execute(sql).pl()
 
-    # df = df.with_columns([
-    #     pl.col("tmobile_app").cast(pl.Int64),
-    #     pl.col("cmobile_app_trx").cast(pl.Int64)
-    # ])
-
     if export:
-        export_path = os.path.join(BUCKET_NAME, "datasets/competencia_02.parquet")
+        export_path = os.path.join(BUCKET_NAME, "datasets/competencia_03.parquet")
         df.write_parquet(export_path, compression="gzip")
         logger.info(">>> Creacion de target finalizada -> {export_path}")
 

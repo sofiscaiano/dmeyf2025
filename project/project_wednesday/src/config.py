@@ -44,6 +44,11 @@ try:
         FLAG_TREND_6M = _cfg.get('FLAG_TREND_6M', False)
         FLAG_ZEROSD = _cfg.get('FLAG_ZEROSD', False)
         FLAG_EMBEDDING = _cfg.get('FLAG_EMBEDDING', False)
+        FLAG_MIN_6M = _cfg.get('FLAG_MIN_6M', False)
+        FLAG_MAX_6M = _cfg.get('FLAG_MAX_6M', False)
+        FLAG_RATIOAVG_6M = _cfg.get('FLAG_RATIOAVG_6M', False)
+        FLAG_PERCENTRANK = _cfg.get('FLAG_PERCENTRANK', False)
+        FLAG_NTILE = _cfg.get('FLAG_NTILE', False)
         QLAGS = _cfg.get('QLAGS', 2)
         ZLGBM_WEAKLEARNER = _cfg.get('ZLGBM_WEAKLEARNER', False)
 
