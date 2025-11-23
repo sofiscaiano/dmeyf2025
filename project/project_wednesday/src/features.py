@@ -330,6 +330,8 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
         logger.warning("No se especificaron atributos para generar atributos")
         return df
 
+    columnas = columnas + [f"{c}_avg{window}" for c in columnas]
+
     # Construir la consulta SQL
     sql = "SELECT foto_mes, numero_de_cliente"
 
