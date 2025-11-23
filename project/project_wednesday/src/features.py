@@ -869,11 +869,21 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
 
 def create_embedding_lgbm_rf(df: pl.DataFrame):
 
+    df = df.with_columns([
+            pl.when(pl.col("target") == "CONTINUA").then(0).otherwise(1).alias("target_train"),
+            pl.when(pl.col("target") == "BAJA+2").then(1).otherwise(0).alias("target_test"),
+            pl.when(pl.col("target") == "CONTINUA").then(1)
+            .when(pl.col("target") == "BAJA+1").then(1.00001)
+            .when(pl.col("target") == "BAJA+2").then(1.00002)
+            .otherwise(None)
+            .alias("w_train")
+        ])
+
     X_train, y_train, X_test, y_test = train_test_split(
         df=df,
         undersampling=False,
-        mes_train=[202101, 202102, 202103],
-        mes_test=[202104]
+        mes_train=[202101, 202102, 202103, 202104],
+        mes_test=[202105]
     )
 
     X_all = df.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
