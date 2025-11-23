@@ -268,6 +268,7 @@ def feature_engineering_min_max(df: pl.DataFrame, columnas: list[str], min: bool
         if attr in df.columns:
             sql += f', MIN({attr}) over ventana as {attr}_min{window}'
             sql += f', MAX({attr}) over ventana as {attr}_max{window}'
+            sql += f', AVG({attr}) over ventana as {attr}_avg{window}'
 
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
@@ -320,7 +321,7 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
     for attr in columnas:
         if attr in df.columns:
             # Usamos NULLIF(..., 0) para que si el promedio es 0, devuelva NULL en lugar de error
-            sql += f', {attr} / NULLIF(AVG({attr}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes ROWS BETWEEN {window-1} PRECEDING AND CURRENT ROW), 0) AS {attr}_ratioavg{window}'
+            sql += f', {attr} / NULLIF({attr}_avg{window}, 0) AS {attr}_ratioavg{window}'
 
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
