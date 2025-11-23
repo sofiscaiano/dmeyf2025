@@ -109,8 +109,12 @@ def feature_engineering_percent_rank(df: pl.DataFrame, columnas: list[str], batc
         logger.warning("No se especificaron atributos para generar rankings")
         return df
 
+    import os
+    os.makedirs("/tmp/duckdb", exist_ok=True)
+
     con = duckdb.connect(database=":memory:")
-    con.execute("PRAGMA disable_spilling=1;")
+    con.execute("SET temp_directory='/tmp/duckdb';")
+    con.execute("SET memory_limit='220GB';")
     con.register("df", df)
 
     # materializamos una sola vez
