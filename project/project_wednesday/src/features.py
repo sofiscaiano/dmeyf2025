@@ -464,7 +464,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas))
+    con.register("df", df.select(["numero_de_cliente", "foto_mes", 'cliente_antiguedad'] + columnas))
     df_new = con.execute(sql).pl()
     con.close()
 
