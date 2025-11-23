@@ -48,7 +48,7 @@ try:
         FLAG_RATIOAVG = _cfg.get('FLAG_RATIOAVG', False)
         QLAGS = _cfg.get('QLAGS', 2)
         ZLGBM_WEAKLEARNER = _cfg.get('ZLGBM_WEAKLEARNER', False)
-
+        FLAG_CANARITOS_ASESINOS = _cfg.get('FLAG_CANARITOS_ASESINOS', False)
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))
         else:

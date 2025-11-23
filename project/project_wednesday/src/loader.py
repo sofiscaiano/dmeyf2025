@@ -170,7 +170,7 @@ def load_dataset_undersampling_efficient(
     clientes_sampled = (
         df_mayoritaria
         .select("numero_de_cliente")
-        .unique()
+        .unique(maintain_order=True)
         .sample(fraction=fraction, seed=seed)
     )
 

@@ -109,8 +109,14 @@ def main():
             if FLAG_GCP == 1:
                 data_path = '~/datasets/df_fe.parquet'
             months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
-            df = cargar_datos(data_path, lazy=True, months=months_filter)
+
+            # Cargar df con undersampling
+            df = load_dataset_undersampling_efficient(path= data_path, months= months_filter, seed= SEMILLA[0],fraction= UNDERSAMPLING_FRACTION)
             gc.collect()
+
+            if FLAG_CANARITOS_ASESINOS:
+                # Uso los hiperparametros de la competencia 2 para hacer una reduccion de dimensionalidad con canaritos
+                run_canaritos_asesinos(df, qcanaritos=50, params_path='lgb_optimization_competencia197')
 
         # Si no existe el df_fe lo genero
         else:

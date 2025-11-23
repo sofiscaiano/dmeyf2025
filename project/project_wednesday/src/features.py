@@ -976,7 +976,6 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     df_with_canaritos = create_canaritos(df, qcanaritos)
-    # Crear dataset de LightGBM
     X_train = df_with_canaritos.to_numpy()
     y_train = df["target_train"].to_numpy()
     w_train = df["w_train"].to_numpy()
