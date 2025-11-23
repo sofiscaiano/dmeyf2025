@@ -981,6 +981,9 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
 
     X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
 
+    logging.info(X_train.shape)
+    logging.info(X_test.shape)
+
     train_data = lgb.Dataset(
         X_train,
         label=y_train,
