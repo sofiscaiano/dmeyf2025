@@ -151,24 +151,22 @@ def main():
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
 
             # RANKINGS
-            if FLAG_PERCENTRANK:
-                df = feature_engineering_percent_rank(df, columnas=atributos)
-            if FLAG_NTILE:
-                df = feature_engineering_ntile(df, columnas=atributos, k=10)
             if FLAG_RANKS:
-                df = feature_engineering_rank(df, columnas=atributos)
+                df = feature_engineering_percent_rank(df, columnas=atributos)
+                df = feature_engineering_ntile(df, columnas=atributos, k=10)
+                df = feature_engineering_rank_cero_fijo(df, columnas=atributos)
+                df = feature_engineering_percent_rank_dense(df, columnas=atributos)
 
-            if FLAG_MIN_6M or FLAG_MAX_6M:
-                df = feature_engineering_min_max(df, columnas=atributos, min=FLAG_MIN_6M, max=FLAG_MAX_6M, window=6)
-            if FLAG_RATIOAVG_6M:
+            if FLAG_MIN or FLAG_MAX:
+                df = feature_engineering_min_max(df, columnas=atributos, min=FLAG_MIN, max=FLAG_MAX, window=6)
+            if FLAG_RATIOAVG:
                 df = feature_engineering_ratioavg(df, columnas=atributos, window=6)
 
             # generar_reporte_mensual_html(df, columna_target='target', nombre_archivo='reporte_atributos_final.html')
 
             # TENDENCIAS
-            if FLAG_TREND_3M:
+            if FLAG_TRENDS:
                 df = feature_engineering_trend(df, columnas=atributos, q=3)
-            if FLAG_TREND_6M:
                 df = feature_engineering_trend(df, columnas=atributos, q=6)
 
             df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS)

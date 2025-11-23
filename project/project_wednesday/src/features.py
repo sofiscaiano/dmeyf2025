@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 logger = logging.getLogger(__name__)
 
 
-def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: str = "foto_mes") -> pl.DataFrame:
+def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], group_col: str = "foto_mes") -> pl.DataFrame:
     """
     - Para cada columna en `columnas`, calcula ranking percentil firmado por grupo (group_col).
     - Valores > 0: percentil en (0, 1] calculado solo entre los positivos del grupo.
@@ -73,7 +73,7 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
             pl.when(pl.col(attr).is_null()).then(None)
             .when(pl.col(attr) == 0).then(0.0)
             .otherwise(pl.coalesce([pos_rank, neg_rank]))
-            .alias(attr)
+            .alias(f"rankcf_{attr}")
         )
 
         df = df.with_columns(expr)
@@ -81,124 +81,155 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
 
     # mantener mismo orden de columnas original
     df = df.select(df.columns)
-    logger.info(f"Feature engineering [ranks] completado")
+    logger.info(f"Feature engineering [ranks con cero fijo] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
     return df
 
-def feature_engineering_percent_rank(df: pl.DataFrame, columnas: list[str], batch_size: int = 20) -> pl.DataFrame:
+def feature_engineering_percent_rank(
+    df: pl.DataFrame,
+    columnas: list[str],
+    ) -> pl.DataFrame:
     """
-    Genera variables de ranking con percentrank para los atributos especificados utilizando SQL.
+    Replica percent_rank() de SQL usando Polars.
 
-    Parameters:
-    -----------
-    df : pd.DataFrame
-        DataFrame con los datos
-    columnas : list
-        Lista de atributos para los cuales generar rankings. Si es None, no se generan rankings.
+    percent_rank = (rank - 1) / (count - 1)
 
-    Returns:
-    --------
-    pd.DataFrame
-        DataFrame con las variables de ranking agregadas
+    Si count == 1 -> 0.0 (igual que SQL)
+    Nulls se mantienen como Null.
     """
 
-    logger.info(f"Realizando feature engineering [percent_rank] para {len(columnas) if columnas else 0} atributos")
-
-    if columnas is None or len(columnas) == 0:
-        logger.warning("No se especificaron atributos para generar rankings")
+    if not columnas:
+        logger.warning("No se especificaron columnas para percent_rank()")
         return df
 
-    import os
-    os.makedirs("/tmp/duckdb", exist_ok=True)
+    out = df
 
-    con = duckdb.connect(database=":memory:")
-    con.execute("SET temp_directory='/tmp/duckdb';")
-    con.execute("SET memory_limit='220GB';")
-    con.register("df", df)
+    for col in columnas:
+        if col not in df.columns:
+            logger.warning(f"[percent_rank] advertencia: columna {col} no existe")
+            continue
 
-    # materializamos una sola vez
-    con.execute("CREATE TABLE work AS SELECT * FROM df")
+        # rank dentro del grupo
+        base_rank = pl.col(col).rank(method="average").over("foto_mes")
 
-    for i in range(0, len(columnas), batch_size):
+        # cantidad por grupo
+        cnt = pl.count().over("foto_mes")
 
-        logger.info(f"Procesando batch {i // batch_size + 1} de {(len(columnas) + batch_size - 1) // batch_size}")
+        # Fórmula SQL
+        pr_expr = (
+            pl.when(cnt == 1)
+            .then(0.0)
+            .otherwise((base_rank - 1) / (cnt - 1))
+            .alias(f"percent_rank_{col}")
+        )
 
-        batch = columnas[i:i+batch_size]
-        select_exprs = ["*"]
-        for col in batch:
-            select_exprs.append(
-                f"percent_rank() OVER (PARTITION BY foto_mes ORDER BY {col} DESC NULLS LAST) AS rankp_{col}"
-            )
+        out = out.with_columns(pr_expr)
 
-        sql = f"""
-            CREATE TABLE tmp AS
-            SELECT {', '.join(select_exprs)}
-            FROM work
-        """
+    return out
 
-        con.execute(sql)
-        con.execute("DROP TABLE work")
-        con.execute("ALTER TABLE tmp RENAME TO work")
-
-    # Finalmente, extraemos ordenado por numero_de_cliente, foto_mes
-    df = con.execute("SELECT * FROM work ORDER BY numero_de_cliente, foto_mes").pl()
-
-    con.close()
-
-    logger.info(f"Feature engineering [percent_rank] completado")
-    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
-
-    return df
-
-def feature_engineering_ntile(df: pl.DataFrame, columnas: list[str], k: int) -> pl.DataFrame:
+def feature_engineering_ntile(
+    df: pl.DataFrame,
+    columnas: list[str],
+    k: int = 10,
+    ) -> pl.DataFrame:
     """
-    Genera variables de ranking con ntile para los atributos especificados utilizando SQL.
+    Replica NTILE() de SQL usando Polars.
 
-    Parameters:
-    -----------
-    df : pd.DataFrame
-        DataFrame con los datos
-    k :  cantidad de grupos que genera ntile
-    columnas : list
-        Lista de atributos para los cuales generar rankings. Si es None, no se generan rankings.
+    ```
+    Para cada columna en `columnas`, dentro de cada grupo:
+        ntile = ceil( rank / count * buckets )
 
-    Returns:
-    --------
-    pd.DataFrame
-        DataFrame con las variables de ranking agregadas
+    Nulls quedan en Null.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+    columnas : list[str]
+        Columnas numéricas a transformar.
+    buckets : int
+        Cantidad de tiles (ej: 10 = deciles).
+    group_col : str
+        Columna de agrupamiento (default: "foto_mes").
     """
 
-    logger.info(f"Realizando feature engineering [ntile] para {len(columnas) if columnas else 0} atributos")
-
-    if columnas is None or len(columnas) == 0:
-        logger.warning("No se especificaron atributos para generar rankings")
+    if not columnas:
+        logger.warning("No se especificaron columnas para ntile()")
         return df
 
-    # Construir la consulta SQL
-    sql = "SELECT *"
+    logger.info(
+        f"Calculando NTILE para {len(columnas)} columnas, buckets={k}, agrupado en foto_mes"
+    )
 
-    # Agregar los lags para los atributos especificados
-    for attr in columnas:
-        if attr in df.columns:
-            sql += f', ntile({k}) over (partition by foto_mes order by {attr} desc nulls last) as rankn_{attr}'
-        else:
-            logger.warning(f"El atributo {attr} no existe en el DataFrame")
+    out = df
 
-    # Completar la consulta
-    sql += " FROM df"
-    sql += " ORDER BY numero_de_cliente, foto_mes"
+    for col in columnas:
+        if col not in df.columns:
+            logger.warning(f"Advertencia: columna {col} no existe en el DataFrame")
+            continue
 
-    # Ejecutar la consulta SQL
-    con = duckdb.connect(database=":memory:")
-    con.register("df", df)
-    df = con.execute(sql).pl()
-    con.close()
+        # rank dentro de grupo
+        base_rank = pl.col(col).rank(method="average").over("foto_mes")
 
-    logger.info(f"Feature engineering [ntile] completado")
-    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+        # cantidad total por grupo
+        cnt = pl.count().over("foto_mes")
 
-    return df
+        # fórmula tipo SQL:
+        # ntile = ceil(rank / count * buckets)
+        ntile_expr = (
+            ((base_rank / cnt) * k)
+            .ceil()
+            .cast(pl.Int64)
+            .alias(f"rankn_{col}")
+        )
+
+        out = out.with_columns(ntile_expr)
+
+    return out
+
+def feature_engineering_percent_rank_dense(
+    df: pl.DataFrame,
+    columnas: list[str]
+    ) -> pl.DataFrame:
+    """
+    Replica percent_rank() de SQL pero usando DENSE_RANK en vez de AVERAGE_RANK.
+
+    - dense_rank no deja huecos cuando hay empates.
+    - percent_rank_dense = (dense_rank - 1) / (unique_count - 1)
+    - Si unique_count == 1 -> 0.0
+
+    Nulls se mantienen como Null.
+    """
+
+    if not columnas:
+        logger.warning("No se especificaron columnas para percent_rank_dense()")
+        return df
+
+    out = df
+
+    for col in columnas:
+        if col not in df.columns:
+            logger.warning(f"[percent_rank_dense] advertencia: columna {col} no existe")
+            continue
+
+        # dense rank dentro del grupo
+        dense_rank = pl.col(col).rank(method="dense").over("foto_mes")
+
+        # cantidad de valores distintos por grupo
+        uniq = pl.col(col).n_unique().over("foto_mes")
+
+        # Fórmula tipo SQL
+        pr_expr = (
+            pl.when(uniq == 1)
+            .then(0.0)
+            .otherwise((dense_rank - 1) / (uniq - 1))
+            .alias(f"rankpd_{col}")
+        )
+
+        out = out.with_columns(pr_expr)
+
+    return out
+
 
 def feature_engineering_min_max(df: pl.DataFrame, columnas: list[str], min: bool, max: bool, window: int) -> pl.DataFrame:
     """
