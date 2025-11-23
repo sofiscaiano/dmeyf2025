@@ -110,6 +110,7 @@ def feature_engineering_percent_rank(df: pl.DataFrame, columnas: list[str], batc
         return df
 
     con = duckdb.connect(database=":memory:")
+    con.execute("PRAGMA disable_spilling=1;")
     con.register("df", df)
 
     # materializamos una sola vez
