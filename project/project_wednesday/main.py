@@ -151,12 +151,12 @@ def main():
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
 
             # RANKINGS
-            if FLAG_RANKS:
-                df = feature_engineering_rank(df, columnas=atributos)
             if FLAG_PERCENTRANK:
                 df = feature_engineering_percent_rank(df, columnas=atributos)
             if FLAG_NTILE:
                 df = feature_engineering_ntile(df, columnas=atributos, k=10)
+            if FLAG_RANKS:
+                df = feature_engineering_rank(df, columnas=atributos)
 
             if FLAG_MIN_6M or FLAG_MAX_6M:
                 df = feature_engineering_min_max(df, columnas=atributos, min=FLAG_MIN_6M, max=FLAG_MAX_6M, window=6)

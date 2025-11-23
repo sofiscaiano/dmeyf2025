@@ -84,8 +84,6 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
     logger.info(f"Feature engineering [ranks] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
 
-    # mlflow.log_param("flag_rankings", True)
-
     return df
 
 def feature_engineering_percent_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
