@@ -86,7 +86,7 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
 
     return df
 
-def feature_engineering_percent_rank(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
+def feature_engineering_percent_rank(df: pl.DataFrame, columnas: list[str], batch_size: int = 20) -> pl.DataFrame:
     """
     Genera variables de ranking con percentrank para los atributos especificados utilizando SQL.
 
@@ -109,32 +109,36 @@ def feature_engineering_percent_rank(df: pd.DataFrame, columnas: list[str]) -> p
         logger.warning("No se especificaron atributos para generar rankings")
         return df
 
-    # Construir la consulta SQL
-    sql = "SELECT *"
-
-    # Agregar los lags para los atributos especificados
-    for attr in columnas:
-        if attr in df.columns:
-            sql += f', percent_rank() OVER (partition by foto_mes order by {attr} desc nulls last) as rankp_{attr}'
-        else:
-            logger.warning(f"El atributo {attr} no existe en el DataFrame")
-
-    # Completar la consulta
-    sql += " FROM df"
-    sql += " ORDER BY numero_de_cliente, foto_mes"
-
-    # 1. Definir una ruta dentro de tu proyecto
-    temp_path = os.path.abspath("./duckdb_temp")
-    # 2. Crear la carpeta si no existe
-    os.makedirs(temp_path, exist_ok=True)
-
-    # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
     con.register("df", df)
-    con.execute("PRAGMA memory_limit='220GB'")  # Ajusta a lo que tenga tu máquina - 2GB
-    con.execute("PRAGMA threads=8")  # A veces menos hilos reducen la presión de memoria
-    con.execute(f"PRAGMA temp_directory={temp_path}")
-    df = con.execute(sql).pl()
+
+    # materializamos una sola vez
+    con.execute("CREATE TABLE work AS SELECT * FROM df")
+
+    for i in range(0, len(columnas), batch_size):
+
+        logger.info(f"Procesando batch {i // batch_size + 1} de {(len(columnas) + batch_size - 1) // batch_size}")
+
+        batch = columnas[i:i+batch_size]
+        select_exprs = ["*"]
+        for col in batch:
+            select_exprs.append(
+                f"percent_rank() OVER (PARTITION BY foto_mes ORDER BY {col} DESC NULLS LAST) AS rankp_{col}"
+            )
+
+        sql = f"""
+            CREATE TABLE tmp AS
+            SELECT {', '.join(select_exprs)}
+            FROM work
+        """
+
+        con.execute(sql)
+        con.execute("DROP TABLE work")
+        con.execute("ALTER TABLE tmp RENAME TO work")
+
+    # Finalmente, extraemos ordenado por numero_de_cliente, foto_mes
+    df = con.execute("SELECT * FROM work ORDER BY numero_de_cliente, foto_mes").pl()
+
     con.close()
 
     logger.info(f"Feature engineering [percent_rank] completado")
@@ -142,7 +146,7 @@ def feature_engineering_percent_rank(df: pd.DataFrame, columnas: list[str]) -> p
 
     return df
 
-def feature_engineering_ntile(df: pd.DataFrame, columnas: list[str], k: int) -> pd.DataFrame:
+def feature_engineering_ntile(df: pl.DataFrame, columnas: list[str], k: int) -> pl.DataFrame:
     """
     Genera variables de ranking con ntile para los atributos especificados utilizando SQL.
 
@@ -191,7 +195,7 @@ def feature_engineering_ntile(df: pd.DataFrame, columnas: list[str], k: int) -> 
 
     return df
 
-def feature_engineering_min_max(df: pd.DataFrame, columnas: list[str], min: bool, max: bool, window: int) -> pd.DataFrame:
+def feature_engineering_min_max(df: pl.DataFrame, columnas: list[str], min: bool, max: bool, window: int) -> pl.DataFrame:
     """
     Genera variables de minimos y/o maximos temporales para los atributos especificados utilizando SQL.
 
@@ -246,7 +250,7 @@ def feature_engineering_min_max(df: pd.DataFrame, columnas: list[str], min: bool
 
     return df
 
-def feature_engineering_ratioavg(df: pd.DataFrame, columnas: list[str], window: int) -> pd.DataFrame:
+def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: int) -> pl.DataFrame:
     """
     Genera variables ratioavg para los atributos especificados utilizando SQL.
 
@@ -299,7 +303,7 @@ def feature_engineering_ratioavg(df: pd.DataFrame, columnas: list[str], window: 
 
     return df
 
-def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
+def feature_engineering_lag(df: pl.DataFrame, columnas: list[str], cant_lag: int = 1) -> pl.DataFrame:
     """
     Genera variables de lag para los atributos especificados utilizando SQL.
 
@@ -408,7 +412,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
     return df
 
 
-def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
+def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], cant_lag: int = 1) -> pl.DataFrame:
     """
     Genera variables delta (attr - attr_lag_i) usando Polars.
     """
