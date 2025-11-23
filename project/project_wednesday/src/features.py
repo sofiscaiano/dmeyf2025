@@ -483,7 +483,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
 
 def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], cant_lag: int = 1) -> pl.DataFrame:
     """
-    Genera variables delta (attr - attr_lag_i) usando Polars.
+    Genera variables delta (attr - attr_lagi) usando Polars.
     """
     logger.info(f"🔄 Feature engineering [deltalags] en proceso")
 
@@ -494,7 +494,7 @@ def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], cant_lag: i
             continue
 
         for i in range(1, cant_lag + 1):
-            lag_col = f"{attr}_lag_{i}"
+            lag_col = f"{attr}_lag{i}"
             if lag_col not in df.columns:
                 logger.warning(f"No se encontró {lag_col}, se omite.")
                 continue
@@ -530,12 +530,12 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
     FROM (
     SELECT foto_mes,
            numero_de_cliente,
-           lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_1,
-           lag(mpayroll, 2) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
-           mpayroll - mpayroll_lag_1 as mpayroll_delta_1,
+           lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag1,
+           lag(mpayroll, 2) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag2,
+           mpayroll - mpayroll_lag1 as mpayroll_delta_1,
            case when foto_mes in (202106, 202012, 202006, 201912, 201906)
-                and mpayroll/mpayroll_lag_1  >= 1.3
-                and mpayroll/mpayroll_lag_2  >= 1.3
+                and mpayroll/mpayroll_lag1  >= 1.3
+                and mpayroll/mpayroll_lag2  >= 1.3
                     then 1
                 else 0
            end as flag_aguinaldo,
