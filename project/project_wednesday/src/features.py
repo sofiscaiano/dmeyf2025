@@ -330,7 +330,7 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
         logger.warning("No se especificaron atributos para generar atributos")
         return df
 
-    columnas = columnas + [f"{c}_avg{window}" for c in columnas]
+    columnas_avg = [f"{c}_avg{window}" for c in columnas]
 
     # Construir la consulta SQL
     sql = "SELECT foto_mes, numero_de_cliente"
@@ -348,11 +348,11 @@ def feature_engineering_ratioavg(df: pl.DataFrame, columnas: list[str], window: 
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas))
+    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas + columnas_avg))
     df_new = con.execute(sql).pl()
     con.close()
 
-    # Merge al dataframe original
+    df_new = df_new.drop(columnas_avg)
     df = df.join(
         df_new,
         on=["numero_de_cliente", "foto_mes"],
