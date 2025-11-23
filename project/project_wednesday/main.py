@@ -157,7 +157,7 @@ def main():
                 df = feature_engineering_percent_rank_dense(df, columnas=atributos)
 
             if FLAG_MIN or FLAG_MAX:
-                df = feature_engineering_min_max(df, columnas=atributos, min=FLAG_MIN, max=FLAG_MAX, window=6)
+                df = feature_engineering_min_max(df, columnas=atributos, window=6)
             if FLAG_RATIOAVG:
                 df = feature_engineering_ratioavg(df, columnas=atributos, window=6)
 

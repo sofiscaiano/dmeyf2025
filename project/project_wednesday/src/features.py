@@ -123,13 +123,13 @@ def feature_engineering_percent_rank(
             pl.when(cnt == 1)
             .then(0.0)
             .otherwise((base_rank - 1) / (cnt - 1))
-            .alias(f"percent_rank_{col}")
+            .alias(f"rankp_{col}")
         )
 
         out = out.with_columns(pr_expr)
 
     logger.info(f"✅ Feature engineering [percent rank] completado")
-    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+    logger.info(f"Filas: {out.height}, Columnas: {out.width}")
 
     return out
 
@@ -189,7 +189,7 @@ def feature_engineering_ntile(
         out = out.with_columns(ntile_expr)
 
     logger.info(f"✅ Feature engineering [ntiles] completado")
-    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+    logger.info(f"Filas: {out.height}, Columnas: {out.width}")
 
     return out
 
@@ -237,7 +237,7 @@ def feature_engineering_percent_rank_dense(
         out = out.with_columns(pr_expr)
 
     logger.info(f"✅ Feature engineering [dense rank] completado")
-    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+    logger.info(f"Filas: {out.height}, Columnas: {out.width}")
 
     return out
 
