@@ -176,17 +176,13 @@ def load_dataset_undersampling_efficient(
 
     # Sample de los continua
     clientes_sampled = (
-        clientes_df
-        .select("numero_de_cliente")
-        .unique(maintain_order=True)
-        .sample(fraction=fraction, seed=seed)
+        clientes_df.sample(fraction=fraction, seed=seed)
     )
 
-    # 3. Filtrar la mayoritaria haciendo JOIN con los clientes seleccionados
-    df_mayoritaria_sampled = df_mayoritaria.join(
-        clientes_sampled,
-        on="numero_de_cliente",
-        how="inner"
+    cliente_ids = clientes_sampled["numero_de_cliente"].to_list()
+
+    df_mayoritaria_sampled = df_mayoritaria.filter(
+        pl.col("numero_de_cliente").is_in(cliente_ids)
     )
 
     df_lazy = pl.concat([df_mayoritaria_sampled, df_minoritaria])
