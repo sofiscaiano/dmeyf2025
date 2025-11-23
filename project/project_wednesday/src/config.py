@@ -11,7 +11,7 @@ try:
     FLAG_ZLIGHTGBM = int(os.getenv('Z', 0))
     with open(PATH_CONFIG, 'r') as f:
         _cfgGeneral = yaml.safe_load(f)
-        _cfg = _cfgGeneral['competencia02']
+        _cfg = _cfgGeneral['competencia03']
 
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
@@ -83,7 +83,7 @@ try:
 
     # Tags fijos
     MLFLOW_TAGS = {
-        "proyecto": "DMEyF-Competencia02",
+        "proyecto": "DMEyF-Competencia03",
         "equipo": "python",
         "user_name": "sscaiano",
         "comision": "Jueves",

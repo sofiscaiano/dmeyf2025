@@ -108,10 +108,11 @@ def main():
             data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
             if FLAG_GCP == 1:
                 data_path = '~/datasets/df_fe.parquet'
-            months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
+            # Cargar df para train con undersampling
+            df_train = load_dataset_undersampling_efficient(path=data_path, months=MES_TRAIN, seed=SEMILLA[0], fraction=UNDERSAMPLING_FRACTION)
+            df_test = load_dataset_undersampling_efficient(path=data_path, months=MES_TRAIN, seed=SEMILLA[0], fraction=1)
+            df = pl.concat([df_train, df_test])
 
-            # Cargar df con undersampling
-            df = load_dataset_undersampling_efficient(path= data_path, months= months_filter, seed= SEMILLA[0], fraction= UNDERSAMPLING_FRACTION)
             gc.collect()
 
             if FLAG_CANARITOS_ASESINOS:

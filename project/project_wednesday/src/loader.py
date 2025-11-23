@@ -117,11 +117,7 @@ def load_dataset_undersampling_efficient(
         fraction: float = 0.1
 ) -> pl.DataFrame:
     """
-    Versión más eficiente en RAM con undersampling
     Lee el dataset, crea columnas objetivo y aplica undersampling sobre CONTINUA.
-
-    Esta versión evita el ranking completo de registros CONTINUA usando hash modulo,
-    lo que reduce significativamente el uso de RAM.
 
     Args:
         path: Ruta al archivo parquet

@@ -3,8 +3,8 @@ STUDY_NAME : 'lgb_optimization_competencia300'
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
 
-competencia02:
-  DATA_PATH: 'datasets/competencia_02.parquet'
+competencia03:
+  DATA_PATH: 'datasets/competencia_03.parquet'
   SEMILLA: [131213, 275677, 633767, 997057, 450223]
   ZEROSHOT: False
   STUDY_HP:
