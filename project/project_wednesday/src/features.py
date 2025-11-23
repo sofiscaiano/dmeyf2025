@@ -123,9 +123,17 @@ def feature_engineering_percent_rank(df: pd.DataFrame, columnas: list[str]) -> p
     sql += " FROM df"
     sql += " ORDER BY numero_de_cliente, foto_mes"
 
+    # 1. Definir una ruta dentro de tu proyecto
+    temp_path = os.path.abspath("./duckdb_temp")
+    # 2. Crear la carpeta si no existe
+    os.makedirs(temp_path, exist_ok=True)
+
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
     con.register("df", df)
+    con.execute("PRAGMA memory_limit='220GB'")  # Ajusta a lo que tenga tu máquina - 2GB
+    con.execute("PRAGMA threads=8")  # A veces menos hilos reducen la presión de memoria
+    con.execute(f"PRAGMA temp_directory={temp_path}")
     df = con.execute(sql).pl()
     con.close()
 
