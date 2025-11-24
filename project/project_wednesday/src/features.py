@@ -977,7 +977,7 @@ def sparse_to_polars(df_sparse, chunk_size=500):
 def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None, ksemillerio: int = 5, metric: float = 0.5) -> pl.DataFrame:
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
-    df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
+    # df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
     df_with_canaritos = create_canaritos(df, qcanaritos)
     features = [c for c in df_with_canaritos.columns if c not in ["target", "target_train", "target_test", "w_train"]]
     X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
@@ -1090,14 +1090,21 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
         logger.info(f"Ningún canarito entre las top features - todas las variables reales son útiles")
 
     # Guardar TXT con lista ordenada (solo nombres)
-    txt_path = os.path.join(os.path.join(BUCKET_NAME, "log"), f"features_ordered_by_gain_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.txt")
+    txt_path = os.path.join(os.path.join(BUCKET_NAME, "log"), f"all_features_ordered_by_gain_{STUDY_NAME}.txt")
     with open(txt_path, 'w') as f:
         f.write(str(df_importances['feature'].tolist()))
 
     # Ahora vuelvo a entrenar el modelo pero cortando la cantidad de features para verificar que se mantenga la ganancia base
     corte = int(np.percentile(ranks, metric))
+    logging.info(f"Corte de features con metrica de {metric}: {corte}")
     selected_features = df_importances['feature'].iloc[:corte].tolist()
     selected_features = [f for f in selected_features if not f.startswith("canarito_")]
+
+    # Guardar TXT con features seleccionadas
+    txt_path = os.path.join(os.path.join(BUCKET_NAME, "log"), f"selected_features_{STUDY_NAME}.txt")
+    with open(txt_path, 'w') as f:
+        f.write(str(df_importances['feature'].tolist()))
+
     df_check = df_with_canaritos.select(selected_features + ['target_train', 'target_test', 'target', 'w_train'])
 
     X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_check, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
