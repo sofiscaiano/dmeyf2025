@@ -55,13 +55,7 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
     if undersampling:
         df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
-    logging.info(df_train.head())
-    logging.info([col for col in df_train.columns if col.startswith("target")])
-
     df_test = df.filter(pl.col("foto_mes").is_in(mes_test))
-
-    logging.info(df_test.head())
-    logging.info([col for col in df_test.columns if col.startswith("target")])
 
     X_train = df_train.select(pl.all().exclude(["target", "target_train", "target_test", "w_train"])).to_numpy().astype("float32")
     y_train = df_train["target_train"].to_numpy().astype("float32")
