@@ -153,14 +153,14 @@ def main():
                 df = fix_zero_sd(df, columnas=atributos)
 
             df = create_features(df)
-            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'target_train', 'target_test', 'numero_de_cliente', 'w_train', 'cliente_edad', 'cliente_antiguedad', 'cliente_vip', "Visa_fultimo_cierre", "Master_Finiciomora", "Visa_Finiciomora", "Master_delinquency", "Visa_delinquency", "Visa_fechaalta", "Master_fechaalta"]]
+            atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'target_train', 'target_test', 'numero_de_cliente', 'w_train']]
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
 
             # RANKINGS
             if FLAG_RANKS:
                 df = feature_engineering_percent_rank(df, columnas=atributos)
                 df = feature_engineering_ntile(df, columnas=atributos, k=10)
-                df = feature_engineering_rank_cero_fijo(df, columnas=atributos)
+                df = feature_engineering_rank_cero_fijo(df, columnas=atributos, prefijo='')
                 df = feature_engineering_percent_rank_dense(df, columnas=atributos)
 
             if FLAG_MIN or FLAG_MAX:

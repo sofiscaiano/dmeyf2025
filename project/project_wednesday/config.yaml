@@ -12,7 +12,7 @@ competencia03:
   FLAG_RANKS: True
   FLAG_TRENDS: True
   FLAG_ZEROSD: True
-  FLAG_EMBEDDING: True
+  FLAG_EMBEDDING: False
   FLAG_MIN: True
   FLAG_MAX: True
   FLAG_RATIOAVG: True

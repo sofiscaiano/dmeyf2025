@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 logger = logging.getLogger(__name__)
 
 
-def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], group_col: str = "foto_mes") -> pl.DataFrame:
+def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], group_col: str = "foto_mes", prefijo: str = 'rankcf') -> pl.DataFrame:
     """
     - Para cada columna en `columnas`, calcula ranking percentil firmado por grupo (group_col).
     - Valores > 0: percentil en (0, 1] calculado solo entre los positivos del grupo.
@@ -64,7 +64,7 @@ def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], gr
             pl.when(pl.col(attr) < 0)
             .then(pl.col(attr).abs())
             .otherwise(None)
-            .rank(method="average")
+            .rank(method="dense")
             .over(group)
             / neg_count
         )
@@ -75,7 +75,7 @@ def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], gr
             pl.when(pl.col(attr).is_null()).then(None)
             .when(pl.col(attr) == 0).then(0.0)
             .otherwise(pl.coalesce([pos_rank, neg_rank]))
-            .alias(f"rankcf_{attr}")
+            .alias(f"{prefijo}_{attr}")
         )
 
         df = df.with_columns(expr)
@@ -91,6 +91,7 @@ def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], gr
 def feature_engineering_percent_rank(
     df: pl.DataFrame,
     columnas: list[str],
+    prefijo: str = 'rankp'
     ) -> pl.DataFrame:
     """
     Replica percent_rank() de SQL usando Polars.
@@ -125,7 +126,7 @@ def feature_engineering_percent_rank(
             pl.when(cnt == 1)
             .then(0.0)
             .otherwise((base_rank - 1) / (cnt - 1))
-            .alias(f"rankp_{col}")
+            .alias(f"{prefijo}_{col}")
         )
 
         out = out.with_columns(pr_expr)
@@ -139,6 +140,7 @@ def feature_engineering_ntile(
     df: pl.DataFrame,
     columnas: list[str],
     k: int = 10,
+    prefijo: str = 'rankn'
     ) -> pl.DataFrame:
     """
     Replica NTILE() de SQL usando Polars.
@@ -185,7 +187,7 @@ def feature_engineering_ntile(
             ((base_rank / cnt) * k)
             .ceil()
             .cast(pl.Int64)
-            .alias(f"rankn_{col}")
+            .alias(f"{prefijo}_{col}")
         )
 
         out = out.with_columns(ntile_expr)
@@ -197,7 +199,8 @@ def feature_engineering_ntile(
 
 def feature_engineering_percent_rank_dense(
     df: pl.DataFrame,
-    columnas: list[str]
+    columnas: list[str],
+    prefijo: str = 'rankpd'
     ) -> pl.DataFrame:
     """
     Replica percent_rank() de SQL pero usando DENSE_RANK en vez de AVERAGE_RANK.
@@ -233,7 +236,7 @@ def feature_engineering_percent_rank_dense(
             pl.when(uniq == 1)
             .then(0.0)
             .otherwise((dense_rank - 1) / (uniq - 1))
-            .alias(f"rankpd_{col}")
+            .alias(f"{prefijo}_{col}")
         )
 
         out = out.with_columns(pr_expr)
