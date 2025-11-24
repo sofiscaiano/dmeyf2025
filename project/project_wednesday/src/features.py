@@ -1103,7 +1103,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
     # Guardar TXT con features seleccionadas
     txt_path = os.path.join(os.path.join(BUCKET_NAME, "log"), f"selected_features_{STUDY_NAME}.txt")
     with open(txt_path, 'w') as f:
-        f.write(str(df_importances['feature'].tolist()))
+        f.write(str(selected_features))
 
     df_check = df_with_canaritos.select(selected_features + ['target_train', 'target_test', 'target', 'w_train'])
 
