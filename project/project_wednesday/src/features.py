@@ -977,6 +977,7 @@ def sparse_to_polars(df_sparse, chunk_size=500):
 def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None, ksemillerio: int = 5, metric: float = 0.5) -> pl.DataFrame:
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
+    df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
     df_with_canaritos = create_canaritos(df, qcanaritos)
     features = [c for c in df_with_canaritos.columns if c not in ["target", "target_train", "target_test", "w_train"]]
     X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)

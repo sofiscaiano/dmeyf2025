@@ -117,7 +117,7 @@ def main():
 
             if FLAG_CANARITOS_ASESINOS:
                 # Uso los hiperparametros de la competencia 2 para hacer una reduccion de dimensionalidad con canaritos
-                run_canaritos_asesinos(df, qcanaritos=50, params_path='lgb_optimization_competencia197')
+                run_canaritos_asesinos(df, qcanaritos=50, ksemillerio=5, metric=0.5, params_path='lgb_optimization_competencia197')
 
         # Si no existe el df_fe lo genero
         else:
@@ -189,7 +189,7 @@ def main():
 
         # Si defini atributos para descartar los elimino ahora
         logging.info("Elimino atributos:")
-        df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)]).clone()
+        df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
         gc.collect()
         mlflow.log_param("df_shape", df.shape)
 
