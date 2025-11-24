@@ -469,7 +469,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
 
     # Ejecutar la consulta SQL
     con = duckdb.connect(database=":memory:")
-    con.register("df", df.select(["numero_de_cliente", "foto_mes", 'cliente_antiguedad'] + columnas))
+    con.register("df", df.select(["numero_de_cliente", "foto_mes"] + columnas))
     df_new = con.execute(sql).pl()
     con.close()
 
@@ -982,7 +982,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     # df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
     df_with_canaritos = create_canaritos(df, qcanaritos)
-    X_train, y_train, X_test, y_test, w_train, features = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
+    X_train, y_train, X_test, y_test, w_train, features = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN_BO, mes_test=MES_TEST)
 
     logging.info(f"Shape X_train: {X_train.shape}")
     logging.info(f"Shape X_test: {X_test.shape}")

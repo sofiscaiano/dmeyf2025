@@ -77,8 +77,8 @@ def cargar_mejores_hiperparametros(archivo_base: str = None) -> dict:
             mejores_params = mejor_iteracion['params']
             best_num_iterations = mejor_iteracion['user_attrs']['num_iterations'] # si hubo early_stopping num_iterations puede ser menor
             mejores_params['num_iterations'] = best_num_iterations
-            if not UNDERSAMPLING_FINAL_TRAINING:
-                mejores_params['min_data_in_leaf'] = round(mejores_params['min_data_in_leaf'] / UNDERSAMPLING_FRACTION)
+            # if not UNDERSAMPLING_FINAL_TRAINING:
+            #     mejores_params['min_data_in_leaf'] = round(mejores_params['min_data_in_leaf'] / UNDERSAMPLING_FRACTION)
             mejor_ganancia = mejor_iteracion['value']
 
             logger.info(f"Mejores hiperparámetros cargados desde {archivo}")

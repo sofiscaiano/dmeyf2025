@@ -54,7 +54,6 @@ logger.info(f"KSEMILLERIO: {KSEMILLERIO}")
 logger.info(f"GANANCIA_ACIERTO: {GANANCIA_ACIERTO}")
 logger.info(f"COSTO_ESTIMULO: {COSTO_ESTIMULO}")
 logger.info(f"UNDERSAMPLING_FRACTION: {UNDERSAMPLING_FRACTION}")
-logger.info(f"UNDERSAMPLING_FINAL_TRAINING: {UNDERSAMPLING_FINAL_TRAINING}")
 logger.info(f"METRIC: {PARAMETROS_LGB['metric']}")
 logger.info(f"DROP FEATURES: {DROP}")
 logger.info(f"CANTIDAD DE ENVIOS: {ENVIOS}")
@@ -109,14 +108,17 @@ def main():
             if FLAG_GCP == 1:
                 data_path = '~/datasets/df_fe.parquet'
             # Cargar df para train con undersampling
-            df_train = load_dataset_undersampling_efficient(path=data_path, months=MES_TRAIN, seed=SEMILLA[0], fraction=UNDERSAMPLING_FRACTION)
+            full_months = [201901, 201902, 201903, 201904, 201905, 201906, 201907, 201908, 201909, 201910, 201911, 201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104, 202105, 202106, 202107]
+            df_undersampled = load_dataset_undersampling_efficient(path=data_path, months=full_months, seed=SEMILLA[0], fraction=UNDERSAMPLING_FRACTION)
+            df_val = load_dataset_undersampling_efficient(path=data_path, months=MES_VALIDACION, seed=SEMILLA[0], fraction=1)
             df_test = load_dataset_undersampling_efficient(path=data_path, months=MES_TEST, seed=SEMILLA[0], fraction=1)
-            df = pl.concat([df_train, df_test])
+            df_predict = load_dataset_undersampling_efficient(path=data_path, months=FINAL_PREDICT, seed=SEMILLA[0], fraction=1)
 
             gc.collect()
 
             if FLAG_CANARITOS_ASESINOS:
                 # Uso los hiperparametros de la competencia 2 para hacer una reduccion de dimensionalidad con canaritos
+                df = pl.concat([df_undersampled.filter(pl.col("foto_mes").is_in(MES_TRAIN_BO)), df_val])
                 run_canaritos_asesinos(df, qcanaritos=50, ksemillerio=5, metric=50, params_path='lgb_optimization_competencia197')
 
             # Importo listado de features seleccionadas por los canaritos asesinos
@@ -126,8 +128,22 @@ def main():
             selected_features = ast.literal_eval(features_str)
             logging.info(f"Features seleccionadas desde el archivo: {features_path}")
             logging.info(selected_features)
-            df = df.select(selected_features + ['foto_mes', 'target', 'target_train', 'target_test', 'numero_de_cliente', 'w_train'])
             logging.info(f'Shape after selected features: {df.shape}')
+
+            # Si defini atributos para descartar los elimino ahora del selected_features
+            logging.info("Atributos a eliminar:")
+            to_drop = [c for c in df_undersampled.columns if any(c.startswith(p) for p in DROP)]
+            selected_features_final = [
+                elemento for elemento in selected_features
+                if elemento not in to_drop
+            ]
+
+            fixed_features = ['target', 'target_train', 'target_test', 'w_train']
+            df_undersampled = df_undersampled.select(selected_features_final + fixed_features)
+            df_val = df_val.select(selected_features_final + fixed_features)
+            df_test = df_test.select(selected_features_final + fixed_features)
+            df_predict = df_predict.select(selected_features_final + fixed_features)
+
 
         # Si no existe el df_fe lo genero
         else:
@@ -197,10 +213,9 @@ def main():
                 data_path = '~/datasets/df_fe.parquet'
             df.write_parquet(data_path, compression="gzip")
 
-        # Si defini atributos para descartar los elimino ahora
-        logging.info("Elimino atributos:")
-        df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
-        gc.collect()
+            return
+
+
         mlflow.log_param("df_shape", df.shape)
 
         if FLAG_ZLIGHTGBM == 0 and STUDY_HP is None and ZEROSHOT == False:
@@ -208,6 +223,9 @@ def main():
             mlflow.log_param("undersampling_ratio_BO", UNDERSAMPLING_FRACTION)
             mlflow.log_param("n_trials_BO", args.n_trials)
             mlflow.log_param("ksemillerio_BO", KSEMILLERIO_BO)
+
+            # df para BO:
+            df = pl.concat([df_undersampled.filter(pl.col("foto_mes").is_in(MES_TRAIN_BO)), df_val])
 
             study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
 
@@ -226,11 +244,15 @@ def main():
             logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
 
         elif FLAG_ZLIGHTGBM == 1:
+            # df para ZLIGHTGBM:
+            df = pl.concat([df_undersampled.filter(pl.col("foto_mes").is_in(MES_TRAIN)), df_test])
             df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
             gc.collect()
 
         if ZEROSHOT:
             logger.info("=== ANÁLISIS ZEROSHOT ===")
+            # df para ZeroShot
+            df = pl.concat([df_undersampled.filter(pl.col("foto_mes").is_in(MES_TRAIN)), df_test])
             resultado_zs = optimizar_zero_shot(df)
 
             # Desempacar resultados del diccionario
@@ -254,8 +276,13 @@ def main():
         else:
             mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
+        # df para testing
+        df = pl.concat([df_undersampled.filter(pl.col("foto_mes").is_in(MES_TRAIN)), df_test])
         resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
+
+        # df para training final
+        df = df_undersampled.filter(pl.col("foto_mes").is_in(FINAL_TRAIN))
         entrenar_modelo_final(df, mejores_params)
 
         ## Generar predicciones
@@ -265,7 +292,7 @@ def main():
         else:
             envios = cargar_mejores_envios()
 
-        predicciones = generar_predicciones_finales(df, envios)
+        predicciones = generar_predicciones_finales(df_predict, envios)
         salida_kaggle = exportar_envios_bot(predicciones)
 
         ## Resumen final

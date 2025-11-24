@@ -36,13 +36,13 @@ def evaluar_en_test(df, mejores_params) -> tuple:
     logger.info("=== EVALUACIÓN EN CONJUNTO DE TEST ===")
     logger.info(f"Período de test: {MES_TEST}")
 
-    X_train, y_train, X_test, y_test, w_train = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN, mes_test=MES_TEST)
+    X_train, y_train, X_test, y_test, w_train, feature_names = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN, mes_test=MES_VALIDACION)
 
     mlflow.log_param("X_train_shape", X_train.shape)
     logging.info(X_train.shape)
     logging.info(X_test.shape)
 
-    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True, feature_name=feature_names)
 
     flag_GPU = int(os.getenv('GPU', 0))
 

@@ -27,10 +27,7 @@ def preparar_datos_entrenamiento_final(df: pl.DataFrame) -> tuple:
     logger.info(f"Preparando datos para entrenamiento final")
     logger.info(f"Períodos de entrenamiento: {FINAL_TRAIN}")
 
-    if UNDERSAMPLING_FINAL_TRAINING:
-        X_train, y_train, X_test, y_test, w_train = train_test_split(df=df, undersampling=True, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
-    else:
-        X_train, y_train, X_test, y_test, w_train = train_test_split(df=df, undersampling=False, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
+    X_train, y_train, X_test, y_test, w_train, feature_names = train_test_split(df=df, undersampling=False, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
 
     logger.info(f"Registros de entrenamiento final: {X_train.shape}")
     mlflow.log_param("X_train_final_shape", X_train.shape)
