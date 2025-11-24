@@ -157,31 +157,32 @@ def load_dataset_undersampling_efficient(
 
     logger.info("Aplicando undersampling...")
 
-    # 1. Separar lógica de filtros (esto sigue siendo una query plan, no data real)
-    df_mayoritaria = df_lazy.filter(
-        pl.col("target") == "CONTINUA")
-    df_minoritaria = df_lazy.filter(pl.col("target") != "CONTINUA")
+    if fraction < 1:
+        # 1. Separar lógica de filtros (esto sigue siendo una query plan, no data real)
+        df_mayoritaria = df_lazy.filter(
+            pl.col("target") == "CONTINUA")
+        df_minoritaria = df_lazy.filter(pl.col("target") != "CONTINUA")
 
-    # Extraer sólo lo necesario para muestrear
-    clientes_df = (
-        df_mayoritaria
-        .select(["numero_de_cliente"])
-        .unique(maintain_order=True)
-        .collect()
-    )
+        # Extraer sólo lo necesario para muestrear
+        clientes_df = (
+            df_mayoritaria
+            .select(["numero_de_cliente"])
+            .unique(maintain_order=True)
+            .collect()
+        )
 
-    # Sample de los continua
-    clientes_sampled = (
-        clientes_df.sample(fraction=fraction, seed=seed)
-    )
+        # Sample de los continua
+        clientes_sampled = (
+            clientes_df.sample(fraction=fraction, seed=seed)
+        )
 
-    cliente_ids = clientes_sampled["numero_de_cliente"].to_list()
+        cliente_ids = clientes_sampled["numero_de_cliente"].to_list()
 
-    df_mayoritaria_sampled = df_mayoritaria.filter(
-        pl.col("numero_de_cliente").is_in(cliente_ids)
-    )
+        df_mayoritaria_sampled = df_mayoritaria.filter(
+            pl.col("numero_de_cliente").is_in(cliente_ids)
+        )
 
-    df_lazy = pl.concat([df_mayoritaria_sampled, df_minoritaria])
+        df_lazy = pl.concat([df_mayoritaria_sampled, df_minoritaria])
 
     df = df_lazy.collect()
 
