@@ -184,15 +184,15 @@ def main():
 
             # RANKINGS
             if FLAG_RANKS:
-                df = feature_engineering_percent_rank(df, columnas=atributos)
-                df = feature_engineering_ntile(df, columnas=atributos, k=10)
+                # df = feature_engineering_percent_rank(df, columnas=atributos)
+                # df = feature_engineering_ntile(df, columnas=atributos, k=10)
                 df = feature_engineering_rank_cero_fijo(df, columnas=atributos, prefijo='')
-                df = feature_engineering_percent_rank_dense(df, columnas=atributos)
+                # df = feature_engineering_percent_rank_dense(df, columnas=atributos)
 
-            if FLAG_MIN or FLAG_MAX:
-                df = feature_engineering_min_max(df, columnas=atributos, window=6)
-            if FLAG_RATIOAVG:
-                df = feature_engineering_ratioavg(df, columnas=atributos, window=6)
+            # if FLAG_MIN or FLAG_MAX:
+                # df = feature_engineering_min_max(df, columnas=atributos, window=6)
+            # if FLAG_RATIOAVG:
+                # df = feature_engineering_ratioavg(df, columnas=atributos, window=6)
 
             # generar_reporte_mensual_html(df, columna_target='target', nombre_archivo='reporte_atributos_final.html')
 

@@ -64,7 +64,7 @@ def feature_engineering_rank_cero_fijo(df: pl.DataFrame, columnas: list[str], gr
             pl.when(pl.col(attr) < 0)
             .then(pl.col(attr).abs())
             .otherwise(None)
-            .rank(method="dense")
+            .rank(method="average")
             .over(group)
             / neg_count
         )
