@@ -978,7 +978,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     df_with_canaritos = create_canaritos(df, qcanaritos)
-
+    features = [c for c in df_with_canaritos.columns if c not in ["target", "target_train", "target_test", "w_train"]]
     X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
 
     logging.info(X_train.shape)
@@ -988,6 +988,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
         X_train,
         label=y_train,
         weight=w_train,
+        feature_name=features,
         free_raw_data=True
     )
 
@@ -1035,6 +1036,8 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
             'feature': model.feature_name(),
             'importance': model.feature_importance(importance_type='gain')
         })
+
+        logging.info(feature_imp.head())
 
         all_importances.append(feature_imp)
 
