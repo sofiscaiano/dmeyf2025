@@ -1024,7 +1024,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
         params_seed = final_params.copy()
         params_seed['seed'] = seed
 
-        model = lgb.train(final_params, train_data)
+        model = lgb.train(params_seed, train_data)
 
         logging.info(f'Fin de entrenamiento del modelo base con seed = {seed} ({i + 1}/{len(semillas)})')
 
