@@ -7,7 +7,7 @@ import numpy as np
 import gc
 import polars as pl
 import mlflow
-
+import ast
 from src.features import *
 from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target, load_dataset_undersampling_efficient
 from src.optimization import optimizar
@@ -118,6 +118,16 @@ def main():
             if FLAG_CANARITOS_ASESINOS:
                 # Uso los hiperparametros de la competencia 2 para hacer una reduccion de dimensionalidad con canaritos
                 run_canaritos_asesinos(df, qcanaritos=50, ksemillerio=5, metric=50, params_path='lgb_optimization_competencia197')
+
+            # Importo listado de features seleccionadas por los canaritos asesinos
+            features_path = os.path.join(os.path.join(BUCKET_NAME, "resultados"), f"selected_features_{STUDY_NAME}.txt")
+            with open(features_path, 'r') as f:
+                features_str = f.read()
+            selected_features = ast.literal_eval(features_str)
+            logging.info(f"Features seleccionadas desde el archivo: {features_path}")
+            logging.info(selected_features)
+            df = df.select(selected_features + ['foto_mes', 'target', 'target_train', 'target_test', 'numero_de_cliente', 'w_train'])
+            logging.info(f'Shape after selected features: {df.shape}')
 
         # Si no existe el df_fe lo genero
         else:

@@ -57,6 +57,8 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
 
     df_test = df.filter(pl.col("foto_mes").is_in(mes_test))
 
+    feature_names = [c for c in df.columns if c not in ["target", "target_train", "target_test", "w_train"]]
+
     X_train = df_train.select(pl.all().exclude(["target", "target_train", "target_test", "w_train"])).to_numpy().astype("float32")
     y_train = df_train["target_train"].to_numpy().astype("float32")
     w_train = df_train["w_train"].to_numpy().astype("float32")
@@ -64,7 +66,7 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
     X_test = df_test.select(pl.all().exclude(["target", "target_train", "target_test", "w_train"])).to_numpy().astype("float32")
     y_test = df_test["target_test"].to_numpy().astype("float32")
 
-    return X_train, y_train, X_test, y_test, w_train
+    return X_train, y_train, X_test, y_test, w_train, feature_names
 
 def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     """

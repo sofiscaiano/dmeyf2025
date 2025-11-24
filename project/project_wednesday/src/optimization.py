@@ -11,6 +11,9 @@ from datetime import datetime
 import random
 import mlflow
 import gc
+
+from mlflow.tracking.request_auth.registry import fetch_auth
+
 from .config import *
 from .gain_function import ganancia_evaluator, calcular_ganancias_acumuladas
 from .basic_functions import generar_semillas, undersample
@@ -110,28 +113,15 @@ def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
     params = {
         'objective': 'binary',
         'metric': 'None',  # Usamos nuestra métrica personalizada
-        # 'metric': PARAMETROS_LGB['metric'],
         'verbose': -1,
         'verbosity': -1,
         'silent': 1,
         'boosting': 'gbdt',
         'num_threads': -1,
         **gpu_dict,
-        # 'first_metric_only': False,
-        # 'boost_from_average': True,
         'feature_pre_filter': PARAMETROS_LGB['feature_pre_filter'],
         'force_row_wise': PARAMETROS_LGB['force_row_wise'],  # para reducir warnings
-        # 'max_depth': -1,  # -1 significa no limitar,  por ahora lo dejo fijo
-        # 'min_gain_to_split': 0,
-        # 'min_sum_hessian_in_leaf': 0.001,
-        # 'lambda_l1': 0.0,
-        # 'lambda_l2': 0.0,
         'max_bin': PARAMETROS_LGB['max_bin'],
-        # 'pos_bagging_fraction': 1,
-        # 'neg_bagging_fraction': 1,
-        # 'is_unbalance': False,
-        # 'scale_pos_weight': 1,
-        # 'extra_trees': False,
         # 'bagging_fraction': trial.suggest_float('bagging_fraction', PARAMETROS_LGB['bagging_fraction'][0], PARAMETROS_LGB['bagging_fraction'][1]),
         'num_iterations': trial.suggest_int('num_iterations', PARAMETROS_LGB['num_iterations'][0], PARAMETROS_LGB['num_iterations'][1], log=True),
         'learning_rate': trial.suggest_float('learning_rate', PARAMETROS_LGB['learning_rate'][0], PARAMETROS_LGB['learning_rate'][1], log=True),
@@ -159,8 +149,6 @@ def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
     # Inicializamos acumulador de predicciones para calcular promedio parcial
     pred_acumulada = np.zeros(len(y_val))
 
-    # preds = []
-
     for i, seed in enumerate(semillas):
         params['seed'] = seed
 
@@ -176,7 +164,6 @@ def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
         trial.set_user_attr('num_iterations', modelo.best_iteration)
 
         y_pred_actual = modelo.predict(X_val)
-        # preds.append(y_pred_actual)
 
         # 1. Actualizar el acumulado y calcular el promedio hasta esta semilla
         pred_acumulada += y_pred_actual
@@ -206,13 +193,12 @@ def objetivo_ganancia(trial, train_data, X_val, y_val) -> float:
                 # Lanzamos la excepción que Optuna entiende para marcar como PRUNED
                 raise optuna.TrialPruned(f"Score parcial {score_parcial} por debajo del umbral {umbral_corte}")
 
-    # y_pred = np.mean(preds, axis=0)
     y_pred = pred_acumulada / len(semillas)
     ganancias = calcular_ganancias_acumuladas(y_val, y_pred)
 
     ganancias_meseta = (
         pd.Series(ganancias)
-        .rolling(window=2001, center=True, min_periods=1)
+        .rolling(window=1001, center=True, min_periods=1)
         .mean()
     )
 
@@ -325,13 +311,13 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     else:
         logger.info(f"🆕 Nueva optimización: {n_trials} trials")
 
-    X_train, y_train, X_val, y_val = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN_BO, mes_test=MES_VALIDACION)
+    X_train, y_train, X_val, y_val, w_train, feature_names = train_test_split(df=df, undersampling=True, mes_train=MES_TRAIN_BO, mes_test=MES_VALIDACION)
 
     logging.info(X_train.shape)
     logging.info(X_val.shape)
 
     # Convertir a LightGBM Dataset
-    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True, feature_name=feature_names)
 
     # Ejecutar optimización
     if trials_a_ejecutar > 0:

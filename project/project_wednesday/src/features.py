@@ -982,8 +982,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     # df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
     df_with_canaritos = create_canaritos(df, qcanaritos)
-    features = [c for c in df_with_canaritos.columns if c not in ["target", "target_train", "target_test", "w_train"]]
-    X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
+    X_train, y_train, X_test, y_test, w_train, features = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
 
     logging.info(f"Shape X_train: {X_train.shape}")
     logging.info(f"Shape X_test: {X_test.shape}")
