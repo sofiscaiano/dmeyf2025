@@ -9,7 +9,7 @@ import polars as pl
 import mlflow
 
 from src.features import create_embedding_lgbm_rf, create_features, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
-from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
+from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target, load_dataset_undersampling_efficient
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
 from src.config import *
@@ -80,10 +80,10 @@ def main():
 
     print(">>> Inicio de ejecucion")
 
-    ## Creacion de target
-    crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
-    df = cargar_datos_csv(crudo_path)
-    df = create_target(df=df)
+    # ## Creacion de target
+    # crudo_path = os.path.join(BUCKET_NAME, "datasets/competencia_02_crudo.csv.gz")
+    # df = cargar_datos_csv(crudo_path)
+    # df = create_target(df=df)
 
     # Configurar MLflow y ejecutar pipeline completo
     try:
@@ -113,7 +113,8 @@ def main():
             if FLAG_GCP == 1:
                 data_path = '~/datasets/df_fe.parquet'
             months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
-            df = cargar_datos(data_path, lazy=True, months=months_filter)
+            # df = cargar_datos(data_path, lazy=True, months=months_filter)
+            df = load_dataset_undersampling_efficient(data_path, months_filter, SEMILLA[0], fraction=1)
             gc.collect()
 
         else:
@@ -174,31 +175,31 @@ def main():
         gc.collect()
         mlflow.log_param("df_shape", df.shape)
 
-        if FLAG_ZLIGHTGBM == 0 and STUDY_HP is None and ZEROSHOT == False:
-            ## Ejecutar optimizacion de hiperparametros
-            mlflow.log_param("undersampling_ratio_BO", UNDERSAMPLING_FRACTION)
-            mlflow.log_param("n_trials_BO", args.n_trials)
-            mlflow.log_param("ksemillerio_BO", KSEMILLERIO_BO)
-
-            study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
-
-            mlflow.log_params({f"best_{k}": v for k, v in study.best_params.items()})
-            mlflow.log_metric("ganancia_best_BO", study.best_value)
-
-            ## 5. Análisis adicional
-            logger.info("=== ANÁLISIS DE RESULTADOS ===")
-            trials_df = study.trials_dataframe()
-            if len(trials_df) > 0:
-                top_5 = trials_df.nlargest(5, 'value')
-                logger.info("Top 5 mejores trials:")
-                for idx, trial in top_5.iterrows():
-                    logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
-            logger.info(f'Mejores Hiperparametros: {study.best_params}')
-            logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
-
-        elif FLAG_ZLIGHTGBM == 1:
-            df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
-            gc.collect()
+        # if FLAG_ZLIGHTGBM == 0 and STUDY_HP is None and ZEROSHOT == False:
+        #     ## Ejecutar optimizacion de hiperparametros
+        #     mlflow.log_param("undersampling_ratio_BO", UNDERSAMPLING_FRACTION)
+        #     mlflow.log_param("n_trials_BO", args.n_trials)
+        #     mlflow.log_param("ksemillerio_BO", KSEMILLERIO_BO)
+        #
+        #     study = optimizar(df, n_trials = args.n_trials, n_jobs = args.n_jobs)
+        #
+        #     mlflow.log_params({f"best_{k}": v for k, v in study.best_params.items()})
+        #     mlflow.log_metric("ganancia_best_BO", study.best_value)
+        #
+        #     ## 5. Análisis adicional
+        #     logger.info("=== ANÁLISIS DE RESULTADOS ===")
+        #     trials_df = study.trials_dataframe()
+        #     if len(trials_df) > 0:
+        #         top_5 = trials_df.nlargest(5, 'value')
+        #         logger.info("Top 5 mejores trials:")
+        #         for idx, trial in top_5.iterrows():
+        #             logger.info(f"  Trial {trial['number']}: {trial['value']:,.4f}")
+        #     logger.info(f'Mejores Hiperparametros: {study.best_params}')
+        #     logger.info("=== OPTIMIZACIÓN COMPLETADA ===")
+        #
+        # elif FLAG_ZLIGHTGBM == 1:
+        #     df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
+        #     gc.collect()
 
         if ZEROSHOT:
             logger.info("=== ANÁLISIS ZEROSHOT ===")
