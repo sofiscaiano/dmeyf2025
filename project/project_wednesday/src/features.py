@@ -981,8 +981,8 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
     features = [c for c in df_with_canaritos.columns if c not in ["target", "target_train", "target_test", "w_train"]]
     X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_with_canaritos, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
 
-    logging.info(X_train.shape)
-    logging.info(X_test.shape)
+    logging.info(f"Shape X_train: {X_train.shape}")
+    logging.info(f"Shape X_test: {X_test.shape}")
 
     train_data = lgb.Dataset(
         X_train,
@@ -1036,8 +1036,6 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
             'feature': model.feature_name(),
             'importance': model.feature_importance(importance_type='gain')
         })
-
-        logging.info(feature_imp.head())
 
         all_importances.append(feature_imp)
 
@@ -1094,5 +1092,55 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
     txt_path = os.path.join(os.path.join(BUCKET_NAME, "log"), f"features_ordered_by_gain_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.txt")
     with open(txt_path, 'w') as f:
         f.write(str(df_importances['feature'].tolist()))
+
+    # Ahora vuelvo a entrenar el modelo pero cortando la cantidad de features para verificar que se mantenga la ganancia base
+    corte = int(np.percentile(ranks, metric))
+    selected_features = df_importances['feature'].iloc[:corte].tolist()
+    selected_features = [f for f in selected_features if not f.startswith("canarito_")]
+    df_check = df_with_canaritos.select(selected_features + ['target_train', 'target_test', 'target', 'w_train'])
+
+    X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_check, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
+
+    logging.info(f"Shape X_train check: {X_train.shape}")
+    logging.info(f"Shape X_test check: {X_test.shape}")
+
+    train_data = lgb.Dataset(
+        X_train,
+        label=y_train,
+        weight=w_train,
+        feature_name=selected_features,
+        free_raw_data=True
+    )
+
+    # Inicializamos acumulador de predicciones para calcular promedio parcial
+    pred_acumulada = np.zeros(len(y_test))
+
+    for i, seed in enumerate(semillas):
+        logging.info(f'Entrenando modelo check con seed = {seed} ({i+1}/{len(semillas)})')
+
+        # Copia de parámetros con la semilla actual
+        params_seed = final_params.copy()
+        params_seed['seed'] = seed
+
+        model = lgb.train(params_seed, train_data)
+
+        logging.info(f'Fin de entrenamiento del modelo check con seed = {seed} ({i + 1}/{len(semillas)})')
+
+        y_pred_actual = model.predict(X_test)
+        pred_acumulada += y_pred_actual
+
+    y_pred = pred_acumulada / len(semillas)
+
+    # Calculo la ganancia del modelo
+    ganancias = calcular_ganancias_acumuladas(y_test, y_pred)
+    ganancias_meseta = (
+        pd.Series(ganancias)
+        .rolling(window=2001, center=True, min_periods=1)
+        .mean()
+    )
+    max_ganancia_check = ganancias_meseta.max(skipna=True)
+
+    logging.info(f"Ganancia base obtenida en test: {max_ganancia}")
+    logging.info(f"Ganancia check obtenida en test: {max_ganancia_check}")
 
     logger.info(f"==== Canaritos Asesinos completado ====")
