@@ -110,7 +110,7 @@ def main():
                 data_path = '~/datasets/df_fe.parquet'
             # Cargar df para train con undersampling
             df_train = load_dataset_undersampling_efficient(path=data_path, months=MES_TRAIN, seed=SEMILLA[0], fraction=UNDERSAMPLING_FRACTION)
-            df_test = load_dataset_undersampling_efficient(path=data_path, months=MES_TRAIN, seed=SEMILLA[0], fraction=1)
+            df_test = load_dataset_undersampling_efficient(path=data_path, months=MES_TEST, seed=SEMILLA[0], fraction=1)
             df = pl.concat([df_train, df_test])
 
             gc.collect()
