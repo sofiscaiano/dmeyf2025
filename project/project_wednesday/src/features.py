@@ -974,7 +974,7 @@ def sparse_to_polars(df_sparse, chunk_size=500):
 
     return pl.DataFrame(columns)
 
-def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None, ksemillerio: int = 5, metric: float = 0.5) -> pl.DataFrame:
+def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: str = None, ksemillerio: int = 5, metric: int = 50) -> pl.DataFrame:
 
     logger.info("==== Iniciando Canaritos Asesinos ====")
     # df = df.drop([c for c in df.columns if any(c.startswith(p) for p in DROP)])
