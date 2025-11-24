@@ -1109,7 +1109,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
 
     df_check = df_with_canaritos.select(selected_features + ['target_train', 'target_test', 'target', 'w_train'])
 
-    X_train, y_train, X_test, y_test, w_train = train_test_split(df=df_check, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
+    X_train, y_train, X_test, y_test, w_train, feature_names = train_test_split(df=df_check, undersampling=False, mes_train=MES_TRAIN, mes_test=MES_TEST)
 
     logging.info(f"Shape X_train check: {X_train.shape}")
     logging.info(f"Shape X_test check: {X_test.shape}")
@@ -1118,7 +1118,7 @@ def run_canaritos_asesinos(df: pl.DataFrame, qcanaritos: int = 50, params_path: 
         X_train,
         label=y_train,
         weight=w_train,
-        feature_name=selected_features,
+        feature_name=feature_names,
         free_raw_data=True
     )
 
