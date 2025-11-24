@@ -117,7 +117,7 @@ def main():
 
             if FLAG_CANARITOS_ASESINOS:
                 # Uso los hiperparametros de la competencia 2 para hacer una reduccion de dimensionalidad con canaritos
-                run_canaritos_asesinos(df, qcanaritos=50, ksemillerio=5, metric=0.5, params_path='lgb_optimization_competencia197')
+                run_canaritos_asesinos(df, qcanaritos=50, ksemillerio=5, metric=50, params_path='lgb_optimization_competencia197')
 
         # Si no existe el df_fe lo genero
         else:
