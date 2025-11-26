@@ -257,7 +257,7 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
            lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_1,
            lag(mpayroll, 2) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
            mpayroll - mpayroll_lag_1 as mpayroll_delta_1,
-           case when foto_mes in ('2021-06-30', '2020-12-31', '2020-06-30', '2019-12-31', '2019-06-30')
+           case when foto_mes in (202106, 202012, 202006, 201912, 201906)
                 and mpayroll/mpayroll_lag_1  >= 1.3
                 and mpayroll/mpayroll_lag_2  >= 1.3
                     then 1
@@ -265,20 +265,20 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
            end as flag_aguinaldo,
            --case when flag_aguinaldo = 1 and cpayroll_trx > 1 then cpayroll_trx - 1 else cpayroll_trx end as cpayroll_trx
     FROM df) as a
-    WHERE foto_mes in ('2021-06-30', '2020-12-31', '2020-06-30', '2019-12-31', '2019-06-30'))
+    WHERE foto_mes in (202106, 202012, 202006, 201912, 201906))
 
     SELECT df.* REPLACE(
-                case when aguinaldo.mpayroll_delta_1 is null or aguinaldo.flag_aguinaldo = 0 then df.mpayroll when df.foto_mes in ('2021-06-30', '2020-12-31', '2020-06-30', '2019-12-31', '2019-06-30') then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll
-                --,case when aguinaldo.mpayroll_delta_1 is null then df.cpayroll_trx when df.foto_mes = '2021-06-30' then aguinaldo.cpayroll_trx else df.cpayroll_trx end as cpayroll_trx
+                case when aguinaldo.mpayroll_delta_1 is null or aguinaldo.flag_aguinaldo = 0 then df.mpayroll when df.foto_mes in (202106, 202012, 202006, 201912, 201906) then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll
+                --,case when aguinaldo.mpayroll_delta_1 is null then df.cpayroll_trx when df.foto_mes = 202106 then aguinaldo.cpayroll_trx else df.cpayroll_trx end as cpayroll_trx
                 ), mpayroll as mpayroll_original
     FROM df
     LEFT JOIN aguinaldo
     ON df.numero_de_cliente = aguinaldo.numero_de_cliente
     AND aguinaldo.foto_mes =
     CASE
-        WHEN EXTRACT(MONTH FROM df.foto_mes) <= 6 -- Si el mes es de Enero a Junio
-        THEN MAKE_DATE(EXTRACT(YEAR FROM df.foto_mes), 6, 30) -- Construye la fecha de Junio de ese año
-        ELSE MAKE_DATE(EXTRACT(YEAR FROM df.foto_mes), 12, 31) -- Sino, construye la de Diciembre de ese año
+        WHEN MOD(df.foto_mes, 100) <= 6 
+        THEN (TRUNC(df.foto_mes / 100) * 100) + 6
+        ELSE (TRUNC(df.foto_mes / 100) * 100) + 12
     END
     ORDER BY df.numero_de_cliente, df.foto_mes
     """
