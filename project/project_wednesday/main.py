@@ -120,10 +120,27 @@ def main():
             ## Carga de Datos
             logger.info("❌ df_fe no encontrado")
             os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
-            data_path = os.path.join(BUCKET_NAME, DATA_PATH)
-            if FLAG_GCP == 1:
-                data_path = '~/datasets/competencia_02.parquet'
-            df = cargar_datos(data_path, lazy=False)
+
+            # Me fijo si existe el df con la clase_ternaria (target) y lo cargo
+            if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"competencia_03.parquet")):
+                data_path = os.path.join(BUCKET_NAME, "datasets", f"competencia_03.parquet")
+                if FLAG_GCP == 1:
+                    data_path = '~/datasets/competencia_03.parquet'
+                df = cargar_datos(data_path, lazy=False)
+            # Si no existe, lo creo
+            else:
+                # Me fijo si existe el df crudo de la competencia 03
+                if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"competencia_02_03_crudo.parquet")):
+                    df = cargar_datos(os.path.join(BUCKET_NAME, "datasets", f"competencia_02_03_crudo.parquet"), lazy=False)
+                # Si no existe, cargo los dos df y los concateno
+                else:
+                    df_2 = cargar_datos_csv(os.path.join(BUCKET_NAME, "datasets", f"competencia_02_crudo.csv.gz"))
+                    df_3 = cargar_datos_csv(os.path.join(BUCKET_NAME, "datasets", f"competencia_03_crudo.csv.gz"))
+                    df = pl.concat([df_2, df_3])
+                    data_path = os.path.join(BUCKET_NAME, "datasets", f"competencia_02_03_crudo.parquet")
+                    df.write_parquet(data_path, compression="gzip")
+
+                df = create_target(df, export=True)
 
             ## Feature Engineering
             atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
