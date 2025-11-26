@@ -114,8 +114,8 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
         return df
 
     # Construir la consulta SQL
-    # sql = "SELECT *"
-    sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE(foto_mes)"
+    sql = "SELECT *"
+    # sql = "SELECT CAST(STRFTIME(foto_mes::DATE, '%Y%m') AS INTEGER) as foto_mes, * EXCLUDE(foto_mes)"
 
     # Agregar los lags para los atributos especificados
     for attr in columnas:

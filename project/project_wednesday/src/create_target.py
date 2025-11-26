@@ -43,11 +43,19 @@ def create_target(df: pl.DataFrame, export=True) -> pl.DataFrame:
 
     df = con.execute(sql).pl()
 
-    # df = df.with_columns([
-    #     pl.col("tmobile_app").cast(pl.Int64),
-    #     pl.col("cmobile_app_trx").cast(pl.Int64)
-    # ])
-
+    logger.info("Cantidades por foto_mes y target")
+    counts_df = df.group_by("foto_mes", "target").agg(
+        pl.count().alias("cantidad")
+    ).sort("foto_mes", "target")
+    with pl.Config(tbl_rows=-1, tbl_width_chars=120):
+        counts_str = str(counts_df)
+    logger.info(
+        f"--- Cantidad de bajas por mes ---\n{counts_str}\n--------------------------------------------")
+    num_cols = df.width
+    logger.info(f"Columnas del dataset: {num_cols}")
+    num_rows = df.height
+    logger.info(f"Filas del dataset: {num_rows}")
+    
     if export:
         export_path = os.path.join(BUCKET_NAME, "datasets/competencia_03.parquet")
         df.write_parquet(export_path, compression="gzip")
