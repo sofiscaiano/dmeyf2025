@@ -40,7 +40,7 @@ def cargar_datos(path: str, lazy: bool, months: List[int] = None) -> pl.DataFram
         except Exception as e:
             logging.info(f"⚠️ Error al cargar el archivo Parquet: {e}")
 
-def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 10000, schema_overrides: dict = None, columns=None) -> pl.DataFrame:
+def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = None, schema_overrides: dict = None, columns=None) -> pl.DataFrame:
     """
     Carga un archivo CSV comprimido (.csv.gz) en un DataFrame de Polars.
 
@@ -58,7 +58,6 @@ def cargar_datos_csv(path: str, sep: str = ",", infer_schema_length: int = 10000
             path,
             separator=sep,
             infer_schema_length=infer_schema_length,
-            schema_overrides=schema_overrides,
             has_header=True,
             try_parse_dates=True,
             columns=columns
