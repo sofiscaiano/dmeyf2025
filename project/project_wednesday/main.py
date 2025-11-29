@@ -7,7 +7,7 @@ import numpy as np
 import gc
 import polars as pl
 import mlflow
-
+import shutil
 from src.features import create_embedding_lgbm_rf, feature_engineering_ipc, create_features, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
@@ -44,6 +44,7 @@ logger.info("Iniciando programa de optimización con log fechado")
 logger.info("Configuración cargada desde YAML")
 logger.info(f"STUDY_NAME: {STUDY_NAME}")
 logger.info(f"DATA_PATH: {DATA_PATH}")
+logger.info(f"DF_FE: {DF_FE}")
 logger.info(f"SEMILLA: {SEMILLA}")
 logger.info(f"MES_TRAIN_BO: {MES_TRAIN_BO}")
 logger.info(f"MES_VALIDACION: {MES_VALIDACION}")
@@ -102,18 +103,18 @@ def main():
         mlflow.log_param("zero_sd", FLAG_ZEROSD)
         mlflow.log_artifact("config.yaml")
 
-        if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")):
-            logger.info("✅ df_fe encontrado")
-            data_path = os.path.join(BUCKET_NAME, "datasets", f"df_fe.parquet")
+        if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"{DF_FE}.parquet")):
+            logger.info(f"✅ {DF_FE} encontrado")
+            data_path = os.path.join(BUCKET_NAME, "datasets", f"{DF_FE}.parquet")
             if FLAG_GCP == 1:
-                data_path = '~/datasets/df_fe.parquet'
+                data_path = f'~/datasets/{DF_FE}.parquet'
             months_filter = list(set(MES_TRAIN + MES_VALIDACION + MES_TEST + FINAL_TRAIN + FINAL_PREDICT))
             df = cargar_datos(data_path, lazy=True, months=months_filter)
             gc.collect()
 
         else:
             ## Carga de Datos
-            logger.info("❌ df_fe no encontrado")
+            logger.info(f"❌ {DF_FE} no encontrado")
             os.makedirs(f'{BUCKET_NAME}/datasets', exist_ok=True)
 
             # Me fijo si existe el df con la clase_ternaria (target) y lo cargo
@@ -165,7 +166,7 @@ def main():
 
             # atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
 
-            df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb
+            df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb 
             df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
 
             ## Convertir clase ternaria a target binaria
@@ -174,12 +175,27 @@ def main():
             if FLAG_EMBEDDING:
                 df = create_embedding_lgbm_rf(df)
 
-            logging.info("==== Exporto el df_fe.parquet ====")
-            data_path = os.path.join(BUCKET_NAME, "datasets", "df_fe.parquet")
+            logging.info(f"==== Exporto el archivo {DF_FE}.parquet ====")
+            data_path = os.path.join(BUCKET_NAME, "datasets", f"{DF_FE}.parquet")
             if FLAG_GCP == 1:
-                data_path = '~/datasets/df_fe.parquet'
-            df.write_parquet(data_path, compression="gzip")
+                data_path = f'~/datasets/{DF_FE}.parquet'
+                source_file = os.path.expanduser(f'~/datasets/{DF_FE}.parquet') 
+                destination_file = os.path.expanduser(f'~/buckets/b1/datasets/{DF_FE}.parquet')
+                
+                df.write_parquet(data_path, compression="gzip")
 
+                try:
+                    os.makedirs(os.path.dirname(destination_file), exist_ok=True)
+                    shutil.copyfile(source_file, destination_file)
+                    print(f"Archivo copiado exitosamente de {source_file} a {destination_file}.")
+                
+                except FileNotFoundError:
+                    print(f"Error: El archivo de origen no se encontró en {source_file}.")
+                except Exception as e:
+                    print(f"Ocurrió un error al copiar el archivo: {e}")
+            else: 
+                df.write_parquet(data_path, compression="gzip")
+            
 
         # Si defini atributos para descartar los elimino ahora
         logging.info("Elimino atributos:")

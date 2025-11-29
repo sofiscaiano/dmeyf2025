@@ -662,7 +662,7 @@ def create_canaritos(df: pl.DataFrame, qcanaritos: int = 100) -> pl.DataFrame:
 from sklearn.ensemble import RandomTreesEmbedding
 def create_embedding_rf(df: pl.DataFrame) -> pl.DataFrame:
 
-    X_train, y_train, X_test, y_test = train_test_split(df=df, undersampling=False, mes_train=[202101, 202102, 202103], mes_test=[202104])
+    X_train, y_train, X_test, y_test, feature_name = train_test_split(df=df, undersampling=False, mes_train=[202101, 202102, 202103], mes_test=[202104])
     X = df.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
 
     embedding_model = RandomTreesEmbedding(
@@ -695,7 +695,7 @@ def create_embedding_rf(df: pl.DataFrame) -> pl.DataFrame:
 
 def create_embedding_lgbm_rf(df: pl.DataFrame):
 
-    X_train, y_train, X_test, y_test = train_test_split(
+    X_train, y_train, X_test, y_test, feature_name = train_test_split(
         df=df,
         undersampling=False,
         mes_train=[202101, 202102, 202103],
@@ -741,7 +741,7 @@ def create_embedding_lgbm_rf(df: pl.DataFrame):
         "extra_trees": False
     }
 
-    train_data = lgb.Dataset(X_train, label=y_train)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True, feature_name=feature_name)
 
     model = lgb.train(
         params,
