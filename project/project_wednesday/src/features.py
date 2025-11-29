@@ -167,7 +167,7 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
     return df
 
 
-def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
+def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], lags: list = [1, 2]) -> pd.DataFrame:
     """
     Genera variables de lag para los atributos especificados utilizando SQL.
 
@@ -199,7 +199,7 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            for i in range(1, cant_lag + 1):
+            for i in lags:
                 sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag_{i}"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
@@ -218,8 +218,6 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], cant_lag: int
 
     logger.info(f"Feature engineering [lags] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
-    # mlflow.log_param("flag_lags", True)
-    # mlflow.log_param("q_lags", cant_lag)
 
     return df
 
@@ -277,7 +275,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
     return df
 
 
-def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: int = 1) -> pd.DataFrame:
+def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], lags: list = [1, 2]) -> pd.DataFrame:
     """
     Genera variables delta (attr - attr_lag_i) usando Polars.
     """
@@ -291,7 +289,7 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
             logger.warning(f"No se encontró {attr}, se omite.")
             continue
 
-        for i in range(1, cant_lag + 1):
+        for i in lags:
             lag_col = f"{attr}_lag_{i}"
             if lag_col not in df.columns:
                 logger.warning(f"No se encontró {lag_col}, se omite.")
@@ -306,9 +304,6 @@ def feature_engineering_delta(df: pd.DataFrame, columnas: list[str], cant_lag: i
 
     logger.info(f"Feature engineering [deltas] completado")
     logger.info(f"Filas: {df.height}, Columnas: {df.width}")
-
-    # mlflow.log_param("flag_deltas", True)
-    # mlflow.log_param("q_deltas", cant_lag)
 
     return df
 

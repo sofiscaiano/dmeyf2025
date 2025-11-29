@@ -102,6 +102,7 @@ def main():
         mlflow.log_param("trend_6m", FLAG_TREND_6M)
         mlflow.log_param("zero_sd", FLAG_ZEROSD)
         mlflow.log_artifact("config.yaml")
+        mlflow.log_artifact("main.py")
 
         if os.path.exists(os.path.join(BUCKET_NAME, "datasets", f"{DF_FE}.parquet")):
             logger.info(f"✅ {DF_FE} encontrado")
