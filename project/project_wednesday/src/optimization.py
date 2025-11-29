@@ -289,7 +289,7 @@ def optimizar(df, n_trials=100, n_jobs=1) -> optuna.Study:
     logging.info(X_val.shape)
 
     # Convertir a LightGBM Dataset
-    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True, feature_name=feature_names)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True, feature_name=feature_name)
 
     # Ejecutar optimización
     if trials_a_ejecutar > 0:
