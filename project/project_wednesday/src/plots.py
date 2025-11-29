@@ -32,5 +32,5 @@ def plot_mean_importance(all_importances, importance_type, type):
     # Guardar la figura
     path_resultados = os.path.join(BUCKET_NAME, "resultados")
     os.makedirs(path_resultados, exist_ok=True)
-    ruta_archivo = os.path.join(path_resultados, f"{STUDY_NAME}_importance_test_{timestamp}.jpg")
+    ruta_archivo = os.path.join(path_resultados, f"{STUDY_NAME}_importance_test_{type}.jpg")
     plt.savefig(ruta_archivo, bbox_inches='tight', dpi=300)
