@@ -152,7 +152,7 @@ def main():
             atributos_monetarios = [c for c in df.columns if any(c.startswith(p) for p in ['m', 'Visa_m', 'Master_m', 'tc_m'])]
 
             if FLAG_RANKS:
-                df = feature_engineering_rank(df, columnas=atributos) # pandas
+                df = feature_engineering_rank(df, columnas=atributos_monetarios) # pandas
             elif FLAG_IPC:
                 df = feature_engineering_ipc(df, columnas=atributos_monetarios) # polars
 
