@@ -11,7 +11,7 @@ try:
     FLAG_ZLIGHTGBM = int(os.getenv('Z', 0))
     with open(PATH_CONFIG, 'r') as f:
         _cfgGeneral = yaml.safe_load(f)
-        _cfg = _cfgGeneral['competencia02']
+        _cfg = _cfgGeneral['competencia03']
 
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']

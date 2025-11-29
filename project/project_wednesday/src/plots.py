@@ -18,16 +18,19 @@ def plot_mean_importance(all_importances, importance_type, type):
     # Ordenar por importancia de forma descendente
     df_sorted_importance = df_filtered_importance.sort_values(by='importance', ascending=False)
 
-    df_top_25 = df_sorted_importance.head(25)
+    df_top_50 = df_sorted_importance.head(50)
 
     # Ajustamos la altura de la figura para que sea legible (25 * 0.4 es un buen punto de partida)
-    figsize_height = max(8, len(df_top_25) * 0.4)
+    figsize_height = max(8, len(df_top_50) * 0.4)
 
     plt.figure(figsize=(10, figsize_height))
-    plt.barh(df_top_25['feature'], df_top_25['importance'])
+    plt.barh(df_top_50['feature'], df_top_50['importance'])
     plt.xlabel(f"Importancia Promediada ({importance_type})")
-    plt.title(f"Top {len(df_top_25)} Variables Más Importantes (Ensamble LightGBM)")
+    plt.title(f"Top {len(df_top_50)} Variables Más Importantes (Ensamble LightGBM)")
     plt.gca().invert_yaxis()  # Invertir el eje Y para que la más importante quede arriba
 
     # Guardar la figura
-    plt.savefig(f'resultados/{STUDY_NAME}_importancia_ensamble_{type}.png', bbox_inches='tight', dpi=300)
+    path_resultados = os.path.join(BUCKET_NAME, "resultados")
+    os.makedirs(path_resultados, exist_ok=True)
+    ruta_archivo = os.path.join(path_resultados, f"{STUDY_NAME}_importance_test_{timestamp}.jpg")
+    plt.savefig(ruta_archivo, bbox_inches='tight', dpi=300)
