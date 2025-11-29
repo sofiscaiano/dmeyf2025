@@ -1,4 +1,4 @@
-STUDY_NAME : 'embedding_rf'
+STUDY_NAME : 'ipc_test'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -9,8 +9,8 @@ competencia03:
   ZEROSHOT: False
   STUDY_HP:
   FLAG_AGUINALDO: False
-  FLAG_RANKS: True
-  FLAG_IPC: False
+  FLAG_RANKS: False
+  FLAG_IPC: True
   FLAG_TREND_3M: True
   FLAG_TREND_6M: True
   FLAG_ZEROSD: True
@@ -51,7 +51,7 @@ parametros_zlgb:
   min_data_in_leaf: 200
   learning_rate: 1
   feature_fraction: 0.5
-  num_leaves: 999
+  num_leaves: 9999
   num_iterations: 64
 
 parametros_adhoc:
