@@ -67,40 +67,28 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
 
 def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     """
-    Realiza un undersampling de la clase mayoritaria (target == 0) en Polars.
-
-    Args:
-        df (pl.DataFrame): DataFrame de entrada (con columnas 'target' y 'numero_de_cliente').
-        sample_fraction (float): Fracción de la clase mayoritaria a conservar (0 < frac ≤ 1).
-        semilla (int): Semilla aleatoria para reproducibilidad.
-
-    Returns:
-        pl.DataFrame: DataFrame resultante submuestreado y mezclado.
+    Realiza un undersampling simple y eficiente de la clase mayoritaria usando Polars.
     """
+    # 1. Separar y submuestrear la clase mayoritaria (target == 0)
+    df_mayoritaria_sampled = (
+        df.filter(pl.col("target") == 0)
+        .sample(
+            fraction=sample_fraction,
+            seed=SEMILLA[1],
+            shuffle=False
+        )
+    )
 
-    # Separar clases
-    df_mayoritaria = df.filter(pl.col("target") == 0)
+    # 2. Obtener la clase minoritaria completa (target == 1)
     df_minoritaria = df.filter(pl.col("target") == 1)
 
-    # Obtener clientes únicos de la clase mayoritaria
-    clientes_unicos = df_mayoritaria.select("numero_de_cliente").unique().sort(pl.col("numero_de_cliente"))
-    clientes_unicos = clientes_unicos.rechunk()
-
-    # Muestrear fracción de clientes únicos
-    clientes_sampled = clientes_unicos.sample(
-        fraction=sample_fraction,
-        with_replacement=False,
-        seed=SEMILLA[1]
-    )
-
-    # Filtrar los registros de esos clientes
-    df_mayoritaria_sampled = df_mayoritaria.join(
-        clientes_sampled,
-        on="numero_de_cliente",
-        how="inner"
-    )
-
-    # Concatenar ambas clases
+    # 3. Concatenar y mezclar
     df_undersampled = pl.concat([df_mayoritaria_sampled, df_minoritaria])
+
+    # --- Logging para verificar resultados ---
+    logging.info(f"Tamaño original: {len(df):,}")
+    logging.info(f"Tamaño final: {len(df_undersampled):,}")
+    logging.info(f"Clase mayoritaria (reducida): {len(df_mayoritaria_sampled):,} / Clase minoritaria (completa): {len(df_minoritaria):,}")
+    # ----------------------------------------------------
 
     return df_undersampled
