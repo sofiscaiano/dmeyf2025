@@ -177,7 +177,7 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], lags: list = 
         DataFrame con los datos
     columnas : list
         Lista de atributos para los cuales generar lags. Si es None, no se generan lags.
-    cant_lag : int, default=1
+    lags : list 
         Cantidad de lags a generar para cada atributo
 
     Returns:
@@ -186,7 +186,7 @@ def feature_engineering_lag(df: pd.DataFrame, columnas: list[str], lags: list = 
         DataFrame con las variables de lag agregadas
     """
 
-    logger.info(f"Realizando feature engineering con {cant_lag} lags para {len(columnas) if columnas else 0} atributos")
+    logger.info(f"Realizando feature engineering con {lags} lags para {len(columnas) if columnas else 0} atributos")
 
     if columnas is None or len(columnas) == 0:
         logger.warning("No se especificaron atributos para generar lags")
