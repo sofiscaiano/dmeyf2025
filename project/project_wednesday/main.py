@@ -167,8 +167,8 @@ def main():
 
             # atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
 
-            df = feature_engineering_lag(df, columnas=atributos, cant_lag=QLAGS) # duckdb 
-            df = feature_engineering_delta(df, columnas=atributos, cant_lag=QLAGS) # polars
+            df = feature_engineering_lag(df, columnas=atributos, lags=QLAGS) # duckdb 
+            df = feature_engineering_delta(df, columnas=atributos, lags=QLAGS) # polars
 
             ## Convertir clase ternaria a target binaria
             df = convertir_clase_ternaria_a_target(df)
