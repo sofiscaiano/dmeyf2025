@@ -39,6 +39,7 @@ try:
         DESCRIPCION = _cfg.get('DESCRIPCION', '')
         FLAG_AGUINALDO = _cfg.get('FLAG_AGUINALDO', False)
         FLAG_RANKS = _cfg.get('FLAG_RANKS', False)
+        FLAG_IPC = _cfg.get('FLAG_IPC', False)
         FLAG_TREND_3M = _cfg.get('FLAG_TREND_3M', False)
         FLAG_TREND_6M = _cfg.get('FLAG_TREND_6M', False)
         FLAG_ZEROSD = _cfg.get('FLAG_ZEROSD', False)

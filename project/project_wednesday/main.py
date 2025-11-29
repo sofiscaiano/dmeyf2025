@@ -8,7 +8,7 @@ import gc
 import polars as pl
 import mlflow
 
-from src.features import create_embedding_lgbm_rf, create_features, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
+from src.features import create_embedding_lgbm_rf, feature_engineering_ipc, create_features, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
 from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -140,7 +140,6 @@ def main():
             ## Feature Engineering
             atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
 
-
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos.html')
             # generar_reporte_mensual_html(df, columna_target= 'target', nombre_archivo= 'reporte_atributos_after_data_quality.html')
             if FLAG_AGUINALDO:
@@ -154,6 +153,8 @@ def main():
 
             if FLAG_RANKS:
                 df = feature_engineering_rank(df, columnas=atributos) # pandas
+            elif FLAG_IPC:
+                df = feature_engineering_ipc(df, columnas=atributos_monetarios) # polars
 
             # generar_reporte_mensual_html(df, columna_target='target', nombre_archivo='reporte_atributos_final.html')
 

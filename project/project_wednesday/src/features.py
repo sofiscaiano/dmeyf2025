@@ -18,6 +18,85 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 logger = logging.getLogger(__name__)
 
+def feature_engineering_ipc(df: pl.DataFrame, columnas: list[str], mes_base: str = "201901") -> pl.DataFrame:
+    """
+    Actualizacion por IPC con base en 201901
+    """
+
+    logger.info(f"Realizando tratamiento por IPC para {len(columnas) if columnas else 0} atributos")
+
+    if not columnas:
+        logger.warning("No se especificaron atributos para ajustar por IPC")
+        return df
+
+    dict_ipc = {
+    "202109": 3.5,
+    "202108": 2.5,
+    "202107": 3.0,
+    "202106": 3.2,
+    "202105": 3.3,
+    "202104": 4.1,
+    "202103": 4.8,
+    "202102": 3.6,
+    "202101": 4.0,
+    "202012": 4.0,
+    "202011": 3.2,
+    "202010": 3.8,
+    "202009": 2.8,
+    "202008": 2.7,
+    "202007": 1.9,
+    "202006": 2.2,
+    "202005": 1.5,
+    "202004": 1.5,
+    "202003": 3.3,
+    "202002": 2.0,
+    "202001": 2.3,
+    "201912": 3.7,
+    "201911": 4.3,
+    "201910": 3.3,
+    "201909": 5.9,
+    "201908": 4.0,
+    "201907": 2.2,
+    "201906": 2.7,
+    "201905": 3.1,
+    "201904": 3.4,
+    "201903": 4.7,
+    "201902": 3.8,
+    "201901": 2.9
+    }
+
+    df_ipc = pl.DataFrame({
+        "foto_mes": list(dict_ipc.keys()),
+        "inflacion": list(dict_ipc.values())
+    }).sort("foto_mes")
+
+    # 2. Calcular el Factor de Actualización 
+    df_factores = df_ipc.with_columns(
+        (1 / (pl.col("inflacion") / 100 + 1).cum_prod()).alias("factor_actualizacion")
+    ).with_columns(
+        pl.when(pl.col("foto_mes") == mes_base)
+          .then(1.0)
+          .otherwise(pl.col("factor_actualizacion").shift(1))
+          .alias("factor_actualizacion_ajustado")
+    ).select(
+        pl.col("foto_mes"),
+        pl.col("factor_actualizacion_ajustado").alias("factor_actualizacion")
+    )
+
+    df = df.join(df_factores, on="foto_mes", how="left")
+
+    expresiones = [
+        (pl.col(feature) * pl.col("factor_actualizacion")).alias(feature) 
+        for feature in columnas
+    ]
+
+    # Aplicar las nuevas columnas (sobrescribe las originales)
+    df = df.with_columns(expresiones)
+
+    logger.info(f"Feature engineering [IPC] completado")
+    logger.info(f"Filas: {df.height}, Columnas: {df.width}")
+
+    return df.drop("factor_actualizacion")
 
 def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: str = "foto_mes") -> pl.DataFrame:
     """
