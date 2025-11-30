@@ -721,7 +721,7 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
         (pl.col("Master_mlimitecompra").fill_null(0) + pl.col("Visa_mlimitecompra").fill_null(0)).alias("tc_mlimitecompra"),
         (pl.col("Master_madelantopesos").fill_null(0) + pl.col("Visa_madelantopesos").fill_null(0)).alias("tc_madelantopesos"),
         (pl.col("Master_madelantodolares").fill_null(0) + pl.col("Visa_madelantodolares").fill_null(0)).alias(
-            "Visa_madelantodolares"),
+            "tc_madelantodolares"),
         (pl.col("Master_mpagado").fill_null(0) + pl.col("Visa_mpagado").fill_null(0)).alias(
             "tc_mpagado"),
         (pl.col("Master_mpagospesos").fill_null(0) + pl.col("Visa_mpagospesos").fill_null(0)).alias(
