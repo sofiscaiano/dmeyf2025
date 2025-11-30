@@ -167,7 +167,7 @@ def feature_engineering_rank(df: pl.DataFrame, columnas: list[str], group_col: s
     return df
 
 
-def feature_engineering_lag(df: pl.DataFrame, columnas: list[str], cant_lag: int = 1) -> pl.DataFrame:
+def feature_engineering_lag(df: pl.DataFrame, columnas: list[str], lags: list = [1, 2]) -> pl.DataFrame:
     """
     Genera variables de lag para los atributos especificados utilizando SQL.
 
@@ -177,7 +177,7 @@ def feature_engineering_lag(df: pl.DataFrame, columnas: list[str], cant_lag: int
         DataFrame con los datos
     columnas : list
         Lista de atributos para los cuales generar lags. Si es None, no se generan lags.
-    cant_lag : int, default=1
+    lags : list
         Cantidad de lags a generar para cada atributo
 
     Returns:
@@ -198,7 +198,7 @@ def feature_engineering_lag(df: pl.DataFrame, columnas: list[str], cant_lag: int
     # Agregar los lags para los atributos especificados
     for attr in columnas:
         if attr in df.columns:
-            for i in range(1, cant_lag + 1):
+            for i in lags:
                 sql += f", lag({attr}, {i}) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes) AS {attr}_lag{i}"
         else:
             logger.warning(f"El atributo {attr} no existe en el DataFrame")
@@ -405,7 +405,7 @@ def feature_engineering_trend(df: pl.DataFrame, columnas: list[str], q=3) -> pl.
     return df
 
 
-def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], cant_lag: int = 1) -> pl.DataFrame:
+def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], lags: list = [1, 2]) -> pl.DataFrame:
     """
     Genera variables delta (attr - attr_lagi) usando Polars.
     """
@@ -417,7 +417,7 @@ def feature_engineering_delta(df: pl.DataFrame, columnas: list[str], cant_lag: i
             logger.warning(f"No se encontró {attr}, se omite.")
             continue
 
-        for i in range(1, cant_lag + 1):
+        for i in lags:
             lag_col = f"{attr}_lag{i}"
             if lag_col not in df.columns:
                 logger.warning(f"No se encontró {lag_col}, se omite.")
