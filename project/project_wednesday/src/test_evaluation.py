@@ -71,8 +71,9 @@ def evaluar_en_test(df, mejores_params) -> tuple:
 
     modelos = []
     preds = []
+    pred_acumulada = np.zeros(len(y_test))
     all_importances = []
-    importance_type = 'gain'  # O 'split'
+    importance_type = 'gain'
 
     semillas = generar_semillas(SEMILLA[0], KSEMILLERIO)
 
@@ -93,7 +94,14 @@ def evaluar_en_test(df, mejores_params) -> tuple:
         logging.info(f'Fin de entrenamiento del modelo con seed = {seed} ({i + 1}/{len(semillas)})')
 
         modelos.append(modelo)
-        preds.append(modelo.predict(X_test))
+        y_pred_actual = modelo.predict(X_test)
+        preds.append(y_pred_actual)
+        pred_acumulada += y_pred_actual
+        y_pred_promedio_parcial = pred_acumulada / (i + 1)
+
+        ganancias_parcial = calcular_ganancias_acumuladas(y_test, y_pred_promedio_parcial)
+        logging.info(f'Ganancias parcial: {ganancias_parcial}')
+        mlflow.log_metric("ganancia_parcial", ganancias_parcial, step=i)  # loggear la ganancia parcial en mlflow
 
         # Generamos un DataFrame temporal con la importancia de este modelo
         feature_imp = pd.DataFrame({
@@ -109,7 +117,7 @@ def evaluar_en_test(df, mejores_params) -> tuple:
     logging.info('=== Finaliza Entrenamiento de los modelos ===')
 
     # Ensemble: promedio de predicciones
-    y_pred = np.mean(preds, axis=0)
+    y_pred = pred_acumulada / len(semillas)
 
     auc = roc_auc_score(y_test, y_pred)
 
@@ -128,6 +136,12 @@ def evaluar_en_test(df, mejores_params) -> tuple:
     ganancia_ensamble = calcular_ganancias_acumuladas(y_test, y_pred)
     ganancias_acumuladas.append(ganancia_ensamble)
 
+    ganancia_ensamble_meseta = (
+        pd.Series(ganancia_ensamble)
+        .rolling(window=1001, center=True, min_periods=1)
+        .mean()
+    ).max(skipna=True)
+
     # Estadísticas básicas del ensamble
     ganancia_test = np.max(ganancia_ensamble)
     total_predicciones = len(ganancia_ensamble)
@@ -136,6 +150,7 @@ def evaluar_en_test(df, mejores_params) -> tuple:
 
     resultados = {
         'ganancia_test': float(ganancia_test),
+        'ganancia_meseta_test': float(ganancia_ensamble_meseta),
         'auc_test': float(auc),
         'total_predicciones': int(total_predicciones),
         'predicciones_positivas': int(predicciones_positivas),
