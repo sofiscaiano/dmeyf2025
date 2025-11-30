@@ -737,14 +737,14 @@ def create_features(df: pl.DataFrame) -> pl.DataFrame:
         (pl.col("Master_mpagominimo").fill_null(0) + pl.col("Visa_mpagominimo").fill_null(0)).alias(
             "tc_mpagominimo"),
         # ctrx_quarter_normalizado
-        pl.when(pl.col("cliente_antiguedad") == 1)
-        .then(pl.col("ctrx_quarter") * 5.0)
-        .when(pl.col("cliente_antiguedad") == 2)
-        .then(pl.col("ctrx_quarter") * 2.0)
-        .when(pl.col("cliente_antiguedad") == 3)
-        .then(pl.col("ctrx_quarter") * 1.2)
-        .otherwise(pl.col("ctrx_quarter"))
-        .alias("ctrx_quarter_normalizado"),
+        # pl.when(pl.col("cliente_antiguedad") == 1)
+        # .then(pl.col("ctrx_quarter") * 5.0)
+        # .when(pl.col("cliente_antiguedad") == 2)
+        # .then(pl.col("ctrx_quarter") * 2.0)
+        # .when(pl.col("cliente_antiguedad") == 3)
+        # .then(pl.col("ctrx_quarter") * 1.2)
+        # .otherwise(pl.col("ctrx_quarter"))
+        # .alias("ctrx_quarter_normalizado"),
 
         (pl.col("mpayroll").fill_null(0) / pl.col("cliente_edad")).alias(
             "mpayroll_sobre_edad")
