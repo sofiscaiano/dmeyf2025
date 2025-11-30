@@ -43,6 +43,7 @@ try:
         FLAG_TREND_3M = _cfg.get('FLAG_TREND_3M', False)
         FLAG_TREND_6M = _cfg.get('FLAG_TREND_6M', False)
         FLAG_AVG_6M = _cfg.get('FLAG_AVG_6M', False)
+        FLAG_AVG_3M = _cfg.get('FLAG_AVG_3M', False)
         FLAG_MIN_6M = _cfg.get('FLAG_MIN_6M', False)
         FLAG_MAX_6M = _cfg.get('FLAG_MAX_6M', False)        
         FLAG_ZEROSD = _cfg.get('FLAG_ZEROSD', False)

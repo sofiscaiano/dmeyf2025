@@ -1,4 +1,4 @@
-STUDY_NAME : 'lags_1_2_3_6_12_nuevo'
+STUDY_NAME : 'lags_1_2_6_12_avg_3_6'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -15,11 +15,12 @@ competencia03:
   FLAG_TREND_6M: False
   FLAG_ZEROSD: True
   FLAG_EMBEDDING: False
-  FLAG_AVG_6M: False
+  FLAG_AVG_6M: True
+  FLAG_AVG_3M: True
   FLAG_MIN_6M: False
   FLAG_MAX_6M: False
-  DF_FE: 'df_fe_lags_1_2_3_6_12_nuevo'
-  QLAGS: [1, 2, 3, 6, 12]
+  DF_FE: 'df_fe_lags_1_2_6_12_avg_3_6'
+  QLAGS: [1, 2, 6, 12]
   MES_TRAIN_BO: [201901, 201902, 201903, 201904, 201905, 201906, 201907, 201908, 201909, 201910, 201911, 201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104]
   MES_VALIDACION_BO: [202106]
   KSEMILLERIO_BO: 3
@@ -33,9 +34,9 @@ competencia03:
   UNDERSAMPLING_FRACTION: 0.1
   UNDERSAMPLING_FINAL_TRAINING: True
   ADHOC: False
-  DROP: ['mprestamos_personales', 'cprestamos_personales']
+  DROP: ['mprestamos_personales', 'cprestamos_personales', 'ctrx_quarter_normalizado', 'mpayroll_sobre_edad']
   ENVIOS: 
-  DESCRIPCION: ''
+  DESCRIPCION: 'dataset nuevo pero dropeo ambas variables'
 
 parametros_lgb:
   n_trail: 50
