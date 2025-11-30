@@ -165,6 +165,9 @@ def main():
             if FLAG_TREND_6M:
                 df = feature_engineering_trend(df, columnas=atributos, q=6)
 
+            if any([FLAG_MIN_6M, FLAG_MAX_6M, FLAG_AVG_6M]):
+                df = feature_engineering_min_max_avg(df, columnas=atributos, window=6, f_min=FLAG_MIN_6M, f_max=FLAG_MAX_6M, f_avg=FLAG_AVG_6M)
+
             # atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
 
             df = feature_engineering_lag(df, columnas=atributos, lags=QLAGS) # duckdb 
