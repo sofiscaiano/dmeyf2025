@@ -100,8 +100,9 @@ def evaluar_en_test(df, mejores_params) -> tuple:
         y_pred_promedio_parcial = pred_acumulada / (i + 1)
 
         ganancias_parcial = calcular_ganancias_acumuladas(y_test, y_pred_promedio_parcial)
-        logging.info(f'Ganancias parcial: {ganancias_parcial}')
-        mlflow.log_metric("ganancia_parcial", ganancias_parcial, step=i)  # loggear la ganancia parcial en mlflow
+        max_ganancia_parcial = np.max(ganancias_parcial)
+        logging.info(f'Ganancias parcial: {max_ganancia_parcial}')
+        mlflow.log_metric("ganancia_parcial", max_ganancia_parcial, step=i)  # loggear la ganancia parcial en mlflow
 
         # Generamos un DataFrame temporal con la importancia de este modelo
         feature_imp = pd.DataFrame({
