@@ -324,13 +324,16 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
            numero_de_cliente,
            mpayroll_delta_1,
            flag_aguinaldo,
-           --cpayroll_trx
+           cpayroll_trx_delta_1,
+           cpayroll_trx_lag_1
     FROM (
     SELECT foto_mes,
            numero_de_cliente,
            lag(mpayroll, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_1,
            lag(mpayroll, 2) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as mpayroll_lag_2,
            mpayroll - mpayroll_lag_1 as mpayroll_delta_1,
+           lag(cpayroll_trx, 1) OVER (PARTITION BY numero_de_cliente ORDER BY foto_mes)  as cpayroll_trx_lag_1,
+           cpayroll_trx - cpayroll_trx_lag_1 as cpayroll_trx_delta_1,
            case when foto_mes in (202106, 202012, 202006, 201912, 201906)
                 and mpayroll/mpayroll_lag_1  >= 1.3
                 and mpayroll/mpayroll_lag_2  >= 1.3
@@ -343,13 +346,14 @@ def fix_aguinaldo(df: pl.DataFrame) -> pl.DataFrame:
 
     SELECT df.* REPLACE(
                 case when aguinaldo.mpayroll_delta_1 is null or aguinaldo.flag_aguinaldo = 0 then df.mpayroll when df.foto_mes in (202106, 202012, 202006, 201912, 201906) then df.mpayroll - aguinaldo.mpayroll_delta_1 + aguinaldo.mpayroll_delta_1/6 else df.mpayroll + aguinaldo.mpayroll_delta_1/6 end as mpayroll
-                --,case when aguinaldo.mpayroll_delta_1 is null then df.cpayroll_trx when df.foto_mes = 202106 then aguinaldo.cpayroll_trx else df.cpayroll_trx end as cpayroll_trx
+                ,case when aguinaldo.mpayroll_delta_1 is null or aguinaldo.flag_aguinaldo = 0 then df.cpayroll_trx when df.foto_mes in (202106, 202012, 202006, 201912, 201906) then case when aguinaldo.cpayroll_trx_delta_1 > 0 then aguinaldo.cpayroll_trx_lag_1 end else df.cpayroll_trx end as cpayroll_trx
                 ), mpayroll as mpayroll_original
     FROM df
     LEFT JOIN aguinaldo
     ON df.numero_de_cliente = aguinaldo.numero_de_cliente
     AND aguinaldo.foto_mes =
     CASE
+        WHEN df.foto_mes > 202106 THEN 202106
         WHEN MOD(df.foto_mes, 100) <= 6 
         THEN (TRUNC(df.foto_mes / 100) * 100) + 6
         ELSE (TRUNC(df.foto_mes / 100) * 100) + 12
