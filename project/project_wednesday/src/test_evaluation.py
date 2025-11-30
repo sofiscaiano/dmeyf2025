@@ -194,6 +194,7 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
         'descripcion_experimento': DESCRIPCION,
         'ksemillerio': KSEMILLERIO,
         'ganancia': resultados_test['ganancia_test'],
+        'ganancia_meseta': resultados_test['ganancia_meseta_test'],
         'auc_BAJA+2': resultados_test['auc_test'],
         'total_predicciones': resultados_test['total_predicciones'],
         'predicciones_positivas': resultados_test['predicciones_positivas'],
@@ -210,6 +211,7 @@ def guardar_resultados_test(resultados_test, archivo_base=None):
     }
 
     mlflow.log_metric("ganancia_test", resultados_test['ganancia_test'])
+    mlflow.log_metric("ganancia_meseta_test", resultados_test['ganancia_meseta_test'])
     mlflow.log_metric("mes_test", MES_TEST[0])
     mlflow.log_metric("undersampling", UNDERSAMPLING_FRACTION)
     mlflow.log_metric("semillerio_test", KSEMILLERIO)
