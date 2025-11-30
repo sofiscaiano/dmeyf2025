@@ -1,6 +1,7 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 from .config import *
+import mlflow
 
 logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)

@@ -8,7 +8,7 @@ import gc
 import polars as pl
 import mlflow
 import shutil
-from src.features import create_embedding_lgbm_rf, feature_engineering_ipc, create_features, feature_engineering_lag, generar_reporte_mensual_html, fix_aguinaldo, feature_engineering_delta, feature_engineering_rank, feature_engineering_trend, fix_zero_sd, create_canaritos
+from src.features import *
 from src.loader import cargar_datos_csv, cargar_datos, convertir_clase_ternaria_a_target
 from src.optimization import optimizar
 from src.test_evaluation import evaluar_en_test, guardar_resultados_test
@@ -164,6 +164,9 @@ def main():
                 df = feature_engineering_trend(df, columnas=atributos, q=3)
             if FLAG_TREND_6M:
                 df = feature_engineering_trend(df, columnas=atributos, q=6)
+
+            if any([FLAG_MIN_6M, FLAG_MAX_6M, FLAG_AVG_6M]):
+                df = feature_engineering_min_max_avg(df, columnas=atributos, window=6, f_min=FLAG_MIN_6M, f_max=FLAG_MAX_6M, f_avg=FLAG_AVG_6M)
 
             # atributos = [c for c in df.columns if c not in ['foto_mes', 'target', 'numero_de_cliente']]
 
