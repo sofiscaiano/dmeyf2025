@@ -49,9 +49,9 @@ def generar_semillas(semilla_primigenia: int, cantidad: int,
     # Seleccionar los primos al azar
     return random.sample(primos, cantidad)
 
-def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, weight_train: list,  mes_test: list, weight: bool = False) -> tuple:
+def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list,  mes_test: list, weight_train: list = None) -> tuple:
 
-    if weight:
+    if weight_train:
         weight_map = dict(zip(mes_train, weight_train))
 
     df_train = df.filter(pl.col("foto_mes").is_in(mes_train))
@@ -59,7 +59,7 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, wei
     if undersampling:
         df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
 
-    if weight:
+    if weight_train:
         df_train = df_train.with_columns(
             pl.col("foto_mes").map_dict(weight_map).alias("w_train")
         )
