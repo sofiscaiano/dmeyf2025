@@ -35,7 +35,7 @@ def preparar_datos_entrenamiento_final(df: pl.DataFrame) -> tuple:
     logger.info(f"Registros de entrenamiento final: {X_train.shape}")
     mlflow.log_param("X_train_final_shape", X_train.shape)
 
-    return X_train, y_train
+    return X_train, y_train, feature_name
 
 def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     """
@@ -50,7 +50,7 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     """
     logger.info("Iniciando entrenamiento del modelo final")
 
-    X_train, y_train = preparar_datos_entrenamiento_final(df)
+    X_train, y_train, feature_name = preparar_datos_entrenamiento_final(df)
 
     flag_GPU = int(os.getenv('GPU', 0))
 

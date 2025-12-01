@@ -264,10 +264,10 @@ def main():
         resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
         guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
         
-        return
-        
         entrenar_modelo_final(df, mejores_params)
 
+        return 
+        
         ## Generar predicciones
         if ENVIOS is not None:
             envios = ENVIOS
