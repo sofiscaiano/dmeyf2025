@@ -122,6 +122,23 @@ def evaluar_en_test(df, mejores_params) -> tuple:
 
     auc = roc_auc_score(y_test, y_pred)
 
+    path_resultados = os.path.join(BUCKET_NAME, "resultados")
+    os.makedirs(path_resultados, exist_ok=True)
+    ruta_probabilidades = os.path.join(path_resultados, f"{STUDY_NAME}_probabilidades.csv")
+    ndc_index = feature_name.index('numero_de_cliente')
+    numero_de_cliente = X_test[:, ndc_index].astype(int)
+
+    df_probabilidades = pd.DataFrame(
+        {
+            'numero_de_cliente': numero_de_cliente,
+            'probabilidad': y_pred,
+            'target': y_test
+        }
+    )
+
+    df_probabilidades.to_csv(ruta_probabilidades, index=False)
+    logger.info(f'Probabilidades guardadas en: {ruta_probabilidades}')
+
     logging.info('=== Inicio Grafico de Importancia ===')
     plot_mean_importance(all_importances, importance_type, type='test')
 
