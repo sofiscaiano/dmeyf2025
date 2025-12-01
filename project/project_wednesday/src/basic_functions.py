@@ -61,7 +61,7 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list,  me
 
     if weight_train:
         df_train = df_train.with_columns(
-            pl.col("foto_mes").map_dict(weight_map).alias("w_train")
+            pl.col("foto_mes").replace(weight_map).alias("w_train")
         )
 
         w_train = df_train["w_train"].to_numpy().astype("float32")
