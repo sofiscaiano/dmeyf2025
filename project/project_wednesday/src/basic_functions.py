@@ -49,11 +49,24 @@ def generar_semillas(semilla_primigenia: int, cantidad: int,
     # Seleccionar los primos al azar
     return random.sample(primos, cantidad)
 
-def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes_test: list) -> tuple:
+def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, weight_train: list,  mes_test: list, weight: bool = False) -> tuple:
+
+    if weight:
+        weight_map = dict(zip(mes_train, weight_train))
 
     df_train = df.filter(pl.col("foto_mes").is_in(mes_train))
+
     if undersampling:
         df_train = undersample(df_train, sample_fraction=UNDERSAMPLING_FRACTION)
+
+    if weight:
+        df_train = df_train.with_columns(
+            pl.col("foto_mes").map_dict(weight_map).alias("w_train")
+        )
+
+        w_train = df_train["w_train"].to_numpy().astype("float32")
+    else:
+        w_train = None
 
     df_test = df.filter(pl.col("foto_mes").is_in(mes_test))
     
@@ -65,7 +78,7 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list, mes
     X_test = df_test.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
     y_test = df_test["target_test"].to_numpy().astype("float32")
 
-    return X_train, y_train, X_test, y_test, feature_name
+    return X_train, y_train, X_test, y_test, w_train, feature_name
 
 def undersample(df: pl.DataFrame, sample_fraction: float) -> pl.DataFrame:
     """

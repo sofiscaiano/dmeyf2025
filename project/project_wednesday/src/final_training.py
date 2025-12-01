@@ -28,14 +28,14 @@ def preparar_datos_entrenamiento_final(df: pl.DataFrame) -> tuple:
     logger.info(f"Períodos de entrenamiento: {FINAL_TRAIN}")
 
     if UNDERSAMPLING_FINAL_TRAINING:
-        X_train, y_train, X_test, y_test, feature_name = train_test_split(df=df, undersampling=True, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
+        X_train, y_train, X_test, y_test, w_train, feature_name  = train_test_split(df=df, undersampling=True, mes_train=FINAL_TRAIN, weight_train=WEIGHT_FINAL_TRAIN, mes_test=MES_TEST)
     else:
-        X_train, y_train, X_test, y_test, feature_name = train_test_split(df=df, undersampling=False, mes_train=FINAL_TRAIN, mes_test=MES_TEST)
+        X_train, y_train, X_test, y_test, w_train, feature_name  = train_test_split(df=df, undersampling=False, mes_train=FINAL_TRAIN, weight_train=WEIGHT_FINAL_TRAIN, mes_test=MES_TEST)
 
     logger.info(f"Registros de entrenamiento final: {X_train.shape}")
     mlflow.log_param("X_train_final_shape", X_train.shape)
 
-    return X_train, y_train, feature_name
+    return X_train, y_train, feature_name, w_train
 
 def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     """
@@ -50,7 +50,7 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     """
     logger.info("Iniciando entrenamiento del modelo final")
 
-    X_train, y_train, feature_name = preparar_datos_entrenamiento_final(df)
+    X_train, y_train, feature_name, w_train = preparar_datos_entrenamiento_final(df)
 
     flag_GPU = int(os.getenv('GPU', 0))
 
@@ -81,7 +81,7 @@ def entrenar_modelo_final(df: pl.DataFrame, mejores_params: dict) -> list:
     logger.info(f"Parámetros del modelo: {params}")
 
     # Crear dataset de LightGBM
-    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True, feature_name=feature_name)
+    train_data = lgb.Dataset(X_train, label=y_train, free_raw_data=True, feature_name=feature_name, weight=w_train)
 
     logging.info(f'=== Inicio Entrenamiento del Modelo Final con {KSEMILLERIO} semillas ===')
 
