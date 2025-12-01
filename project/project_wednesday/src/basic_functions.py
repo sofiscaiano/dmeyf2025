@@ -72,10 +72,10 @@ def train_test_split(df: pl.DataFrame, undersampling: bool, mes_train: list,  me
     
     feature_name = [c for c in df.columns if c not in ["target", "target_train", "target_test", "w_train"]]
 
-    X_train = df_train.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
+    X_train = df_train.select(pl.all().exclude(["target", "target_test", "w_train"])).to_numpy().astype("float32")
     y_train = df_train["target"].to_numpy().astype("float32")
 
-    X_test = df_test.select(pl.all().exclude(["target", "target_test"])).to_numpy().astype("float32")
+    X_test = df_test.select(pl.all().exclude(["target", "target_test", "w_train"])).to_numpy().astype("float32")
     y_test = df_test["target_test"].to_numpy().astype("float32")
 
     return X_train, y_train, X_test, y_test, w_train, feature_name
