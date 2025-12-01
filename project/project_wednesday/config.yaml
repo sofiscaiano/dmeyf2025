@@ -1,4 +1,4 @@
-STUDY_NAME : 'lags_1_2_6_12_final_train'
+STUDY_NAME : 'lags_1_2_3_6_12_tend_3_6_undersampling5'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -11,34 +11,34 @@ competencia03:
   FLAG_AGUINALDO: False
   FLAG_RANKS: True
   FLAG_IPC: False
-  FLAG_TREND_3M: False
-  FLAG_TREND_6M: False
+  FLAG_TREND_3M: True
+  FLAG_TREND_6M: True
   FLAG_ZEROSD: True
   FLAG_EMBEDDING: False
   FLAG_AVG_6M: False
   FLAG_AVG_3M: False
   FLAG_MIN_6M: False
   FLAG_MAX_6M: False
-  DF_FE: 'df_fe_lags_1_2_6_12'
+  DF_FE: 'df_fe_lags_1_2_3_6_12_tend_3_6'
   QLAGS: [1, 2, 6, 12]
   MES_TRAIN_BO: [201901, 201902, 201903, 201904, 201905, 201906, 201907, 201908, 201909, 201910, 201911, 201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104]
   MES_VALIDACION_BO: [202106]
   KSEMILLERIO_BO: 3
   MES_TRAIN: [201901, 201902, 201903, 201904, 201905, 201906, 201907, 201908, 201909, 201910, 201911, 201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104, 202105]
-  WEIGHT_TRAIN: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  WEIGHT_TRAIN: 
   MES_TEST: [202107]
   FINAL_TRAIN: [201901, 201902, 201903, 201904, 201905, 201906, 201907, 201908, 201909, 201910, 201911, 201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104, 202105, 202106, 202107]
-  WEIGHT_FINAL_TRAIN: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  WEIGHT_FINAL_TRAIN: 
   FINAL_PREDICT: [202109]
   KSEMILLERIO: 100
   GANANCIA_ACIERTO: 780000
   COSTO_ESTIMULO: 20000
-  UNDERSAMPLING_FRACTION: 0.1
+  UNDERSAMPLING_FRACTION: 0.05
   UNDERSAMPLING_FINAL_TRAINING: True
   ADHOC: False
-  DROP: ['mprestamos_personales', 'cprestamos_personales']
+  DROP: ['mprestamos_personales', 'cprestamos_personales', 'ctrx_quarter_normalizado', 'mpayroll_sobre_edad']
   ENVIOS: 
-  DESCRIPCION: 'dataset anterior sin ctrx_quarter_normalizado ni mpayroll_sobre_edad'
+  DESCRIPCION: 'dataset nuevo sin ctrx_quarter_normalizado ni mpayroll_sobre_edad'
 
 parametros_lgb:
   n_trail: 50
