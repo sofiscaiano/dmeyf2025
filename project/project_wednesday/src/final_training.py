@@ -170,7 +170,9 @@ def generar_predicciones_finales(df: pl.DataFrame, envios: int, archivo_base: st
     preds = []
 
     for file in model_files:
+        logging.info(f"Cargando modelo: {file}")
         modelo = lgb.Booster(model_file=file)
+        logging.info(f"Generando predicciones con el modelo: {file}")
         preds.append(modelo.predict(X_predict))
 
     # Ensemble final (promedio)
