@@ -166,6 +166,7 @@ def generar_predicciones_finales(df: pl.DataFrame, envios: int, archivo_base: st
         mensaje_error = f"🔍 No se encontraron los modelos correspondientes al experimento '{archivo_base}'."
         raise FileNotFoundError(mensaje_error)
 
+    logging.info(f"Se encontraron {len(model_files)} modelos asociados al experimento: {archivo_base}")
     preds = []
 
     for file in model_files:
