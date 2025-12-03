@@ -12,6 +12,7 @@ try:
     with open(PATH_CONFIG, 'r') as f:
         _cfgGeneral = yaml.safe_load(f)
         _cfg = _cfgGeneral['competencia03']
+        _cfgEnsemble = _cfgGeneral['ensemble']
 
         PARAMETROS_LGB = _cfgGeneral['parametros_lgb']
         PARAMETROS_LGB_ADHOC = _cfgGeneral['parametros_adhoc']
@@ -52,6 +53,12 @@ try:
         FLAG_EMBEDDING = _cfg.get('FLAG_EMBEDDING', False)
         DF_FE = _cfg.get('DF_FE', 'df_fe')
         QLAGS = _cfg.get('QLAGS', 2)
+
+        # Parametros de Ensemble
+        MODELOS = _cfgEnsemble.get('MODELOS', [])
+        WEIGHTS = _cfgEnsemble.get('WEIGHTS', None)
+        MES_TEST_ENSEMBLE = _cfgEnsemble.get('MES_TEST', [202107])
+        ENVIOS_ENSEMBLE = _cfgEnsemble.get('QLAGS', 2)
 
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))
