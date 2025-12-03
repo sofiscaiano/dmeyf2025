@@ -188,7 +188,13 @@ def generar_predicciones_finales(df: pl.DataFrame, envios: int, archivo_base: st
     resultados["Predicted"] = 0
     resultados.loc[:envios, "Predicted"] = 1
 
-    resultados.drop(columns='probabilidad', inplace=True)
+    # resultados.drop(columns='probabilidad', inplace=True)
+
+    path_predict = os.path.join(BUCKET_NAME, "predict")
+    os.makedirs(path_predict, exist_ok=True)
+    ruta_predicciones = os.path.join(path_predict, f"{STUDY_NAME}_predicciones.csv")
+    resultados.to_csv(ruta_predicciones, index=False)
+    logger.info(f'Predicciones guardadas en: {ruta_predicciones}')
 
     # Estadísticas de predicciones
     total_predicciones = len(resultados)

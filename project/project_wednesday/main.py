@@ -262,12 +262,10 @@ def main():
         else:
             mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
-        resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
-        guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-        
-        entrenar_modelo_final(df, mejores_params)
-
-        return 
+        # resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
+        # guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
+        #
+        # entrenar_modelo_final(df, mejores_params)
         
         ## Generar predicciones
         if ENVIOS is not None:
@@ -277,6 +275,8 @@ def main():
             envios = cargar_mejores_envios()
 
         predicciones = generar_predicciones_finales(df, envios)
+
+        return
         salida_kaggle = exportar_envios_bot(predicciones)
 
         ## Resumen final
