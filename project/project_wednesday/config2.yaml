@@ -37,7 +37,7 @@ competencia03:
   UNDERSAMPLING_FINAL_TRAINING: True
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
-  ENVIOS:
+  ENVIOS: 11000
   DESCRIPCION: 'dataset anterior sin ctrx_quarter_normalizado ni mpayroll_sobre_edad'
 
 ensemble:
