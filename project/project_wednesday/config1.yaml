@@ -1,11 +1,11 @@
-STUDY_NAME : 'lags_1_2_6_12_undersampling5_semilla633767'
+STUDY_NAME : 'lags_1_2_6_12_undersampling5'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
 
 competencia03:
   DATA_PATH: 'datasets/competencia_03.parquet'
-  SEMILLA: [633767, 131213, 275677, 997057, 450223]
+  SEMILLA: [131213, 275677, 633767, 997057, 450223]
   ZEROSHOT: False
   STUDY_HP:
   FLAG_AGUINALDO: False
@@ -41,11 +41,11 @@ competencia03:
   DESCRIPCION: 'dataset anterior sin ctrx_quarter_normalizado ni mpayroll_sobre_edad'
 
 ensemble:
-  MODELOS: ['lags_1_2_6_12_undersampling5_semilla633767', 'lags_1_2_6_12_undersampling5', 'lags_1_2_6_12_undersampling5_semilla450223']
+  MODELOS:
   WEIGHTS:
   MES_TEST:
-  FINAL_PREDICT: [202109]
-  ENVIOS: 11000
+  FINAL_PREDICT:
+  ENVIOS:
   DESCRIPCION:
 
 parametros_lgb:

@@ -37,15 +37,15 @@ competencia03:
   UNDERSAMPLING_FINAL_TRAINING: True
   ADHOC: False
   DROP: ['mprestamos_personales', 'cprestamos_personales']
-  ENVIOS: 11000
+  ENVIOS:
   DESCRIPCION: 'dataset anterior sin ctrx_quarter_normalizado ni mpayroll_sobre_edad'
 
 ensemble:
-  MODELOS: ['lags_1_2_6_12_undersampling5_semilla633767', 'lags_1_2_6_12_undersampling5', 'lags_1_2_6_12_undersampling5_semilla450223']
+  MODELOS:
   WEIGHTS:
   MES_TEST:
-  FINAL_PREDICT: [202109]
-  ENVIOS: 11000
+  FINAL_PREDICT:
+  ENVIOS:
   DESCRIPCION:
 
 parametros_lgb:

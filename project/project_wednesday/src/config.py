@@ -4,7 +4,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-PATH_CONFIG = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.yaml')
+config_name = os.getenv('CONFIG', 'config.yaml')
+PATH_CONFIG = os.path.join(os.path.dirname(os.path.dirname(__file__)), config_name)
 
 try:
     FLAG_GCP = int(os.getenv('GCP', 1))

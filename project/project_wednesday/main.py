@@ -237,36 +237,36 @@ def main():
             df = create_canaritos(df, qcanaritos=PARAMETROS_ZLGB['qcanaritos'])
             gc.collect()
 
-        # if ZEROSHOT:
-        #     logger.info("=== ANÁLISIS ZEROSHOT ===")
-        #     resultado_zs = optimizar_zero_shot(df)
+        if ZEROSHOT:
+            logger.info("=== ANÁLISIS ZEROSHOT ===")
+            resultado_zs = optimizar_zero_shot(df)
 
-        #     # Desempacar resultados del diccionario
-        #     ganancia_val = resultado_zs["ganancia_validacion"]
-        #     umbral_sugerido = resultado_zs["umbral_sugerido"]
-        #     params_lightgbm = resultado_zs["best_params_lightgbm"]
-        #     hyperparams = resultado_zs["best_params_flaml"]
-        #     paths = resultado_zs["paths"]
+            # Desempacar resultados del diccionario
+            ganancia_val = resultado_zs["ganancia_validacion"]
+            umbral_sugerido = resultado_zs["umbral_sugerido"]
+            params_lightgbm = resultado_zs["best_params_lightgbm"]
+            hyperparams = resultado_zs["best_params_flaml"]
+            paths = resultado_zs["paths"]
 
-        #     logger.info("=== ANÁLISIS DE RESULTADOS ZEROSHOT ===")
-        #     logger.info(f"✅ Ganancia en validación: {ganancia_val:,.0f}")
-        #     logger.info(f"✅ Umbral sugerido: {umbral_sugerido:.4f}")
-        #     logger.info(f"✅ Parámetros FLAML guardados: {len(hyperparams)} parámetros")
-        #     logger.info(f"✅ Parámetros LightGBM guardados: {len(params_lightgbm)} parámetros")
-        #     logger.info(f"✅ Archivos generados:")
-        #     logger.info(f"   - Iteraciones: {paths['iteraciones']}")
-        #     logger.info(f"   - Best params: {paths['best_params']}")
+            logger.info("=== ANÁLISIS DE RESULTADOS ZEROSHOT ===")
+            logger.info(f"✅ Ganancia en validación: {ganancia_val:,.0f}")
+            logger.info(f"✅ Umbral sugerido: {umbral_sugerido:.4f}")
+            logger.info(f"✅ Parámetros FLAML guardados: {len(hyperparams)} parámetros")
+            logger.info(f"✅ Parámetros LightGBM guardados: {len(params_lightgbm)} parámetros")
+            logger.info(f"✅ Archivos generados:")
+            logger.info(f"   - Iteraciones: {paths['iteraciones']}")
+            logger.info(f"   - Best params: {paths['best_params']}")
 
-        # elif STUDY_HP is None:
-        #     mejores_params = cargar_mejores_hiperparametros()
-        # else:
-        #     mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
+        elif STUDY_HP is None:
+            mejores_params = cargar_mejores_hiperparametros()
+        else:
+            mejores_params = cargar_mejores_hiperparametros(archivo_base=STUDY_HP)
 
         # resultados_test, y_pred, ganancias_acumuladas = evaluar_en_test(df, mejores_params)
         # guardar_resultados_test(resultados_test, archivo_base=STUDY_NAME)
-        #
-        # entrenar_modelo_final(df, mejores_params)
-        
+
+        entrenar_modelo_final(df, mejores_params)
+
         ## Generar predicciones
         if ENVIOS is not None:
             envios = ENVIOS
@@ -277,18 +277,19 @@ def main():
         predicciones = generar_predicciones_finales(df, envios)
 
         return
-        salida_kaggle = exportar_envios_bot(predicciones)
 
-        ## Resumen final
-        logger.info("=== RESUMEN FINAL ===")
-        logger.info(f"✅ Entrenamiento final completado exitosamente")
-        logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
-        logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
-        logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
-        logger.info(f"📁 Archivo de salida: {salida_kaggle}")
-        logger.info(f"📝 Log detallado: log/{nombre_log}")
-
-        logger.info(f'Ejecucion finalizada. Revisar log para mas detalles. {nombre_log}')
+        # salida_kaggle = exportar_envios_bot(predicciones)
+        #
+        # ## Resumen final
+        # logger.info("=== RESUMEN FINAL ===")
+        # logger.info(f"✅ Entrenamiento final completado exitosamente")
+        # logger.info(f"📊 Mejores hiperparámetros utilizados: {mejores_params}")
+        # logger.info(f"🎯 Períodos de entrenamiento: {FINAL_TRAIN}")
+        # logger.info(f"🔮 Período de predicción: {FINAL_PREDICT}")
+        # logger.info(f"📁 Archivo de salida: {salida_kaggle}")
+        # logger.info(f"📝 Log detallado: log/{nombre_log}")
+        #
+        # logger.info(f'Ejecucion finalizada. Revisar log para mas detalles. {nombre_log}')
 
 if __name__ == '__main__':
     main()
