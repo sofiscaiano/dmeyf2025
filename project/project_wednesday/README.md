@@ -12,7 +12,7 @@ Se entrenaron tres modelos con distintas semillas primigenias y 50 semillerio en
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/sofiscaiano/dmeyf2025.git](https://github.com/sofiscaiano/dmeyf2025.git)
+    git clone git@github.com:sofiscaiano/dmeyf2025.git
     cd dmeyf2025/project/project_wednesday
     ```
     
@@ -21,16 +21,16 @@ Se entrenaron tres modelos con distintas semillas primigenias y 50 semillerio en
     pip install -r requirements.txt
     
     cd
-    rm -rf  LightGBM
-    git clone --recursive  https://github.com/dmecoyfin/LightGBM
+    rm -rf LightGBM
+    git clone --recursive https://github.com/dmecoyfin/LightGBM
     
     source  ~/.venv/bin/activate
     pip install sympy
     pip uninstall --yes lightgbm
     
     # instalacion Python
-    cd  ~/LightGBM
-    sh ./build-python.sh  install
+    cd ~/LightGBM
+    sh ./build-python.sh install
     
     cd ~/dmeyf2025/project/project_wednesday
     
