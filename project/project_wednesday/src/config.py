@@ -57,8 +57,9 @@ try:
         # Parametros de Ensemble
         MODELOS = _cfgEnsemble.get('MODELOS', [])
         WEIGHTS = _cfgEnsemble.get('WEIGHTS', None)
-        MES_TEST_ENSEMBLE = _cfgEnsemble.get('MES_TEST', [202107])
-        ENVIOS_ENSEMBLE = _cfgEnsemble.get('QLAGS', 2)
+        MES_TEST_ENSEMBLE = _cfgEnsemble.get('MES_TEST', None)
+        MES_FINAL_ENSEMBLE = _cfgEnsemble.get('FINAL_PREDICT', None)
+        ENVIOS_ENSEMBLE = _cfgEnsemble.get('ENVIOS', 11000)
 
         if FLAG_GCP == 1:
             BUCKET_NAME = os.path.expanduser(_cfgGeneral.get("BUCKET_NAME", '~/buckets/'))

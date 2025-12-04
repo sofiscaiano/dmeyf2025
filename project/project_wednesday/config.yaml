@@ -1,4 +1,4 @@
-STUDY_NAME : '8_modelos'
+STUDY_NAME : 'lags_1_2_6_12_undersampling5_3mod_final'
 
 BUCKET_NAME: '~/buckets/b1'
 LOCAL_PATH: '/Users/sofi/Documents/dmeyf2025/project/project_wednesday'
@@ -41,10 +41,11 @@ competencia03:
   DESCRIPCION: 'dataset anterior sin ctrx_quarter_normalizado ni mpayroll_sobre_edad'
 
 ensemble:
-  MODELOS: ["lags_1_2_6_12_undersampling5_semilla633767", "lags_1_2_6_12_undersampling5_semilla450223", "lags_1_2_6_12_undersampling5", "lags_1_2_6_12_undersampling5_slow", "lags_1_2_6_12_avg_3_6_undersampling5_slow", "lags_1_2_3_6_12_tend_3_6_undersampling5", "lags_1_2_3_6_12_undersampling5_nuevo", "lags_1_2_6_12_avg_3_6_undersampling5"]
+  MODELOS: ['lags_1_2_6_12_undersampling5_semilla633767', 'lags_1_2_6_12_undersampling5', 'lags_1_2_6_12_undersampling5_semilla450223']
   WEIGHTS:
-  MES_TEST: [202107]
-  ENVIOS:
+  MES_TEST:
+  FINAL_PREDICT: [202109]
+  ENVIOS: 11000
   DESCRIPCION:
 
 parametros_lgb:
